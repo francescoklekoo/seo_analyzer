@@ -864,7 +864,9 @@ class MainWindow:
             
             for issue in issue_list:
                 url = issue.get('url', 'N/A')
+                # Change 'type' to 'issue' to get the descriptive message
                 issue_description = issue.get('issue', 'Descrizione Non Disponibile') 
+                # Truncate issue_description as well if it's too long for the column (e.g., max 20 chars for this basic table)
                 issue_display = issue_description[:18] + '..' if len(issue_description) > 20 else issue_description
                 table_content += "{:<80} {:<20}\n".format(url[:77] + '...' if len(url) > 80 else url, issue_display)
             table_content += "\n"
