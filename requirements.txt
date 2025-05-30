@@ -1,0 +1,49 @@
+# GUI Framework
+customtkinter
+Pillow
+
+# Web Scraping and HTTP
+requests
+beautifulsoup4
+selenium
+lxml
+
+# URL and Domain handling
+urllib3
+tldextract
+
+# Performance and Speed Testing
+python-whois
+
+# PDF Generation
+reportlab
+weasyprint
+jinja2
+
+# Data Processing
+pandas
+numpy
+
+# Progress and Logging
+tqdm
+
+# Image Processing
+opencv-python
+
+# Threading and Async
+aiohttp
+
+# SEO and Analytics
+googlesearch-python
+
+# System and OS
+psutil
+
+# Date and Time
+python-dateutil
+
+# Configuration
+python-dotenv
+
+# Web Driver Management
+webdriver-manager

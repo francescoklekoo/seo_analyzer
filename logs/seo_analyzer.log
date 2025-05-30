@@ -1,0 +1,579 @@
+2025-05-29 15:07:06,965 - __main__ - INFO - ==================================================
+2025-05-29 15:07:06,966 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:07:06,966 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:07:06,966 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:07:06,966 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:07:06,966 - __main__ - INFO - ==================================================
+2025-05-29 15:07:06,966 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:07:06,966 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:07:06,966 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:07:06,966 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:07:06,966 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:07:06,966 - __main__ - ERROR - ✗ Beautiful Soup - MANCANTE
+2025-05-29 15:07:11,717 - __main__ - ERROR - 
+Dipendenze mancanti:
+Beautiful Soup
+
+Installa le dipendenze mancanti con:
+pip install -r requirements.txt
+
+Oppure installa manualmente:
+pip install beautifulsoup4
+        
+2025-05-29 15:07:48,353 - __main__ - INFO - ==================================================
+2025-05-29 15:07:48,353 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:07:48,353 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:07:48,353 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:07:48,353 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:07:48,353 - __main__ - INFO - ==================================================
+2025-05-29 15:07:48,353 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:07:48,353 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:07:48,353 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:07:48,353 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:07:48,353 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:07:48,353 - __main__ - ERROR - ✗ Beautiful Soup - MANCANTE
+2025-05-29 15:07:48,546 - __main__ - ERROR - 
+Dipendenze mancanti:
+Beautiful Soup
+
+Installa le dipendenze mancanti con:
+pip install -r requirements.txt
+
+Oppure installa manualmente:
+pip install beautifulsoup4
+        
+2025-05-29 15:09:28,602 - __main__ - INFO - ==================================================
+2025-05-29 15:09:28,602 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:09:28,602 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:09:28,602 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:09:28,602 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:09:28,602 - __main__ - INFO - ==================================================
+2025-05-29 15:09:28,602 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:09:28,602 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:09:28,602 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:09:28,602 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:09:28,602 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:09:28,689 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:09:28,689 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:09:29,632 - __main__ - CRITICAL - Errore critico nell'avvio: 'MainWindow' object has no attribute 'url_var'
+2025-05-29 15:09:29,633 - __main__ - CRITICAL - Traceback (most recent call last):
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/main.py", line 357, in main
+    app = MainWindow()
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 43, in __init__
+    self._setup_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 62, in _setup_ui
+    self._create_main_content()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 104, in _create_main_content
+    self._create_input_panel(left_panel)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 126, in _create_input_panel
+    textvariable=self.url_var,
+                 ^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'url_var'
+
+2025-05-29 15:10:43,563 - __main__ - INFO - ==================================================
+2025-05-29 15:10:43,563 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:10:43,563 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:10:43,563 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:10:43,563 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:10:43,563 - __main__ - INFO - ==================================================
+2025-05-29 15:10:43,563 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:10:43,563 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:10:43,563 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:10:43,563 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:10:43,563 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:10:43,705 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:10:43,705 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:10:44,804 - __main__ - CRITICAL - Errore critico nell'avvio: 'dark_gray'
+2025-05-29 15:10:44,805 - __main__ - CRITICAL - Traceback (most recent call last):
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/main.py", line 357, in main
+    app = MainWindow()
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 46, in __init__
+    self._setup_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 67, in _setup_ui
+    self._create_status_bar()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/francesco/Desktop/progetti_py/seo_analyzer/gui/main_window.py", line 359, in _create_status_bar
+    text_color=GUI_CONFIG['colors']['dark_gray']
+               ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+KeyError: 'dark_gray'
+
+2025-05-29 15:12:13,712 - __main__ - INFO - ==================================================
+2025-05-29 15:12:13,712 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:12:13,712 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:12:13,712 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:12:13,712 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:12:13,712 - __main__ - INFO - ==================================================
+2025-05-29 15:12:13,712 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:12:13,712 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:12:13,712 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:12:13,712 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:12:13,712 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:12:13,850 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:12:13,850 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:12:14,916 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 15:12:14,916 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 15:13:05,732 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 15:13:05,900 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 15:13:06,057 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:13:06,127 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:13:06,174 - WDM - INFO - There is no [mac64] chromedriver "136.0.7103.113" for browser google-chrome "136.0.7103" in cache
+2025-05-29 15:13:06,185 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:13:06,306 - WDM - INFO - WebDriver version 136.0.7103.113 selected
+2025-05-29 15:13:06,307 - WDM - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/136.0.7103.113/mac-arm64/chromedriver-mac-arm64.zip
+2025-05-29 15:13:06,307 - WDM - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/136.0.7103.113/mac-arm64/chromedriver-mac-arm64.zip
+2025-05-29 15:13:06,402 - WDM - INFO - Driver downloading response is 200
+2025-05-29 15:13:07,152 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:13:07,254 - WDM - INFO - Driver has been saved in cache [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113]
+2025-05-29 15:13:42,437 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 15:13:42,437 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 15:13:42,479 - utils.analyzer - INFO - Analisi SEO completata
+2025-05-29 15:23:23,076 - __main__ - INFO - ==================================================
+2025-05-29 15:23:23,076 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:23:23,076 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:23:23,076 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:23:23,076 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:23:23,076 - __main__ - INFO - ==================================================
+2025-05-29 15:23:23,076 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:23:23,077 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:23:23,077 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:23:23,077 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:23:23,077 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:23:23,261 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:23:23,261 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:23:24,360 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 15:23:24,361 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 15:23:36,118 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 15:23:36,228 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 15:23:36,390 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:23:36,457 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:23:36,504 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 15:24:12,121 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 15:24:12,122 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 15:24:12,164 - utils.analyzer - INFO - Analisi SEO completata
+2025-05-29 15:26:06,747 - __main__ - INFO - Applicazione chiusa dall'utente
+2025-05-29 15:26:09,695 - __main__ - INFO - ==================================================
+2025-05-29 15:26:09,695 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:26:09,695 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:26:09,695 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:26:09,695 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:26:09,695 - __main__ - INFO - ==================================================
+2025-05-29 15:26:09,695 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:26:09,695 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:26:09,695 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:26:09,695 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:26:09,695 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:26:09,841 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:26:09,841 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:26:10,913 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 15:26:10,913 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 15:26:17,388 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 15:26:17,473 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 15:26:17,580 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:26:17,632 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:26:17,683 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 15:26:51,557 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 15:26:51,559 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 15:26:51,600 - utils.analyzer - INFO - Analisi SEO completata
+2025-05-29 15:28:38,810 - __main__ - INFO - Applicazione chiusa dall'utente
+2025-05-29 15:28:40,453 - __main__ - INFO - ==================================================
+2025-05-29 15:28:40,453 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:28:40,453 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:28:40,453 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:28:40,453 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:28:40,453 - __main__ - INFO - ==================================================
+2025-05-29 15:28:40,453 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:28:40,453 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:28:40,453 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:28:40,453 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:28:40,453 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:28:40,594 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:28:40,595 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:28:41,660 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 15:28:41,660 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 15:28:51,606 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 15:28:51,674 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 15:28:51,822 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:28:51,872 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:28:51,917 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 15:29:30,280 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 15:29:30,281 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 15:29:30,323 - utils.analyzer - INFO - Analisi SEO completata
+2025-05-29 15:31:02,745 - __main__ - INFO - Applicazione chiusa dall'utente
+2025-05-29 15:31:05,367 - __main__ - INFO - ==================================================
+2025-05-29 15:31:05,367 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 15:31:05,367 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 15:31:05,367 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 15:31:05,367 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 15:31:05,367 - __main__ - INFO - ==================================================
+2025-05-29 15:31:05,367 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 15:31:05,367 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 15:31:05,367 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 15:31:05,367 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 15:31:05,367 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 15:31:05,496 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 15:31:05,496 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 15:31:06,549 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 15:31:06,549 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 15:31:12,054 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 15:31:12,120 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 15:31:12,290 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:31:12,351 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 15:31:12,399 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 15:31:46,458 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 15:31:46,459 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 15:31:46,505 - utils.analyzer - INFO - Analisi SEO completata
+2025-05-29 16:57:57,440 - __main__ - INFO - Applicazione chiusa dall'utente
+2025-05-29 17:03:16,634 - __main__ - INFO - ==================================================
+2025-05-29 17:03:16,635 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 17:03:16,635 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 17:03:16,635 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 17:03:16,635 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 17:03:16,635 - __main__ - INFO - ==================================================
+2025-05-29 17:03:16,635 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 17:03:16,635 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 17:03:16,635 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 17:03:16,635 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 17:03:16,635 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 17:03:16,825 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 17:03:16,825 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 17:03:17,929 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 17:03:17,930 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 17:03:26,891 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 17:03:27,019 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 17:03:27,147 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:03:27,216 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:03:27,263 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 17:04:01,960 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 17:04:01,985 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 17:05:10,475 - __main__ - INFO - ==================================================
+2025-05-29 17:05:10,475 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 17:05:10,475 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 17:05:10,476 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 17:05:10,476 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 17:05:10,476 - __main__ - INFO - ==================================================
+2025-05-29 17:05:10,476 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 17:05:10,476 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 17:05:10,476 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 17:05:10,476 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 17:05:10,476 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 17:05:10,610 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 17:05:10,610 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 17:05:11,651 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 17:05:11,651 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 17:05:18,648 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 17:05:18,722 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 17:05:18,866 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:05:18,919 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:05:18,967 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 17:05:53,417 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 17:05:53,418 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 17:08:03,303 - __main__ - INFO - ==================================================
+2025-05-29 17:08:03,303 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 17:08:03,303 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 17:08:03,303 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 17:08:03,303 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 17:08:03,303 - __main__ - INFO - ==================================================
+2025-05-29 17:08:03,303 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 17:08:03,303 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 17:08:03,303 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 17:08:03,303 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 17:08:03,303 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 17:08:03,434 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 17:08:03,434 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 17:08:04,472 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 17:08:04,472 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 17:08:09,732 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 17:08:09,792 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 17:08:09,957 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:08:10,008 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:08:10,057 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 17:08:47,315 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 17:08:47,319 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 17:08:47,367 - utils.analyzer - INFO - Analisi SEO completata
+2025-05-29 17:10:54,993 - __main__ - INFO - ==================================================
+2025-05-29 17:10:54,993 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-05-29 17:10:54,994 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-05-29 17:10:54,994 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-05-29 17:10:54,994 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-05-29 17:10:54,994 - __main__ - INFO - ==================================================
+2025-05-29 17:10:54,994 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-05-29 17:10:54,994 - __main__ - INFO - Verifica requisiti di sistema...
+2025-05-29 17:10:54,994 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-05-29 17:10:54,994 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-05-29 17:10:54,994 - __main__ - INFO - Verifica dipendenze...
+2025-05-29 17:10:55,124 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-05-29 17:10:55,124 - __main__ - INFO - Avvio interfaccia grafica...
+2025-05-29 17:10:56,149 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-05-29 17:10:56,149 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-05-29 17:11:00,499 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-05-29 17:11:00,567 - WDM - INFO - ====== WebDriver manager ======
+2025-05-29 17:11:00,727 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:11:00,777 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-29 17:11:00,829 - WDM - INFO - Driver [/Users/francesco/.wdm/drivers/chromedriver/mac64/136.0.7103.113/chromedriver-mac-arm64/chromedriver] found in cache
+2025-05-29 17:11:37,335 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-05-29 17:11:37,336 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-05-29 17:11:37,383 - utils.analyzer - INFO - Analisi SEO completata

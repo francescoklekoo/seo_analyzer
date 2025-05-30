@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Audit: Full Report - {{ domain }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        .cover-page {
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 0;
+        }
+        
+        .logo-space {
+            height: 100px;
+            margin-bottom: 50px;
+        }
+        
+        .main-title {
+            font-size: 3em;
+            font-weight: bold;
+            color: #1f538d;
+            margin: 50px 0 20px 0;
+        }
+        
+        .domain-title {
+            font-size: 2em;
+            color: #14375e;
+            margin: 20px 0 50px 0;
+        }
+        
+        .generated-date {
+            font-size: 1.1em;
+            color: #666;
+            margin-top: auto;
+        }
+        
+        .site-health-page {
+            page-break-before: always;
+            padding: 20px 0;
+        }
+        
+        .header-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .header-info h2 {
+            color: #1f538d;
+            margin: 0 0 15px 0;
+            font-size: 1.8em;
+        }
+        
+        .header-info p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+        
+        .health-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .health-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .health-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .health-excellent { background: conic-gradient(#2fa827 var(--percentage), #f0f0f0 var(--percentage)); }
+        .health-good { background: conic-gradient(#ff9500 var(--percentage), #f0f0f0 var(--percentage)); }
+        .health-poor { background: conic-gradient(#d32f2f var(--percentage), #f0f0f0 var(--percentage)); }
+        
+        .health-circle::after {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .health-text {
+            position: relative;
+            z-index: 2;
+            color: #333;
+        }
+        
+        .health-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .pages-crawled {
+            background: #1f538d;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .status-table th, .status-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .status-table th {
+            background: #1f538d;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .counter-box {
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .errors-counter { background: #d32f2f; }
+        .warnings-counter { background: #ff9500; }
+        .notices-counter { background: #2fa827; }
+        
+        .problems-section {
+            background: #fff3cd;
+            border-left: 5px solid #ff9500;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+        
+        .problems-section h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+        
+        .problem-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #ff9500;
+        }
+        
+        .section-page {
+            page-break-before: always;
+            padding: 20px 0;
+        }
+        
+        .errors-section {
+            border-left: 5px solid #d32f2f;
+            background: #ffebee;
+        }
+        
+        .warnings-section {
+            border-left: 5px solid #ff9500;
+            background: #fff3cd;
+        }
+        
+        .notices-section {
+            border-left: 5px solid #2fa827;
+            background: #e8f5e8;
+        }
+        
+        .section {
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 10px;
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            font-size: 2em;
+        }
+        
+        .errors-section h2 { color: #d32f2f; }
+        .warnings-section h2 { color: #ff9500; }
+        .notices-section h2 { color: #2fa827; }
+        
+        .issue-group {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .issue-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .issue-list {
+            margin-left: 20px;
+        }
+        
+        .issue-list li {
+            margin: 5px 0;
+            word-break: break-all;
+        }
+        
+        .detailed-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .detailed-table th, .detailed-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .detailed-table th {
+            background: #1f538d;
+            color: white;
+        }
+        
+        .detailed-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .detailed-table td:last-child {
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+            margin-top: 50px;
+        }
+        
+        @media print {
+            body { margin: 0; font-size: 12px; }
+            .cover-page, .section-page { page-break-before: always; }
+            .health-container { grid-template-columns: 1fr; }
+            .counters-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .health-container { grid-template-columns: 1fr; }
+            .counters-grid { grid-template-columns: 1fr; }
+            .main-title { font-size: 2em; }
+            .domain-title { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <!-- PAGINA 1: COVER -->
+    <div class="cover-page">
+        <div class="logo-space">
+            <!-- Spazio per logo del sito -->
+        </div>
+        
+        <div>
+            <h1 class="main-title">Site Audit: Full Report</h1>
+            <h2 class="domain-title">{{ domain }}</h2>
+        </div>
+        
+        <div class="generated-date">
+            Generato in data: {{ analysis_date }}
+        </div>
+    </div>
+    
+    <!-- PAGINA 2: SITE HEALTH -->
+    <div class="site-health-page">
+        <div class="header-info">
+            <h2>Site Audit: Full Report</h2>
+            <p><strong>Sottodominio:</strong> {{ domain }}</p>
+            <p><strong>Ultimo update:</strong> {{ analysis_date }}</p>
+            <p><strong>Pagine sottoposte a crawling:</strong> {{ total_pages }}</p>
+        </div>
+        
+        <div class="health-container">
+            <div class="health-chart">
+                <div class="health-circle {% if site_health.health_percentage >= 80 %}health-excellent{% elif site_health.health_percentage >= 60 %}health-good{% else %}health-poor{% endif %}" 
+                     style="--percentage: {{ site_health.health_percentage }}%;">
+                    <div class="health-text">{{ site_health.health_percentage }}%</div>
+                </div>
+                <h3>Site Health</h3>
+            </div>
+            
+            <div class="health-stats">
+                <div class="pages-crawled">
+                    Pagine Sottoposte A Crawling<br>{{ total_pages }}
+                </div>
+                
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>Stato Pagina</th>
+                            <th>Numero</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Sane</td><td>{{ site_health.healthy_pages }}</td></tr>
+                        <tr><td>Interrotte</td><td>{{ site_health.broken_pages }}</td></tr>
+                        <tr><td>Con problemi</td><td>{{ site_health.problematic_pages }}</td></tr>
+                        <tr><td>Reindirizzate</td><td>{{ site_health.redirected_pages }}</td></tr>
+                        <tr><td>Bloccate</td><td>{{ site_health.blocked_pages }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="counters-grid">
+            <div class="counter-box errors-counter">
+                {{ errors_count }}<br><small>Errori</small>
+            </div>
+            <div class="counter-box warnings-counter">
+                {{ warnings_count }}<br><small>Avvertimenti</small>
+            </div>
+            <div class="counter-box notices-counter">
+                {{ notices_count }}<br><small>Avvisi</small>
+            </div>
+        </div>
+        
+        <div class="problems-section">
+            <h3>Problemi Principali</h3>
+            {% for problem in main_problems %}
+            <div class="problem-item">{{ problem }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- SEZIONE ERRORI -->
+    {% if errors %}
+    <div class="section-page">
+        <div class="section errors-section">
+            <h2>🔴 ERRORI</h2>
+            {% for error_group in error_groups %}
+            <div class="issue-group">
+                <div class="issue-title">{{ error_group.title }}</div>
+                <ul class="issue-list">
+                    {% for error in error_group.items %}
+                    <li>{{ error.url }} {% if error.details %}({{ error.details }}){% endif %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- SEZIONE AVVERTIMENTI -->
+    {% if warnings %}
+    <div class="section-page">
+        <div class="section warnings-section">
+            <h2>⚠️ AVVERTIMENTI</h2>
+            {% for warning_group in warning_groups %}
+            <div class="issue-group">
+                <div class="issue-title">{{ warning_group.title }}</div>
+                <ul class="issue-list">
+                    {% for warning in warning_group.items %}
+                    <li>{{ warning.url }} {% if warning.details %}({{ warning.details }}){% endif %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- SEZIONE AVVISI -->
+    {% if notices %}
+    <div class="section-page">
+        <div class="section notices-section">
+            <h2>ℹ️ AVVISI</h2>
+            {% for notice_group in notice_groups %}
+            <div class="issue-group">
+                <div class="issue-title">{{ notice_group.title }}</div>
+                <ul class="issue-list">
+                    {% for notice in notice_group.items %}
+                    <li>{{ notice.url }} {% if notice.details %}({{ notice.details }}){% endif %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ANALISI DETTAGLIATA -->
+    <div class="section-page">
+        <div class="section">
+            <h2>📊 ANALISI DETTAGLIATA</h2>
+            
+            <table class="detailed-table">
+                <thead>
+                    <tr>
+                        <th>Controllo</th>
+                        <th>Risultato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for check in detailed_checks %}
+                    <tr>
+                        <td>{{ check.description }}</td>
+                        <td>{{ check.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Rapporto generato da <strong>SEO Analyzer Pro v1.0</strong></p>
+        <p>{{ analysis_date }}</p>
+    </div>
+</body>
+</html>
