@@ -126,6 +126,7 @@ PDF_CONFIG = {
         'error': '#d32f2f',
         'light_gray': '#f0f0f0',
         'dark_gray': '#333333',
+        'secondary_dark': '#556677',
         'border': '#CCCCCC'  # Added border color
     }
 }

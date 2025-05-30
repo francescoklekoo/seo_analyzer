@@ -1642,5 +1642,3 @@ if __name__ == "__main__":
         }
 
     main()
-
-[end of gui/main_window.py]
