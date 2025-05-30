@@ -96,13 +96,15 @@ class SEOAnalyzer:
                     analysis['too_short_titles'].append({
                         'url': url,
                         'title': title,
-                        'length': title_length
+                        'length': title_length,
+                        'issue': f"Title troppo corto (attuale: {title_length}, min: {SEO_CONFIG.get('title_min_length', 'N/A')})"
                     })
                 elif title_length > SEO_CONFIG['title_max_length']:
                     analysis['too_long_titles'].append({
                         'url': url,
                         'title': title,
-                        'length': title_length
+                        'length': title_length,
+                        'issue': f"Title troppo lungo (attuale: {title_length}, max: {SEO_CONFIG.get('title_max_length', 'N/A')})"
                     })
                 else:
                     analysis['optimal_titles'].append({
@@ -170,13 +172,15 @@ class SEOAnalyzer:
                     analysis['too_short_metas'].append({
                         'url': url,
                         'meta': meta_desc,
-                        'length': meta_length
+                        'length': meta_length,
+                        'issue': f"Meta Description troppo corta (attuale: {meta_length}, min: {SEO_CONFIG.get('meta_description_min_length', 'N/A')})"
                     })
                 elif meta_length > SEO_CONFIG['meta_description_max_length']:
                     analysis['too_long_metas'].append({
                         'url': url,
                         'meta': meta_desc,
-                        'length': meta_length
+                        'length': meta_length,
+                        'issue': f"Meta Description troppo lunga (attuale: {meta_length}, max: {SEO_CONFIG.get('meta_description_max_length', 'N/A')})"
                     })
                 else:
                     analysis['optimal_metas'].append({
@@ -268,7 +272,7 @@ class SEOAnalyzer:
         
         for page in self.pages_data:
             images = page.get('images', [])
-            # url = page.get('url', '') # page_url not directly used for issues here, but good for context if adding to analysis['issues']
+            # url = page.get('url', '') # page_url not directly used for issues here
 
             for img in images:
                 analysis['total_images'] += 1
@@ -283,7 +287,6 @@ class SEOAnalyzer:
                         analysis['alt_text_lengths'].append(len(alt_text_value.strip()))
                 else: # alt attribute is missing
                     analysis['images_without_alt'] += 1
-                    # analysis['issues'].append(f"Immagine senza attributo alt: {img.get('src', '')} in {url}")
 
                 # Title attribute analysis
                 title_text_value = img.get('title') # Check for presence vs empty
@@ -294,7 +297,6 @@ class SEOAnalyzer:
                         analysis['images_with_title_attr'] += 1
                 else: # title attribute is missing
                     analysis['images_without_title_attr'] += 1
-                    # analysis['issues'].append(f"Immagine senza attributo title: {img.get('src', '')} in {url}")
         
         # Calcola il punteggio (currently only based on alt text)
         if analysis['total_images'] > 0:
@@ -563,14 +565,15 @@ class SEOAnalyzer:
             'warnings': [],    # Avvertimenti
             'notices': [],     # Informazioni/suggerimenti
             'missing_h1_pages': [],
+            'multiple_h1_pages': [], # Added this list
             'missing_h2_pages': [],
             'missing_h3_pages': [],
             'images_without_alt': [], # Alt attribute is missing
             'images_with_empty_alt': [], # Alt attribute is present but empty (alt="")
             'images_without_title_attr': [], # Title attribute is missing
             'images_with_empty_title_attr': [], # Title attribute is present but empty (title="")
-            'duplicate_titles': [],
-            'duplicate_meta_descriptions': [],
+            'duplicate_titles': [], # Populated by _find_duplicates
+            'duplicate_meta_descriptions': [], # Populated by _find_duplicates
             'pages_without_title': [],
             'pages_without_meta': [],
             'low_word_count_pages': [],
@@ -666,10 +669,14 @@ class SEOAnalyzer:
                     'message': 'Tag H1 mancante'
                 })
             elif h1_count > 1:
-                detailed['warnings'].append({
+                detailed['multiple_h1_pages'].append({ # Populate specific list
+                    'url': url,
+                    'issue': f'Multipli H1 ({h1_count}) trovati'
+                })
+                detailed['warnings'].append({ # Keep general warning as well
                     'type': 'multiple_h1',
                     'url': url,
-                    'message': f'Multipli H1 trovati ({h1_count})'
+                    'message': f'Multipli H1 ({h1_count}) trovati'
                 })
             
             if h2_count == 0:
@@ -696,7 +703,8 @@ class SEOAnalyzer:
             
             # Analisi immagini
             for img in images:
-                img_src = img.get('src', 'N/A')
+                img_src = img.get('src', '')
+                img_src = img.get('src', 'N/A') # Use N/A if src is missing
                 
                 # Alt text
                 alt_value = img.get('alt')
@@ -705,14 +713,14 @@ class SEOAnalyzer:
                         'url': url, 'image_src': img_src, 'issue': 'Attributo ALT HTML mancante'
                     })
                     detailed['warnings'].append({
-                        'type': 'missing_alt_attr', 'url': url, 'image': img_src,
+                        'type': 'missing_alt_attr', 'url': url, 'image': img_src, # Ensure 'image' key has src for context
                         'message': 'Attributo ALT HTML mancante per immagine.'
                     })
                 elif alt_value.strip() == '': # Attributo alt presente ma vuoto
                     detailed['images_with_empty_alt'].append({
                         'url': url, 'image_src': img_src, 'issue': 'Attributo ALT vuoto'
                     })
-                    detailed['warnings'].append({ # Considerato ancora un warning
+                    detailed['warnings'].append({ 
                         'type': 'empty_alt_attr', 'url': url, 'image': img_src,
                         'message': 'Attributo ALT vuoto per immagine.'
                     })
@@ -735,20 +743,35 @@ class SEOAnalyzer:
                         'type': 'empty_title_attr', 'url': url, 'image': img_src,
                         'message': 'Attributo Title vuoto per immagine.'
                     })
-
+            
             # Contenuto
             word_count = content.get('word_count', 0)
-            if word_count < SEO_CONFIG['min_word_count']:
+            min_wc = SEO_CONFIG.get('min_word_count', 200) # Use .get for safety
+            if word_count < min_wc:
                 detailed['low_word_count_pages'].append({
                     'url': url,
-                    'word_count': word_count,
-                    'issue': f'Contenuto scarso ({word_count} parole)'
+                    'word_count': str(word_count), # For GUI display consistency if it expects string
+                    'issue': f"Conteggio parole basso ({word_count} parole, min: {min_wc})"
                 })
                 detailed['warnings'].append({
                     'type': 'low_content',
                     'url': url,
-                    'message': f'Contenuto insufficiente ({word_count} parole)'
+                    'message': f"Conteggio parole basso ({word_count}), minimo raccomandato {min_wc}."
                 })
+
+            text_html_ratio = content.get('text_html_ratio', 0.0)
+            min_text_html_ratio = SEO_CONFIG.get('min_text_html_ratio', 0.1) # Use .get for safety
+            if text_html_ratio < min_text_html_ratio:
+                detailed.setdefault('low_text_html_ratio_pages', []).append({
+                   'url': url,
+                   'ratio': f"{text_html_ratio:.2f}", # For GUI display
+                   'issue': f"Rapporto Testo/HTML basso ({text_html_ratio:.2f}, min: {min_text_html_ratio})"
+               })
+                detailed['warnings'].append({ 
+                   'type': 'low_text_html_ratio',
+                   'url': url,
+                   'message': f"Rapporto Testo/HTML basso ({text_html_ratio:.2f}), minimo raccomandato {min_text_html_ratio}."
+               })
             
             # Performance
             if response_time > PERFORMANCE_CONFIG['max_response_time']:
@@ -881,7 +904,6 @@ class SEOAnalyzer:
             }
 
         # Definisci le penalità per tipo di problema
-        # Queste potrebbero essere spostate in config.py se necessario
         CRITICAL_PENALTY_PER_ISSUE = 5.0
         WARNING_PENALTY_PER_ISSUE = 2.0
         NOTICE_PENALTY_PER_ISSUE = 0.5
@@ -889,7 +911,8 @@ class SEOAnalyzer:
         # Recupera i conteggi dei problemi da detailed_issues
         # Assicurati che _analyze_detailed_issues sia chiamato prima di questo metodo
         # e che self.analysis_results['detailed_issues'] sia popolato.
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
+        detailed_issues = self.analysis_results.get('detailed_issues', 
+                                                 {'errors': [], 'warnings': [], 'notices': []}) # Default if key missing
         
         num_critical_issues = len(detailed_issues.get('errors', []))
         num_warning_issues = len(detailed_issues.get('warnings', []))
@@ -925,6 +948,36 @@ class SEOAnalyzer:
             # nel flusso normale dato che _calculate_site_health è chiamato prima.
             self.logger.warning("Attempted to calculate overall_score before site_health was available. Returning 0.")
             return 0
+    
+    def _generate_recommendations(self) -> List[Dict]:
+        scores = {}
+        
+        # Raccogli tutti i punteggi
+        for analysis_type, weight in SEO_WEIGHTS.items():
+            if analysis_type == 'title_tags':
+                scores[analysis_type] = self.analysis_results['title_analysis']['score']
+            elif analysis_type == 'meta_descriptions':
+                scores[analysis_type] = self.analysis_results['meta_description_analysis']['score']
+            elif analysis_type == 'headings':
+                scores[analysis_type] = self.analysis_results['headings_analysis']['score']
+            elif analysis_type == 'images_alt':
+                scores[analysis_type] = self.analysis_results['images_analysis']['score']
+            elif analysis_type == 'internal_links':
+                scores[analysis_type] = self.analysis_results['links_analysis']['score']
+            elif analysis_type == 'page_speed':
+                scores[analysis_type] = self.analysis_results['performance_analysis']['score']
+            elif analysis_type == 'mobile_friendly':
+                scores[analysis_type] = self.analysis_results['mobile_analysis']['score']
+            elif analysis_type == 'ssl_certificate':
+                scores[analysis_type] = self.analysis_results['ssl_analysis']['score']
+            elif analysis_type == 'content_quality':
+                scores[analysis_type] = self.analysis_results['content_analysis']['score']
+        
+        # Calcola media ponderata
+        weighted_sum = sum(scores[key] * SEO_WEIGHTS[key] for key in scores)
+        total_weight = sum(SEO_WEIGHTS.values())
+        
+        return int(weighted_sum / total_weight) if total_weight > 0 else 0
     
     def _generate_recommendations(self) -> List[Dict]:
         """Genera raccomandazioni basate sull'analisi"""
@@ -993,16 +1046,17 @@ class SEOAnalyzer:
     def _create_summary(self) -> Dict:
         """Crea un riassunto dell'analisi"""
         return {
+            'report_title': "SEO Analysis Report for " + self.domain,
             'domain': self.domain,
             'analysis_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'total_pages_analyzed': len(self.pages_data),
-            'overall_score': self.analysis_results['overall_score'],
-            'total_issues': sum(len(analysis.get('issues', [])) for analysis in self.analysis_results.values() if isinstance(analysis, dict)),
-            'total_recommendations': len(self.analysis_results['recommendations']),
+            'overall_score': self.analysis_results.get('overall_score', 0), # Use .get for safety
+            'total_issues': sum(len(v) for k,v in self.analysis_results.get('detailed_issues',{}).items() if isinstance(v,list) and k in ['errors','warnings','notices']),
+            'total_recommendations': len(self.analysis_results.get('recommendations', [])), # Use .get for safety
             'score_breakdown': {
-                'excellent': self.analysis_results['overall_score'] >= 90,
-                'good': 70 <= self.analysis_results['overall_score'] < 90,
-                'needs_improvement': 50 <= self.analysis_results['overall_score'] < 70,
-                'poor': self.analysis_results['overall_score'] < 50
+                'excellent': self.analysis_results.get('overall_score', 0) >= 90,
+                'good': 70 <= self.analysis_results.get('overall_score', 0) < 90,
+                'needs_improvement': 50 <= self.analysis_results.get('overall_score', 0) < 70,
+                'poor': self.analysis_results.get('overall_score', 0) < 50
             }
         }

@@ -864,8 +864,9 @@ class MainWindow:
             
             for issue in issue_list:
                 url = issue.get('url', 'N/A')
-                issue_type = issue.get('type', 'Sconosciuto')
-                table_content += "{:<80} {:<20}\n".format(url[:77] + '...' if len(url) > 80 else url, issue_type)
+                issue_description = issue.get('issue', 'Descrizione Non Disponibile') 
+                issue_display = issue_description[:18] + '..' if len(issue_description) > 20 else issue_description
+                table_content += "{:<80} {:<20}\n".format(url[:77] + '...' if len(url) > 80 else url, issue_display)
             table_content += "\n"
             return table_content
 
@@ -1639,3 +1640,5 @@ if __name__ == "__main__":
         }
 
     main()
+
+[end of gui/main_window.py]
