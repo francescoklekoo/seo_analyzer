@@ -52,20 +52,30 @@ PERFORMANCE_CONFIG = {
     'compression_threshold': 0.8,  # soglia di compressione
 }
 
-# Configurazioni GUI
+# Configurazioni GUI (Aggiornato con colori aggiuntivi)
 GUI_CONFIG = {
     'window_title': 'SEO Analyzer Pro',
     'window_size': '1200x800',
-    'theme': 'dark',
+    'theme': 'dark', # 'System', 'Dark', 'Light'
     'colors': {
         'primary': '#1f538d',
-        'secondary': '#14375e',
+        'primary_light': '#6699CC', # Aggiunto
+        'primary_dark': '#14375e',  # Modificato per essere più scuro del primary
+        'secondary': '#6699CC',
+        'secondary_dark': '#4477AA', # Aggiunto
         'success': '#2fa827',
+        'success_dark': '#22881f',   # Aggiunto
         'warning': '#ff9500',
+        'warning_dark': '#cc7700',   # Aggiunto
         'error': '#d32f2f',
+        'error_dark': '#a32222',     # Aggiunto
         'text': '#ffffff',
         'background': '#212121',
-        'dark_gray': '#666666',  # Aggiungo il colore mancante
+        'dark_gray': '#666666',
+        'white': '#FFFFFF',          # Aggiunto
+        'light_gray': '#EEEEEE',     # Aggiunto
+        'border': '#CCCCCC',         # Aggiunto
+        'disabled': '#AAAAAA'        # Aggiunto
     },
     'fonts': {
         'title': ('Helvetica', 24, 'bold'),
@@ -96,10 +106,10 @@ SELENIUM_CONFIG = {
 PDF_CONFIG = {
     'page_size': 'A4',
     'margin': {
-        'top': 2,
-        'bottom': 2,
-        'left': 2,
-        'right': 2
+        'left': 2.5,
+        'right': 2.5,
+        'top': 2.5,
+        'bottom': 2.5
     },
     'font_family': 'Helvetica',
     'font_sizes': {
@@ -109,13 +119,13 @@ PDF_CONFIG = {
         'small': 8
     },
     'colors': {
-        'primary': '#1f538d',
+        'primary': '#336699',
+        'secondary': '#6699CC',
         'success': '#2fa827',
         'warning': '#ff9500',
         'error': '#d32f2f',
-        'text': '#333333',
-        'light_gray': '#f5f5f5',
-        'dark_gray': '#666666'
+        'light_gray': '#f0f0f0',
+        'dark_gray': '#333333'
     }
 }
 
@@ -124,7 +134,7 @@ MESSAGES = {
     'crawling_started': 'Crawling iniziato per: {}',
     'crawling_completed': 'Crawling completato. Analizzate {} pagine',
     'analysis_started': 'Analisi SEO in corso...',
-    'analysis_completed': 'Analisi SEO completata',
+    'analysis_completed': 'Analisi SEO completata!',
     'report_generated': 'Report generato con successo: {}',
     'error_invalid_url': 'URL non valido. Inserisci un URL completo (es: https://example.com)',
     'error_crawling': 'Errore durante il crawling: {}',
