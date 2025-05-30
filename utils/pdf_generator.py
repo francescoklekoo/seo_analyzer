@@ -42,17 +42,34 @@ class PDFGenerator:
         
     def _setup_custom_styles(self):
         """Configura gli stili personalizzati"""
+        # CONCEPTUAL PDF_CONFIG (assuming updated in config.py)
+        # For demonstration, using direct values here. In practice, these would come from PDF_CONFIG.
+        FONT_FAMILY = 'Helvetica'
+        FONT_FAMILY_BOLD = 'Helvetica-Bold'
+        
+        COLOR_PRIMARY = '#005A9C'         # Dark Blue
+        COLOR_TEXT_PRIMARY = '#222222'   # Very Dark Gray / Off-black
+        COLOR_TEXT_SECONDARY = '#555555' # Medium Gray
+        COLOR_SUCCESS = '#28A745'
+        COLOR_WARNING = '#FFC107' # Amber
+        COLOR_ERROR = '#DC3545' # Red
+        
+        FONT_SIZE_TITLE = 20
+        FONT_SIZE_HEADING = 15
+        FONT_SIZE_BODY = 10
+        FONT_SIZE_SMALL = 8
+
         # Stile titolo principale
         style_name = 'CustomTitle'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(
                 name=style_name,
-                parent=self.styles['h1'],
-                fontName=PDF_CONFIG['font_family'],
-                fontSize=PDF_CONFIG['font_sizes']['title'],
-                leading=36,
+                fontName=FONT_FAMILY_BOLD,
+                fontSize=FONT_SIZE_TITLE,
+                leading=FONT_SIZE_TITLE * 1.2,
                 alignment=TA_CENTER,
-                textColor=HexColor(PDF_CONFIG['colors']['primary'])
+                textColor=HexColor(COLOR_PRIMARY),
+                spaceAfter=12
             ))
         
         # Stile sottotitolo
@@ -60,12 +77,12 @@ class PDFGenerator:
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(
                 name=style_name,
-                parent=self.styles['h2'],
-                fontName=PDF_CONFIG['font_family'],
-                fontSize=PDF_CONFIG['font_sizes']['heading'],
-                leading=20,
+                fontName=FONT_FAMILY,
+                fontSize=FONT_SIZE_HEADING,
+                leading=FONT_SIZE_HEADING * 1.2,
                 alignment=TA_CENTER,
-                textColor=HexColor(PDF_CONFIG['colors']['dark_gray'])
+                textColor=HexColor(COLOR_TEXT_SECONDARY),
+                spaceAfter=6
             ))
 
         # Stile per le sezioni
@@ -73,12 +90,11 @@ class PDFGenerator:
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(
                 name=style_name,
-                parent=self.styles['h2'],
-                fontName=PDF_CONFIG['font_family'],
-                fontSize=PDF_CONFIG['font_sizes']['heading'],
-                leading=18,
-                spaceAfter=10,
-                textColor=HexColor(PDF_CONFIG['colors']['primary'])
+                fontName=FONT_FAMILY_BOLD,
+                fontSize=FONT_SIZE_HEADING,
+                leading=FONT_SIZE_HEADING * 1.2,
+                spaceAfter=8, # Increased space after heading
+                textColor=HexColor(COLOR_PRIMARY)
             ))
 
         # Stile per il testo normale
@@ -86,12 +102,11 @@ class PDFGenerator:
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(
                 name=style_name,
-                parent=self.styles['Normal'],
-                fontName=PDF_CONFIG['font_family'],
-                fontSize=PDF_CONFIG['font_sizes']['body'],
-                leading=14,
+                fontName=FONT_FAMILY,
+                fontSize=FONT_SIZE_BODY,
+                leading=FONT_SIZE_BODY * 1.4, # Increased line spacing
                 spaceAfter=6,
-                textColor=HexColor(PDF_CONFIG['colors']['dark_gray'])
+                textColor=HexColor(COLOR_TEXT_PRIMARY)
             ))
 
         # Stile per i punti elenco
@@ -99,41 +114,38 @@ class PDFGenerator:
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(
                 name=style_name,
-                parent=self.styles['Normal'],
-                fontName=PDF_CONFIG['font_family'],
-                fontSize=PDF_CONFIG['font_sizes']['body'],
-                leading=14,
+                parent=self.styles['BodyText'], # Inherits from BodyText
                 leftIndent=20,
-                spaceAfter=3,
-                textColor=HexColor(PDF_CONFIG['colors']['dark_gray'])
+                spaceAfter=4 # Slightly more space after list items
             ))
 
-        # Stile per testo piccolo (es. footer)
+        # Stile per testo piccolo (es. footer, date)
         style_name = 'SmallText'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(
                 name=style_name,
-                parent=self.styles['Normal'],
-                fontName=PDF_CONFIG['font_family'],
-                fontSize=PDF_CONFIG['font_sizes']['small'],
-                leading=10,
+                fontName=FONT_FAMILY,
+                fontSize=FONT_SIZE_SMALL,
+                leading=FONT_SIZE_SMALL * 1.2,
                 alignment=TA_CENTER,
-                textColor=HexColor(PDF_CONFIG['colors']['dark_gray'])
+                textColor=HexColor(COLOR_TEXT_SECONDARY)
             ))
 
-        # Stili per i colori dei punteggi
+        # Stili per i colori dei punteggi (used in _get_evaluation_text if applying styles directly)
+        # For now, these are primarily for direct color reference, but could be full styles
+        score_parent_style = self.styles['BodyText']
         style_name = 'ScoreExcellent'
         if style_name not in self.styles:
-            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], textColor=HexColor(PDF_CONFIG['colors']['success']), fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'], alignment=TA_RIGHT))
-        style_name = 'ScoreGood'
+            self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_SUCCESS), fontName=FONT_FAMILY_BOLD))
+        style_name = 'ScoreGood' # Typically primary or a specific "good" color
         if style_name not in self.styles:
-            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], textColor=HexColor(PDF_CONFIG['colors']['primary']), fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'], alignment=TA_RIGHT))
+             self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_PRIMARY), fontName=FONT_FAMILY_BOLD)) # Example: Using primary for "Good"
         style_name = 'ScoreWarning'
         if style_name not in self.styles:
-            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], textColor=HexColor(PDF_CONFIG['colors']['warning']), fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'], alignment=TA_RIGHT))
+            self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_WARNING), fontName=FONT_FAMILY_BOLD))
         style_name = 'ScoreCritical'
         if style_name not in self.styles:
-            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], textColor=HexColor(PDF_CONFIG['colors']['error']), fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'], alignment=TA_RIGHT))
+            self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_ERROR), fontName=FONT_FAMILY_BOLD))
         
     def _add_header(self):
         """Aggiunge l'intestazione del report"""
@@ -209,19 +221,50 @@ class PDFGenerator:
                 Paragraph(status_text, self.styles['BodyText']) # Potresti voler applicare uno stile specifico qui per il colore
             ])
 
-        table = Table(data, colWidths=[4*cm, 2.5*cm, 3*cm])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['primary_light'])),
-            ('TEXTCOLOR', (0, 0), (-1, 0), white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), PDF_CONFIG['font_family']),
-            ('FONTSIZE', (0, 0), (-1, 0), PDF_CONFIG['font_sizes']['body']),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), HexColor(PDF_CONFIG['colors']['light_gray'])),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['border'])),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['primary_dark'])),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ]))
+        table = Table(data, colWidths=[7*cm, 3*cm, 7*cm]) # Adjusted widths
+        
+        # New conceptual PDF_CONFIG values for styling this table
+        COLOR_TABLE_HEADER_BG = '#004080' 
+        COLOR_TABLE_HEADER_TEXT = '#FFFFFF'
+        COLOR_TABLE_ROW_BG_ODD = '#F0F4F7' 
+        COLOR_TABLE_ROW_BG_EVEN = '#FFFFFF'
+        COLOR_BORDER = '#CCCCCC'
+        FONT_FAMILY_TABLE_HEADER = 'Helvetica-Bold'
+        FONT_FAMILY_TABLE_BODY = 'Helvetica'
+        FONT_SIZE_TABLE_HEADER = 9
+        FONT_SIZE_TABLE_BODY = 9
+        COLOR_TEXT_PRIMARY_FOR_TABLE = '#222222'
+
+        score_table_style = TableStyle([
+            # Header style
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_TEXT)),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
+            ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+
+            # Body style
+            ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY),
+            ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY),
+            ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)),
+            ('ALIGN', (0, 1), (-1, -1), 'LEFT'), # Align category and status text to left
+            ('ALIGN', (1, 1), (1, -1), 'CENTER'), # Center score text
+            ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+            ('TOPPADDING', (0, 1), (-1, -1), 5),
+            ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN)),
+        ])
+
+        for i in range(1, len(data)): # Odd rows for body
+            if i % 2 != 0:
+                score_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
+        
+        score_table_style.add('GRID', (0, 0), (-1, -1), 0.5, HexColor(COLOR_BORDER))
+        score_table_style.add('BOX', (0, 0), (-1, -1), 1, HexColor(COLOR_BORDER))
+        
+        table.setStyle(score_table_style)
         self.story.append(table)
         self.story.append(Spacer(1, 0.5 * inch))
 
@@ -238,7 +281,20 @@ class PDFGenerator:
         # Dati per il grafico a torta
         data = [health_percentage, problem_percentage]
         labels = [f'Sano ({health_percentage:.0f}%)', f'Problemi ({problem_percentage:.0f}%)']
-        colors_pie = [HexColor(PDF_CONFIG['colors']['success']), HexColor(PDF_CONFIG['colors']['error'])]
+        
+        # Using direct hex values conceptually from the new PDF_CONFIG
+        COLOR_SUCCESS = '#28A745'
+        COLOR_ERROR = '#DC3545'
+        FONT_FAMILY = 'Helvetica'
+        FONT_FAMILY_BOLD = 'Helvetica-Bold'
+        FONT_SIZE_SMALL_CHART = 8 
+        FONT_SIZE_BODY_CHART = 10
+        FONT_SIZE_SCORE_CHART = 32 # Slightly reduced from 36
+        COLOR_TEXT_PRIMARY_CHART = '#222222'
+        COLOR_PRIMARY_CHART_LABEL = '#005A9C'
+
+
+        colors_pie = [HexColor(COLOR_SUCCESS), HexColor(COLOR_ERROR)]
 
         drawing = Drawing(400, 200)
         pie = Pie()
@@ -247,14 +303,17 @@ class PDFGenerator:
         pie.height = 150
         pie.width = 150
         pie.data = data
-        pie.labels = labels
+        pie.labels = labels # ReportLab will use pie.slices[i].fontName etc for these if set
         pie.slices.strokeWidth = 0.5
         
-        for i, color in enumerate(colors_pie):
-            pie.slices[i].fillColor = color
-            pie.slices[i].fontName = PDF_CONFIG['font_family']
-            pie.slices[i].fontSize = PDF_CONFIG['font_sizes']['small']
-            pie.slices[i].labelRadius = 1.1 # Posiziona le etichette fuori dalla torta
+        for i, color_val in enumerate(colors_pie):
+            pie.slices[i].fillColor = color_val
+            pie.slices[i].fontName = FONT_FAMILY
+            pie.slices[i].fontSize = FONT_SIZE_SMALL_CHART 
+            pie.slices[i].labelRadius = 1.2 # Posiziona le etichette fuori dalla torta
+            # To change label text color (if needed, default is usually black and fine)
+            # pie.slices[i].fontColor = HexColor(COLOR_TEXT_PRIMARY_CHART)
+
 
         # Aggiungi il testo centrale con la percentuale
         center_x = pie.x + pie.width / 2
@@ -262,17 +321,17 @@ class PDFGenerator:
         
         # Testo centrale "XX%"
         overall_score_text = String(center_x, center_y + 10, f"{int(overall_score)}%",
-                                    fontName=PDF_CONFIG['font_family'],
-                                    fontSize=36, # Grande per la percentuale
-                                    fillColor=HexColor(PDF_CONFIG['colors']['dark_gray']),
+                                    fontName=FONT_FAMILY_BOLD, # Bold for score
+                                    fontSize=FONT_SIZE_SCORE_CHART, 
+                                    fillColor=HexColor(COLOR_PRIMARY_CHART_LABEL), # Use primary color for score
                                     textAnchor='middle')
         drawing.add(overall_score_text)
 
         # Testo centrale "Site Health"
         site_health_label = String(center_x, center_y - 15, "Site Health",
-                                   fontName=PDF_CONFIG['font_family'],
-                                   fontSize=PDF_CONFIG['font_sizes']['body'],
-                                   fillColor=HexColor(PDF_CONFIG['colors']['dark_gray']),
+                                   fontName=FONT_FAMILY,
+                                   fontSize=FONT_SIZE_BODY_CHART, # Use body size
+                                   fillColor=HexColor(COLOR_TEXT_PRIMARY_CHART), # Standard text color
                                    textAnchor='middle')
         drawing.add(site_health_label)
 
@@ -289,29 +348,38 @@ class PDFGenerator:
         detailed_issues = self.analysis_results.get('detailed_issues', {})
 
         # Helper per aggiungere una sottosezione con tabella di problemi
-        def add_issue_table_subsection(title: str, issues: List[Dict], issue_type_key: str = 'type'):
+        def add_issue_table_subsection(title: str, issues: List[Dict], 
+                                       headers: List[str], data_keys: List[str], 
+                                       column_widths: List = None):
             if not issues:
                 return
             
-            self.story.append(Paragraph(title, self.styles['BodyText']))
+            self.story.append(Paragraph(title, self.styles['BodyText'])) # Use BodyText for sub-section title
             self.story.append(Spacer(1, 0.1 * inch))
 
-            data = [['URL', 'Tipo Problema']]
-            for issue in issues:
-                url = issue.get('url', 'N/A')
-                # Per i problemi di immagini, l'URL è direttamente l'URL dell'immagine, non un dizionario con 'type'
-                if issue_type_key == 'url':
-                    issue_type = "Immagine" # O un altro valore predefinito
-                else:
-                    issue_type = issue.get(issue_type_key, 'Sconosciuto')
-                data.append([
-                    Paragraph(url, self.styles['BodyText']),
-                    Paragraph(issue_type, self.styles['BodyText'])
-                ])
+            # Data for the table, starting with headers
+            table_data = [headers]
+            for issue_item in issues:
+                row = []
+                for key in data_keys:
+                    # Truncate long URLs/text to prevent table overflow
+                    raw_text = str(issue_item.get(key, 'N/A'))
+                    if len(raw_text) > 100 and ("http" in raw_text or "www" in raw_text): # Heuristic for URLs
+                        raw_text = raw_text[:97] + "..."
+                    elif len(raw_text) > 150: # General text truncation
+                        raw_text = raw_text[:147] + "..."
+                    row.append(Paragraph(raw_text, self.styles['BodyText']))
+                table_data.append(row)
             
-            table = Table(data, colWidths=[12*cm, 5*cm])
+            # Define column widths if not provided (distribute equally)
+            if column_widths is None:
+                total_width = 17 * cm # A4 width minus margins approx
+                num_cols = len(headers)
+                column_widths = [total_width / num_cols] * num_cols
+            
+            table = Table(table_data, colWidths=column_widths)
             table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['secondary'])),
+                ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['secondary'])), # Header background
                 ('TEXTCOLOR', (0, 0), (-1, 0), white),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, 0), PDF_CONFIG['font_family']),
@@ -330,15 +398,15 @@ class PDFGenerator:
         title_analysis = self.analysis_results['title_analysis']
         self.story.append(Paragraph(f"• Pagine con Title: {title_analysis['pages_with_title']}/{title_analysis['total_pages']}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Pagine senza Title: {len(detailed_issues.get('pages_without_title', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Title duplicati: {len(detailed_issues.get('duplicate_titles', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Title troppo corti: {len(title_analysis['too_short_titles'])}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Title troppo lunghi: {len(title_analysis['too_long_titles'])}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Title duplicati: {len(detailed_issues.get('duplicate_titles', []))} (istanze)", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Title troppo corti: {len(title_analysis.get('too_short_titles', []))}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Title troppo lunghi: {len(title_analysis.get('too_long_titles', []))}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Punteggio: {title_analysis['score']}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []))
-        add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []))
-        add_issue_table_subsection("Title Troppo Corti", title_analysis['too_short_titles'])
-        add_issue_table_subsection("Title Troppo Lunghi", title_analysis['too_long_titles'])
+        add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
+        add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []), headers=['Title Duplicato', 'URL Pagina Coinvolta', 'Conteggio Totale Duplicati'], data_keys=['title', 'url', 'duplicate_count'], column_widths=[6*cm, 9*cm, 2*cm])
+        add_issue_table_subsection("Title Troppo Corti (< {0} caratteri)".format(SEO_CONFIG.get('title_min_length', 30)), title_analysis.get('too_short_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'], column_widths=[10*cm, 5*cm, 2*cm])
+        add_issue_table_subsection("Title Troppo Lunghi (> {0} caratteri)".format(SEO_CONFIG.get('title_max_length', 60)), title_analysis.get('too_long_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'], column_widths=[10*cm, 5*cm, 2*cm])
         self.story.append(PageBreak())
 
         # Meta Descriptions
@@ -346,15 +414,15 @@ class PDFGenerator:
         meta_analysis = self.analysis_results['meta_description_analysis']
         self.story.append(Paragraph(f"• Pagine con Meta Description: {meta_analysis['pages_with_meta']}/{meta_analysis['total_pages']}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Pagine senza Meta Description: {len(detailed_issues.get('pages_without_meta', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Meta Description Duplicate: {len(detailed_issues.get('duplicate_meta_descriptions', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Meta Description Troppo Corte: {len(meta_analysis['too_short_metas'])}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Meta Description Troppo Lunghe: {len(meta_analysis['too_long_metas'])}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Meta Description Duplicate: {len(detailed_issues.get('duplicate_meta_descriptions', []))} (istanze)", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Meta Description Troppo Corte: {len(meta_analysis.get('too_short_metas',[]))}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Meta Description Troppo Lunghe: {len(meta_analysis.get('too_long_metas',[]))}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Punteggio: {meta_analysis['score']}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []))
-        add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []))
-        add_issue_table_subsection("Meta Description Troppo Corte", meta_analysis['too_short_metas'])
-        add_issue_table_subsection("Meta Description Troppo Lunghe", meta_analysis['too_long_metas'])
+        add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
+        add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []), headers=['Meta Description Duplicata', 'URL Pagina Coinvolta', 'Conteggio Totale Duplicati'], data_keys=['meta', 'url', 'duplicate_count'], column_widths=[6*cm, 9*cm, 2*cm])
+        add_issue_table_subsection("Meta Description Troppo Corte (< {0} caratteri)".format(SEO_CONFIG.get('meta_description_min_length', 50)), meta_analysis.get('too_short_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'], column_widths=[8*cm, 7*cm, 2*cm])
+        add_issue_table_subsection("Meta Description Troppo Lunghe (> {0} caratteri)".format(SEO_CONFIG.get('meta_description_max_length',160)), meta_analysis.get('too_long_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'], column_widths=[8*cm, 7*cm, 2*cm])
         self.story.append(PageBreak())
 
         # Headings (H1, H2, H3)
@@ -366,130 +434,117 @@ class PDFGenerator:
         self.story.append(Paragraph(f"• Pagine senza H3: {len(detailed_issues.get('missing_h3_pages', []))}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Punteggio: {headings_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []))
-        add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []))
-        add_issue_table_subsection("Pagine senza H2", detailed_issues.get('missing_h2_pages', []))
-        add_issue_table_subsection("Pagine senza H3", detailed_issues.get('missing_h3_pages', []))
+        add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
+        add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
+        add_issue_table_subsection("Pagine senza H2", detailed_issues.get('missing_h2_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
+        add_issue_table_subsection("Pagine senza H3", detailed_issues.get('missing_h3_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
         self.story.append(PageBreak())
 
         # Immagini
         self.story.append(Paragraph("Immagini", self.styles['SectionHeading']))
-        images_analysis = self.analysis_results['images_analysis']
+        images_analysis = self.analysis_results['images_analysis'] # images_analysis from analyzer
         self.story.append(Paragraph(f"• Totale immagini: {images_analysis['total_images']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Con alt text: {images_analysis['images_with_alt']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Senza alt text: {len(detailed_issues.get('images_without_alt', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Senza attributo title: {len(detailed_issues.get('images_without_title', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Alt vuoto: {images_analysis['images_with_empty_alt']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Immagini interrotte: {len(detailed_issues.get('broken_images', []))}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Con ALT text (contenuto): {images_analysis['images_with_alt']}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Senza attributo ALT HTML: {images_analysis.get('images_without_alt',0)} ({len(detailed_issues.get('images_without_alt',[]))} instanze)", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Con attributo ALT vuoto: {images_analysis.get('images_with_empty_alt',0)} ({len(detailed_issues.get('images_with_empty_alt',[]))} instanze)", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Con attributo Title (contenuto): {images_analysis.get('images_with_title_attr',0)}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Senza attributo Title HTML: {images_analysis.get('images_without_title_attr',0)} ({len(detailed_issues.get('images_without_title_attr',[]))} instanze)", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Con attributo Title vuoto: {images_analysis.get('images_with_empty_title_attr',0)} ({len(detailed_issues.get('images_with_empty_title_attr',[]))} instanze)", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Immagini interrotte: {len(detailed_issues.get('broken_images', []))}", self.styles['ListItem'])) # Assuming broken_images are in detailed_issues
         self.story.append(Paragraph(f"• Punteggio: {images_analysis['score']}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        # Per i problemi di immagini, l'URL è direttamente l'URL dell'immagine, non un dizionario con 'type'
-        add_issue_table_subsection("Immagini senza Alt Text", detailed_issues.get('images_without_alt', []), issue_type_key='url') 
-        add_issue_table_subsection("Immagini senza Attributo Title", detailed_issues.get('images_without_title', []), issue_type_key='url') 
-        add_issue_table_subsection("Immagini Interrotte", detailed_issues.get('broken_images', []), issue_type_key='url') 
+
+        img_headers = ['Pagina URL', 'URL Immagine', 'Problema']
+        img_data_keys = ['url', 'image_src', 'issue']
+        img_col_widths = [6*cm, 7*cm, 4*cm]
+
+        add_issue_table_subsection("Immagini senza Attributo ALT HTML", detailed_issues.get('images_without_alt', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
+        add_issue_table_subsection("Immagini con Attributo ALT Vuoto", detailed_issues.get('images_with_empty_alt', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
+        add_issue_table_subsection("Immagini senza Attributo Title HTML", detailed_issues.get('images_without_title_attr', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
+        add_issue_table_subsection("Immagini con Attributo Title Vuoto", detailed_issues.get('images_with_empty_title_attr', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
+        # Assuming broken_images structure is {'url': page_url, 'image_src': img_src, 'issue': 'Immagine interrotta'}
+        add_issue_table_subsection("Immagini Interrotte", detailed_issues.get('broken_images', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths) 
         self.story.append(PageBreak())
 
         # Contenuto
         self.story.append(Paragraph("Contenuto", self.styles['SectionHeading']))
         content_analysis = self.analysis_results.get('content_analysis', {})
         self.story.append(Paragraph(f"• Pagine con conteggio parole basso: {len(detailed_issues.get('low_word_count_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con duplicati di contenuto: {len(detailed_issues.get('duplicate_content_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con rapporto testo/HTML basso: {len(detailed_issues.get('low_text_html_ratio_pages', []))}", self.styles['ListItem']))
+        # Note: duplicate_content_pages and low_text_html_ratio_pages are not explicitly populated in detailed_issues by current analyzer.py
+        # self.story.append(Paragraph(f"• Pagine con duplicati di contenuto: {len(detailed_issues.get('duplicate_content_pages', []))}", self.styles['ListItem']))
+        # self.story.append(Paragraph(f"• Pagine con rapporto testo/HTML basso: {len(detailed_issues.get('low_text_html_ratio_pages', []))}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Punteggio: {content_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine con Conteggio Parole Basso", detailed_issues.get('low_word_count_pages', []))
-        add_issue_table_subsection("Pagine con Duplicati di Contenuto", detailed_issues.get('duplicate_content_pages', []))
-        add_issue_table_subsection("Pagine con Rapporto Testo/HTML Basso", detailed_issues.get('low_text_html_ratio_pages', []))
+        add_issue_table_subsection("Pagine con Conteggio Parole Basso (< {0} parole)".format(SEO_CONFIG.get('min_word_count',200)), detailed_issues.get('low_word_count_pages', []), headers=['URL Pagina', 'Conteggio Parole', 'Problema'], data_keys=['url', 'word_count', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
+        # add_issue_table_subsection("Pagine con Duplicati di Contenuto", detailed_issues.get('duplicate_content_pages', []), headers=['URL Pagina', 'Problema'], data_keys=['url', 'issue'], column_widths=[12*cm, 5*cm])
+        # add_issue_table_subsection("Pagine con Rapporto Testo/HTML Basso", detailed_issues.get('low_text_html_ratio_pages', []), headers=['URL Pagina', 'Rapporto T/H', 'Problema'], data_keys=['url', 'ratio', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
         self.story.append(PageBreak())
 
         # Link
-        self.story.append(Paragraph("Link", self.styles['SectionHeading']))
         links_analysis = self.analysis_results.get('links_analysis', {})
-        self.story.append(Paragraph(f"• Link interni interrotti: {len(detailed_issues.get('broken_links', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Loop e catene di reindirizzamenti: {len(detailed_issues.get('redirect_chains', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con link canonico interrotto: {len(detailed_issues.get('broken_canonical_links', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con più URL canonici: {len(detailed_issues.get('multiple_canonical_urls', []))}", self.styles['ListItem']))
+        # Note: broken_links, redirect_chains, etc. are not explicitly populated in detailed_issues by current analyzer.py
+        # self.story.append(Paragraph(f"• Link interni interrotti: {len(detailed_issues.get('broken_links', []))}", self.styles['ListItem']))
+        # ... other list items for links ...
         self.story.append(Paragraph(f"• Punteggio: {links_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Link Interni Interrotti", detailed_issues.get('broken_links', []))
-        add_issue_table_subsection("Loop e Catene di Reindirizzamenti", detailed_issues.get('redirect_chains', []))
-        add_issue_table_subsection("Pagine con Link Canonico Interrotto", detailed_issues.get('broken_canonical_links', []))
-        add_issue_table_subsection("Pagine con Più URL Canonici", detailed_issues.get('multiple_canonical_urls', []))
+        # add_issue_table_subsection("Link Interni Interrotti", detailed_issues.get('broken_links', []), headers=['Pagina di Origine', 'URL Interrotto', 'Testo Anchor'], data_keys=['url', 'broken_link_url', 'anchor_text'], column_widths=[6*cm, 7*cm, 4*cm])
+        # ... other table calls for links ...
         self.story.append(PageBreak())
 
         # Performance
         self.story.append(Paragraph("Performance", self.styles['SectionHeading']))
         perf_analysis = self.analysis_results['performance_analysis']
         self.story.append(Paragraph(f"• Pagine veloci: {perf_analysis['fast_pages']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine lente: {perf_analysis['slow_pages']}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Pagine lente: {perf_analysis['slow_pages']} (Instanze: {len(detailed_issues.get('slow_pages',[]))})", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Tempo medio: {perf_analysis['average_response_time']:.2f}s", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Dimensione media: {perf_analysis['average_page_size']/1024:.1f} KB", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Pagine con dimensioni HTML troppo grandi: {len(detailed_issues.get('large_html_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con velocità di caricamento bassa: {len(detailed_issues.get('slow_pages', []))}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Punteggio: {perf_analysis['score']}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine con Dimensioni HTML Troppo Grandi", detailed_issues.get('large_html_pages', []))
-        add_issue_table_subsection("Pagine con Velocità di Caricamento Bassa", detailed_issues.get('slow_pages', []))
+        add_issue_table_subsection("Pagine con Dimensioni HTML Troppo Grandi (> {0} MB)".format(SEO_CONFIG.get('max_page_size_mb', 2)), detailed_issues.get('large_html_pages', []), headers=['URL Pagina', 'Dimensione (MB)', 'Problema'], data_keys=['url', 'size_mb', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
+        add_issue_table_subsection("Pagine con Velocità di Caricamento Bassa (> {0}s)".format(PERFORMANCE_CONFIG.get('max_response_time',3)), detailed_issues.get('slow_pages', []), headers=['URL Pagina', 'Tempo (s)', 'Problema'], data_keys=['url', 'response_time', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
         self.story.append(PageBreak())
 
         # Tecnico
+        tech_headers = ['URL Pagina', 'Problema Rilevato']
+        tech_data_keys = ['url', 'issue']
+        tech_col_widths = [13*cm, 4*cm]
         self.story.append(Paragraph("Aspetti Tecnici", self.styles['SectionHeading']))
         technical_analysis = self.analysis_results.get('technical_analysis', {})
-        self.story.append(Paragraph(f"• Pagine non raggiungibili dal crawler: {len(detailed_issues.get('unreachable_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi risoluzione DNS: {len(detailed_issues.get('dns_resolution_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Formati URL non corretti: {len(detailed_issues.get('invalid_url_format_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Robots.txt con errori: {len(detailed_issues.get('robots_txt_errors', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Sitemap.xml con errori: {len(detailed_issues.get('sitemap_xml_errors', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine sbagliate in sitemap.xml: {len(detailed_issues.get('sitemap_wrong_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi risoluzione WWW: {len(detailed_issues.get('www_resolution_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza tag viewport: {len(detailed_issues.get('pages_without_viewport', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine AMP senza tag canonici: {len(detailed_issues.get('amp_no_canonical_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi hreflang: {len(detailed_issues.get('hreflang_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Conflitti hreflang: {len(detailed_issues.get('hreflang_conflicts', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Link hreflang sbagliati: {len(detailed_issues.get('hreflang_broken_links', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con meta refresh tag: {len(detailed_issues.get('meta_refresh_tags', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• CSS/JS interni inaccessibili: {len(detailed_issues.get('inaccessible_css_js', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Sitemap.xml troppo pesanti: {len(detailed_issues.get('large_sitemap_files', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Elementi dati strutturati non validi: {len(detailed_issues.get('invalid_structured_data', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza valore larghezza viewport: {len(detailed_issues.get('pages_without_viewport_width', []))}", self.styles['ListItem']))
+        
+        tech_issues_to_report = {
+            'status_4xx_pages': "Pagine con Errori Client (4xx)",
+            'status_5xx_pages': "Pagine con Errori Server (5xx)",
+            'pages_without_canonical': "Pagine senza URL Canonico",
+            'pages_without_lang': "Pagine senza Attributo Lingua",
+            'pages_without_schema': "Pagine senza Schema Markup",
+            # Add other technical issues here if analyzer.py populates their specific lists in detailed_issues
+        }
+        for key, text in tech_issues_to_report.items():
+             self.story.append(Paragraph(f"• {text}: {len(detailed_issues.get(key, []))}", self.styles['ListItem']))
         self.story.append(Paragraph(f"• Punteggio: {technical_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
         self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine Non Raggiungibili dal Crawler", detailed_issues.get('unreachable_pages', []))
-        add_issue_table_subsection("Problemi Risoluzione DNS", detailed_issues.get('dns_resolution_issues', []))
-        add_issue_table_subsection("Formati URL Non Corretti", detailed_issues.get('invalid_url_format_pages', []))
-        add_issue_table_subsection("Robots.txt con Errori", detailed_issues.get('robots_txt_errors', []))
-        add_issue_table_subsection("Sitemap.xml con Errori", detailed_issues.get('sitemap_xml_errors', []))
-        add_issue_table_subsection("Pagine Sbagliate in Sitemap.xml", detailed_issues.get('sitemap_wrong_pages', []))
-        add_issue_table_subsection("Problemi Risoluzione WWW", detailed_issues.get('www_resolution_issues', []))
-        add_issue_table_subsection("Pagine senza Tag Viewport", detailed_issues.get('pages_without_viewport', []))
-        add_issue_table_subsection("Pagine AMP senza Tag Canonici", detailed_issues.get('amp_no_canonical_pages', []))
-        add_issue_table_subsection("Problemi Hreflang", detailed_issues.get('hreflang_issues', []))
-        add_issue_table_subsection("Conflitti Hreflang", detailed_issues.get('hreflang_conflicts', []))
-        add_issue_table_subsection("Link Hreflang Sbagliati", detailed_issues.get('hreflang_broken_links', []))
-        add_issue_table_subsection("Pagine con Meta Refresh Tag", detailed_issues.get('meta_refresh_tags', []))
-        add_issue_table_subsection("CSS/JS Interni Inaccessibili", detailed_issues.get('inaccessible_css_js', []))
-        add_issue_table_subsection("Sitemap.xml Troppo Pesanti", detailed_issues.get('large_sitemap_files', []))
-        add_issue_table_subsection("Elementi Dati Strutturati Non Validi", detailed_issues.get('invalid_structured_data', []))
-        add_issue_table_subsection("Pagine senza Valore Larghezza Viewport", detailed_issues.get('pages_without_viewport_width', []))
+        for key, text in tech_issues_to_report.items():
+            data_to_pass = detailed_issues.get(key, [])
+            if key == 'status_4xx_pages' or key == 'status_5xx_pages':
+                 add_issue_table_subsection(text, data_to_pass, headers=['URL Pagina', 'Status Code', 'Problema'], data_keys=['url', 'status_code', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
+            else:
+                 add_issue_table_subsection(text, data_to_pass, headers=tech_headers, data_keys=tech_data_keys, column_widths=tech_col_widths)
         self.story.append(PageBreak())
 
         # SSL / Sicurezza
+        # Note: SSL issues are typically domain-wide or not easily listed as page-specific URLs from current analyzer.py detailed_issues.
+        # For now, the summary points from ssl_analysis are listed. If specific URL lists become available, tables can be added.
         self.story.append(Paragraph("SSL / Sicurezza", self.styles['SectionHeading']))
         ssl_analysis = self.analysis_results.get('ssl_analysis', {})
-        self.story.append(Paragraph(f"• Pagine non sicure (HTTP): {len(detailed_issues.get('non_secure_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Certificato in scadenza/scaduto: {len(detailed_issues.get('ssl_expired_or_expiring_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Vecchio protocollo sicurezza: {len(detailed_issues.get('old_security_protocol_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Certificato nome errato: {len(detailed_issues.get('ssl_wrong_name_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi contenuti misti: {len(detailed_issues.get('mixed_content_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Nessun reindirizzamento HTTP->HTTPS homepage: {len(detailed_issues.get('http_to_https_no_redirect_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {ssl_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine Non Sicure (HTTP)", detailed_issues.get('non_secure_pages', []))
-        add_issue_table_subsection("Certificato in Scadenza/Scaduto", detailed_issues.get('ssl_expired_or_expiring_issues', []))
-        add_issue_table_subsection("Vecchio Protocollo Sicurezza", detailed_issues.get('old_security_protocol_issues', []))
-        add_issue_table_subsection("Certificato Nome Errato", detailed_issues.get('ssl_wrong_name_issues', []))
-        add_issue_table_subsection("Problemi Contenuti Misti", detailed_issues.get('mixed_content_pages', []))
-        add_issue_table_subsection("Nessun Reindirizzamento HTTP->HTTPS Homepage", detailed_issues.get('http_to_https_no_redirect_issues', []))
+        self.story.append(Paragraph(f"• Certificato SSL presente: {'Sì' if ssl_analysis.get('has_ssl') else 'No'}", self.styles['ListItem']))
+        self.story.append(Paragraph(f"• Certificato SSL valido: {'Sì' if ssl_analysis.get('ssl_valid') else 'No'}", self.styles['ListItem']))
+        if ssl_analysis.get('ssl_expires'):
+            self.story.append(Paragraph(f"• Scadenza Certificato SSL: {ssl_analysis.get('ssl_expires')}", self.styles['ListItem']))
+        # Add more list items based on what ssl_analysis provides or what detailed_issues might contain for SSL.
+        # For example:
+        # self.story.append(Paragraph(f"• Pagine non sicure (HTTP): {len(detailed_issues.get('non_secure_pages', []))}", self.styles['ListItem']))
+        # add_issue_table_subsection("Pagine Non Sicure (HTTP)", detailed_issues.get('non_secure_pages', []), headers=['URL Pagina', 'Problema'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
         self.story.append(PageBreak())
 
     def _add_recommendations_section(self):
@@ -519,19 +574,49 @@ class PDFGenerator:
                     Paragraph(rec.get('recommendation', 'N/A'), self.styles['BodyText'])
                 ])
             
-            table = Table(data, colWidths=[4*cm, 6*cm, 7*cm])
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['secondary'])),
-                ('TEXTCOLOR', (0, 0), (-1, 0), white),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), PDF_CONFIG['font_family']),
-                ('FONTSIZE', (0, 0), (-1, 0), PDF_CONFIG['font_sizes']['small']),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-                ('BACKGROUND', (0, 1), (-1, -1), HexColor(PDF_CONFIG['colors']['light_gray'])),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor(PDF_CONFIG['colors']['border'])),
-                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['secondary_dark'])),
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ]))
+            table = Table(data, colWidths=[4*cm, 6*cm, 7*cm]) # Current widths, sum = 17cm
+            
+            # New conceptual PDF_CONFIG values for styling this table
+            COLOR_TABLE_HEADER_BG = '#004080' 
+            COLOR_TABLE_HEADER_TEXT = '#FFFFFF'
+            COLOR_TABLE_ROW_BG_ODD = '#F0F4F7' 
+            COLOR_TABLE_ROW_BG_EVEN = '#FFFFFF'
+            COLOR_BORDER = '#CCCCCC'
+            FONT_FAMILY_TABLE_HEADER = 'Helvetica-Bold'
+            FONT_FAMILY_TABLE_BODY = 'Helvetica'
+            FONT_SIZE_TABLE_HEADER = 9
+            FONT_SIZE_TABLE_BODY = 9
+            COLOR_TEXT_PRIMARY_FOR_TABLE = '#222222'
+
+            rec_table_style = TableStyle([
+                # Header style
+                ('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)),
+                ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_TEXT)),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
+                ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+
+                # Body style
+                ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY),
+                ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY),
+                ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)),
+                ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 1), (-1, -1), 'TOP'), # Recommendations can be long
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+                ('TOPPADDING', (0, 1), (-1, -1), 5),
+                ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN)),
+            ])
+
+            for i in range(1, len(data)): # Odd rows for body
+                if i % 2 != 0:
+                    rec_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
+            
+            rec_table_style.add('GRID', (0, 0), (-1, -1), 0.5, HexColor(COLOR_BORDER))
+            rec_table_style.add('BOX', (0, 0), (-1, -1), 1, HexColor(COLOR_BORDER))
+            
+            table.setStyle(rec_table_style)
             self.story.append(table)
             self.story.append(Spacer(1, 0.3 * inch))
 
@@ -581,19 +666,49 @@ class PDFGenerator:
             ['Viewport', 'Meta tag che controlla la larghezza della viewport su dispositivi mobili'],
             ['Core Web Vitals', 'Metriche di Google per valutare l\'esperienza utente di una pagina web (LCP, FID, CLS)'],
         ]
-        glossary_table = Table(glossary_data, colWidths=[4*cm, 13*cm])
-        glossary_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['secondary'])),
-            ('TEXTCOLOR', (0, 0), (-1, 0), white),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), PDF_CONFIG['font_family']),
-            ('FONTSIZE', (0, 0), (-1, 0), PDF_CONFIG['font_sizes']['small']),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-            ('BACKGROUND', (0, 1), (-1, -1), HexColor(PDF_CONFIG['colors']['light_gray'])),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor(PDF_CONFIG['colors']['border'])),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['secondary_dark'])),
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ]))
+        glossary_table = Table(glossary_data, colWidths=[4*cm, 13*cm]) # Total 17cm
+        
+        # New conceptual PDF_CONFIG values for styling this table
+        COLOR_TABLE_HEADER_BG = '#004080' 
+        COLOR_TABLE_HEADER_TEXT = '#FFFFFF'
+        COLOR_TABLE_ROW_BG_ODD = '#F0F4F7' 
+        COLOR_TABLE_ROW_BG_EVEN = '#FFFFFF'
+        COLOR_BORDER = '#CCCCCC'
+        FONT_FAMILY_TABLE_HEADER = 'Helvetica-Bold'
+        FONT_FAMILY_TABLE_BODY = 'Helvetica'
+        FONT_SIZE_TABLE_HEADER = 9
+        FONT_SIZE_TABLE_BODY = 9
+        COLOR_TEXT_PRIMARY_FOR_TABLE = '#222222'
+
+        glossary_style = TableStyle([
+            # Header style
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_TEXT)),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
+            ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+
+            # Body style
+            ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY),
+            ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY),
+            ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)),
+            ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 1), (-1, -1), 'TOP'), # Definitions can be long
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+            ('TOPPADDING', (0, 1), (-1, -1), 5),
+            ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN)),
+        ])
+
+        for i in range(1, len(glossary_data)): # Odd rows for body
+            if i % 2 != 0:
+                glossary_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
+        
+        glossary_style.add('GRID', (0, 0), (-1, -1), 0.5, HexColor(COLOR_BORDER))
+        glossary_style.add('BOX', (0, 0), (-1, -1), 1, HexColor(COLOR_BORDER))
+            
+        glossary_table.setStyle(glossary_style)
         self.story.append(glossary_table)
         self.story.append(Spacer(1, 0.5 * inch))
 
@@ -621,14 +736,15 @@ class PDFGenerator:
     
     def _get_score_color_hex(self, score):
         """Restituisce il codice colore esadecimale basato sul punteggio"""
+        # Using direct hex values conceptually from the new PDF_CONFIG
         if score >= 90:
-            return PDF_CONFIG['colors']['success']
+            return '#28A745'  # success (Green)
         elif score >= 70:
-            return PDF_CONFIG['colors']['warning']
+            return '#005A9C'  # primary (Dark Blue for "Good" as per new scheme)
         elif score >= 50:
-            return PDF_CONFIG['colors']['primary'] # Usiamo primary per "Da Migliorare"
+            return '#FFC107'  # warning (Amber for "Da Migliorare")
         else:
-            return PDF_CONFIG['colors']['error']
+            return '#DC3545'  # error (Red for "Critico")
 
     def _identify_strengths_weaknesses(self):
         """Identifica punti di forza e debolezze"""
@@ -685,22 +801,22 @@ class PDFGenerator:
             self.story = []
 
             self._add_header()
-            self.story.append(PageBreak()) # Nuova pagina dopo l'header
+            # self.story.append(PageBreak()) # Nuova pagina dopo l'header
 
             self._add_executive_summary()
-            self.story.append(PageBreak()) # Nuova pagina dopo il riassunto
+            # self.story.append(PageBreak()) # Nuova pagina dopo il riassunto
 
             self._add_site_health_chart() # Aggiungi il grafico del Site Health
-            self.story.append(PageBreak()) # Nuova pagina dopo il grafico
+            # self.story.append(PageBreak()) # Nuova pagina dopo il grafico
 
             self._add_score_overview()
-            self.story.append(PageBreak()) # Nuova pagina dopo la panoramica punteggi
+            # self.story.append(PageBreak()) # Nuova pagina dopo la panoramica punteggi
 
             self._add_detailed_analysis_section()
-            self.story.append(PageBreak()) # Nuova pagina dopo l'analisi dettagliata
+            # self.story.append(PageBreak()) # Nuova pagina dopo l'analisi dettagliata
 
             self._add_recommendations_section()
-            self.story.append(PageBreak()) # Nuova pagina dopo le raccomandazioni
+            # self.story.append(PageBreak()) # Nuova pagina dopo le raccomandazioni
 
             self._add_appendix()
             

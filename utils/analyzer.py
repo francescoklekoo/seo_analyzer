@@ -256,36 +256,47 @@ class SEOAnalyzer:
         analysis = {
             'total_images': 0,
             'images_with_alt': 0,
-            'images_without_alt': 0,
-            'images_with_empty_alt': 0,
-            'images_with_title': 0,
+            'images_without_alt': 0, # Missing alt attribute
+            'images_with_empty_alt': 0, # alt=""
+            'images_with_title_attr': 0, # Has title attribute with content
+            'images_without_title_attr': 0, # Missing title attribute
+            'images_with_empty_title_attr': 0, # title=""
             'alt_text_lengths': [],
-            'issues': [],
+            'issues': [], # Generic issues for this specific analysis summary, not for detailed_issues
             'score': 0
         }
         
         for page in self.pages_data:
             images = page.get('images', [])
-            url = page.get('url', '')
-            
+            # url = page.get('url', '') # page_url not directly used for issues here, but good for context if adding to analysis['issues']
+
             for img in images:
                 analysis['total_images'] += 1
-                alt_text = img.get('alt', '').strip()
-                title_text = img.get('title', '').strip()
                 
-                if alt_text:
-                    analysis['images_with_alt'] += 1
-                    analysis['alt_text_lengths'].append(len(alt_text))
-                elif alt_text == '':
-                    analysis['images_with_empty_alt'] += 1
-                else:
+                # Alt text analysis
+                alt_text_value = img.get('alt') # Check for presence vs empty
+                if alt_text_value is not None:
+                    if alt_text_value.strip() == '':
+                        analysis['images_with_empty_alt'] += 1
+                    else:
+                        analysis['images_with_alt'] += 1
+                        analysis['alt_text_lengths'].append(len(alt_text_value.strip()))
+                else: # alt attribute is missing
                     analysis['images_without_alt'] += 1
-                    analysis['issues'].append(f"Immagine senza alt: {img.get('src', '')} in {url}")
-                
-                if title_text:
-                    analysis['images_with_title'] += 1
+                    # analysis['issues'].append(f"Immagine senza attributo alt: {img.get('src', '')} in {url}")
+
+                # Title attribute analysis
+                title_text_value = img.get('title') # Check for presence vs empty
+                if title_text_value is not None:
+                    if title_text_value.strip() == '':
+                        analysis['images_with_empty_title_attr'] += 1
+                    else:
+                        analysis['images_with_title_attr'] += 1
+                else: # title attribute is missing
+                    analysis['images_without_title_attr'] += 1
+                    # analysis['issues'].append(f"Immagine senza attributo title: {img.get('src', '')} in {url}")
         
-        # Calcola il punteggio
+        # Calcola il punteggio (currently only based on alt text)
         if analysis['total_images'] > 0:
             alt_ratio = analysis['images_with_alt'] / analysis['total_images']
             analysis['score'] = int(alt_ratio * 100)
@@ -554,8 +565,10 @@ class SEOAnalyzer:
             'missing_h1_pages': [],
             'missing_h2_pages': [],
             'missing_h3_pages': [],
-            'images_without_alt': [],
-            'images_without_title': [],
+            'images_without_alt': [], # Alt attribute is missing
+            'images_with_empty_alt': [], # Alt attribute is present but empty (alt="")
+            'images_without_title_attr': [], # Title attribute is missing
+            'images_with_empty_title_attr': [], # Title attribute is present but empty (title="")
             'duplicate_titles': [],
             'duplicate_meta_descriptions': [],
             'pages_without_title': [],
@@ -683,36 +696,46 @@ class SEOAnalyzer:
             
             # Analisi immagini
             for img in images:
-                img_src = img.get('src', '')
-                img_alt = img.get('alt', '').strip()
-                img_title = img.get('title', '').strip()
+                img_src = img.get('src', 'N/A')
                 
-                if not img_alt:
+                # Alt text
+                alt_value = img.get('alt')
+                if alt_value is None: # Attributo alt mancante
                     detailed['images_without_alt'].append({
-                        'url': url,
-                        'image_src': img_src,
-                        'issue': 'Alt text mancante'
+                        'url': url, 'image_src': img_src, 'issue': 'Attributo ALT HTML mancante'
                     })
                     detailed['warnings'].append({
-                        'type': 'missing_alt',
-                        'url': url,
-                        'image': img_src,
-                        'message': 'Immagine senza alt text'
+                        'type': 'missing_alt_attr', 'url': url, 'image': img_src,
+                        'message': 'Attributo ALT HTML mancante per immagine.'
                     })
-                
-                if not img_title:
-                    detailed['images_without_title'].append({
-                        'url': url,
-                        'image_src': img_src,
-                        'issue': 'Title mancante'
+                elif alt_value.strip() == '': # Attributo alt presente ma vuoto
+                    detailed['images_with_empty_alt'].append({
+                        'url': url, 'image_src': img_src, 'issue': 'Attributo ALT vuoto'
+                    })
+                    detailed['warnings'].append({ # Considerato ancora un warning
+                        'type': 'empty_alt_attr', 'url': url, 'image': img_src,
+                        'message': 'Attributo ALT vuoto per immagine.'
+                    })
+
+                # Title attribute
+                title_value = img.get('title')
+                if title_value is None: # Attributo title mancante
+                    detailed['images_without_title_attr'].append({
+                        'url': url, 'image_src': img_src, 'issue': 'Attributo Title HTML mancante'
                     })
                     detailed['notices'].append({
-                        'type': 'missing_img_title',
-                        'url': url,
-                        'image': img_src,
-                        'message': 'Immagine senza attributo title'
+                        'type': 'missing_title_attr', 'url': url, 'image': img_src,
+                        'message': 'Attributo Title HTML mancante per immagine.'
                     })
-            
+                elif title_value.strip() == '': # Attributo title presente ma vuoto
+                    detailed['images_with_empty_title_attr'].append({
+                        'url': url, 'image_src': img_src, 'issue': 'Attributo Title vuoto'
+                    })
+                    detailed['notices'].append({
+                        'type': 'empty_title_attr', 'url': url, 'image': img_src,
+                        'message': 'Attributo Title vuoto per immagine.'
+                    })
+
             # Contenuto
             word_count = content.get('word_count', 0)
             if word_count < SEO_CONFIG['min_word_count']:
@@ -846,162 +869,62 @@ class SEOAnalyzer:
                     })
     
     def _calculate_site_health(self) -> Dict:
-        """Calcola lo stato di salute del sito con algoritmo migliorato"""
+        """Calcola lo stato di salute del sito con algoritmo basato su penalità."""
         total_pages = len(self.pages_data)
         if total_pages == 0:
             return {
-                'healthy_pages': 0,
-                'broken_pages': 0,
-                'problematic_pages': 0,
-                'redirected_pages': 0,
-                'blocked_pages': 0,
-                'health_percentage': 0,
-                'total_pages': 0
+                'health_percentage': 100, # Se non ci sono pagine, il sito è "sano" in questo contesto
+                'total_pages': 0,
+                'total_critical_issues': 0,
+                'total_warning_issues': 0,
+                'total_notice_issues': 0
             }
+
+        # Definisci le penalità per tipo di problema
+        # Queste potrebbero essere spostate in config.py se necessario
+        CRITICAL_PENALTY_PER_ISSUE = 5.0
+        WARNING_PENALTY_PER_ISSUE = 2.0
+        NOTICE_PENALTY_PER_ISSUE = 0.5
+
+        # Recupera i conteggi dei problemi da detailed_issues
+        # Assicurati che _analyze_detailed_issues sia chiamato prima di questo metodo
+        # e che self.analysis_results['detailed_issues'] sia popolato.
+        detailed_issues = self.analysis_results.get('detailed_issues', {})
         
-        # Contatori per stato pagine
-        healthy = 0
-        broken = 0
-        problematic = 0
-        redirected = 0
-        blocked = 0
+        num_critical_issues = len(detailed_issues.get('errors', []))
+        num_warning_issues = len(detailed_issues.get('warnings', []))
+        num_notice_issues = len(detailed_issues.get('notices', []))
+
+        # Calcola il punteggio di salute
+        health_percentage = 100.0
+        health_percentage -= num_critical_issues * CRITICAL_PENALTY_PER_ISSUE
+        health_percentage -= num_warning_issues * WARNING_PENALTY_PER_ISSUE
+        health_percentage -= num_notice_issues * NOTICE_PENALTY_PER_ISSUE
         
-        # Contatori per problemi complessivi
-        total_critical_issues = 0  # Errori gravi
-        total_warning_issues = 0   # Avvertimenti
-        total_minor_issues = 0     # Avvisi minori
-        
-        for page in self.pages_data:
-            status_code = page.get('status_code', 200)
-            title = page.get('title', '').strip()
-            meta = page.get('meta_description', '').strip()
-            word_count = page.get('content', {}).get('word_count', 0)
-            headings = page.get('headings', {})
-            images = page.get('images', [])
+        # Assicura che il punteggio sia tra 0 e 100
+        health_percentage = max(0, min(100, int(round(health_percentage))))
             
-            # Classifica stato pagina
-            page_issues = 0
-            
-            # Errori gravi (influenzano molto la salute)
-            if status_code >= 400:
-                if status_code >= 500:
-                    broken += 1
-                    total_critical_issues += 3  # Peso alto per errori server
-                else:
-                    broken += 1
-                    total_critical_issues += 2  # Peso medio per errori client
-                continue
-            elif status_code >= 300:
-                redirected += 1
-                total_warning_issues += 1
-                page_issues += 1
-            
-            # Problemi SEO che influenzano la salute
-            if not title:
-                total_critical_issues += 2
-                page_issues += 2
-            
-            if not meta:
-                total_warning_issues += 1
-                page_issues += 1
-            
-            if word_count < SEO_CONFIG['min_word_count']:
-                total_warning_issues += 1
-                page_issues += 1
-            
-            # Problemi strutturali
-            h1_count = len(headings.get('h1', []))
-            if h1_count == 0:
-                total_warning_issues += 1
-                page_issues += 1
-            elif h1_count > 1:
-                total_warning_issues += 1
-                page_issues += 1
-            
-            # Problemi immagini (peso minore)
-            for img in images:
-                if not img.get('alt', '').strip():
-                    total_warning_issues += 1
-                if not img.get('title', '').strip():
-                    total_minor_issues += 1
-            
-            # Schema markup e aspetti tecnici minori
-            if not page.get('canonical_url', '').strip():
-                total_minor_issues += 1
-            
-            if not page.get('lang', '').strip():
-                total_minor_issues += 1
-            
-            if not page.get('schema_markup', []):
-                total_minor_issues += 1
-            
-            # Classifica la pagina
-            if page_issues >= 3:
-                problematic += 1
-            elif page_issues >= 1:
-                # Pagina con problemi minori ma non critici
-                healthy += 1
-            else:
-                healthy += 1
-        
-        # Calcola percentuale di salute più precisa
-        # Formula migliorata che considera tutti i tipi di problemi
-        base_health = (healthy / total_pages) * 100 if total_pages > 0 else 0
-        
-        # Penalità per problemi (scalate in base alla gravità)
-        critical_penalty = min((total_critical_issues * 5), 30)  # Max 30% di penalità per errori critici
-        warning_penalty = min((total_warning_issues * 2), 25)    # Max 25% per avvertimenti
-        minor_penalty = min((total_minor_issues * 0.5), 15)      # Max 15% per problemi minori
-        
-        # Applica le penalità
-        adjusted_health = base_health - critical_penalty - warning_penalty - minor_penalty
-        
-        # Assicurati che non vada sotto 0 o sopra 100
-        health_percentage = max(0, min(100, int(adjusted_health)))
-        
         return {
-            'healthy_pages': healthy,
-            'broken_pages': broken,
-            'problematic_pages': problematic,
-            'redirected_pages': redirected,
-            'blocked_pages': blocked,
             'health_percentage': health_percentage,
             'total_pages': total_pages,
-            'critical_issues': total_critical_issues,
-            'warning_issues': total_warning_issues,
-            'minor_issues': total_minor_issues
+            'total_critical_issues': num_critical_issues,
+            'total_warning_issues': num_warning_issues,
+            'total_notice_issues': num_notice_issues
         }
-    
+
     def _calculate_overall_score(self) -> int:
-        """Calcola il punteggio SEO complessivo"""
-        scores = {}
-        
-        # Raccogli tutti i punteggi
-        for analysis_type, weight in SEO_WEIGHTS.items():
-            if analysis_type == 'title_tags':
-                scores[analysis_type] = self.analysis_results['title_analysis']['score']
-            elif analysis_type == 'meta_descriptions':
-                scores[analysis_type] = self.analysis_results['meta_description_analysis']['score']
-            elif analysis_type == 'headings':
-                scores[analysis_type] = self.analysis_results['headings_analysis']['score']
-            elif analysis_type == 'images_alt':
-                scores[analysis_type] = self.analysis_results['images_analysis']['score']
-            elif analysis_type == 'internal_links':
-                scores[analysis_type] = self.analysis_results['links_analysis']['score']
-            elif analysis_type == 'page_speed':
-                scores[analysis_type] = self.analysis_results['performance_analysis']['score']
-            elif analysis_type == 'mobile_friendly':
-                scores[analysis_type] = self.analysis_results['mobile_analysis']['score']
-            elif analysis_type == 'ssl_certificate':
-                scores[analysis_type] = self.analysis_results['ssl_analysis']['score']
-            elif analysis_type == 'content_quality':
-                scores[analysis_type] = self.analysis_results['content_analysis']['score']
-        
-        # Calcola media ponderata
-        weighted_sum = sum(scores[key] * SEO_WEIGHTS[key] for key in scores)
-        total_weight = sum(SEO_WEIGHTS.values())
-        
-        return int(weighted_sum / total_weight) if total_weight > 0 else 0
+        """Calcola il punteggio SEO complessivo.
+        Questo ora restituisce direttamente 'health_percentage' calcolato da _calculate_site_health.
+        """
+        # Assicurati che site_health sia già calcolato e disponibile
+        if 'site_health' in self.analysis_results and \
+           'health_percentage' in self.analysis_results['site_health']:
+            return self.analysis_results['site_health']['health_percentage']
+        else:
+            # Fallback nel caso in cui site_health non sia stato calcolato, anche se non dovrebbe succedere
+            # nel flusso normale dato che _calculate_site_health è chiamato prima.
+            self.logger.warning("Attempted to calculate overall_score before site_health was available. Returning 0.")
+            return 0
     
     def _generate_recommendations(self) -> List[Dict]:
         """Genera raccomandazioni basate sull'analisi"""
