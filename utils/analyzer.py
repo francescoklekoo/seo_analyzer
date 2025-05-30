@@ -923,8 +923,13 @@ class SEOAnalyzer:
         health_percentage -= num_critical_issues * CRITICAL_PENALTY_PER_ISSUE
         health_percentage -= num_warning_issues * WARNING_PENALTY_PER_ISSUE
         health_percentage -= num_notice_issues * NOTICE_PENALTY_PER_ISSUE
+
+        # If there are no critical errors, but there are warnings or notices,
+        # the score shouldn't be a perfect 100%.
+        if num_critical_issues == 0 and (num_warning_issues > 0 or num_notice_issues > 0):
+            health_percentage = min(health_percentage, 99.0)
         
-        # Assicura che il punteggio sia tra 0 e 100
+        # Assicura che il punteggio sia tra 0 e 100 e intero
         health_percentage = max(0, min(100, int(round(health_percentage))))
             
         return {

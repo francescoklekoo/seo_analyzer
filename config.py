@@ -85,23 +85,6 @@ GUI_CONFIG = {
     }
 }
 
-# Selenium WebDriver configurazioni
-SELENIUM_CONFIG = {
-    'headless': True,
-    'window_size': (1920, 1080),
-    'page_load_timeout': 30,
-    'implicit_wait': 10,
-    'chrome_options': [
-        '--no-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-images',  # Per velocizzare il caricamento
-        '--disable-javascript',  # Per alcune analisi statiche
-    ]
-}
-
 # Configurazioni per il report PDF
 PDF_CONFIG = {
     'page_size': 'A4',
@@ -130,6 +113,61 @@ PDF_CONFIG = {
         'border': '#CCCCCC'  # Added border color
     }
 }
+
+# Etichette user-friendly per i tipi di problemi nel report PDF
+PDF_ISSUE_TYPE_LABELS = {
+    # Tipi usati in detailed_issues['errors'/'warnings'/'notices'].type
+    'missing_title': "Title Tag Mancante",
+    'duplicate_title': "Title Duplicato",
+    'short_title': "Title Tag Troppo Corto",
+    'long_title': "Title Tag Troppo Lungo",
+    'missing_meta': "Meta Description Mancante",
+    'duplicate_meta': "Meta Description Duplicata",
+    'short_meta_description': "Meta Description Troppo Corta",
+    'long_meta_description': "Meta Description Troppo Lunga",
+    'missing_h1': "Tag H1 Mancante",
+    'multiple_h1': "Tag H1 Multipli",
+    'missing_h2': "Tag H2 Mancante",
+    'missing_h3': "Tag H3 Mancante",
+    'missing_alt_attr': "Attributo ALT Immagine Mancante",
+    'empty_alt_attr': "Attributo ALT Immagine Vuoto",
+    'missing_title_attr': "Attributo Title Immagine Mancante",
+    'empty_title_attr': "Attributo Title Immagine Vuoto",
+    'broken_image': "Immagine Interrotta",
+    'low_content': "Conteggio Parole Basso",
+    'low_text_html_ratio': "Rapporto Testo/HTML Basso",
+    'slow_page': "Pagina Lenta (Caricamento)",
+    'large_page': "Pagina Pesante (Dimensioni Grandi)",
+    'missing_canonical': "URL Canonico Mancante",
+    'missing_lang': "Attributo Lingua Mancante",
+    'missing_schema': "Schema Markup Mancante",
+    'server_error': "Errore Server (Es. 5xx)",
+    'client_error': "Errore Client (Es. 4xx)",
+
+    # Tipi derivati dalle chiavi delle liste specifiche in detailed_issues
+    # (usati nel fallback di _add_issues_table_section)
+    'pages_without_title': "Title Tag Mancante",
+    'pages_without_meta': "Meta Description Mancante",
+    'missing_h1_pages': "Tag H1 Mancante",
+    'multiple_h1_pages': "Tag H1 Multipli",
+    'images_without_alt': "Attributo ALT Immagine Mancante",
+    'images_with_empty_alt': "Attributo ALT Immagine Vuoto",
+    'images_without_title_attr': "Attributo Title Immagine Mancante",
+    'images_with_empty_title_attr': "Attributo Title Immagine Vuoto",
+    'low_word_count_pages': "Conteggio Parole Basso",
+    'large_html_pages': "Pagina Pesante (Dimensioni Grandi)",
+    'slow_pages': "Pagina Lenta (Caricamento)",
+    'status_4xx_pages': "Errore Client (4xx)",
+    'status_5xx_pages': "Errore Server (5xx)",
+    'pages_without_canonical': "URL Canonico Mancante",
+    'pages_without_lang': "Attributo Lingua Mancante",
+    'pages_without_schema': "Schema Markup Mancante",
+
+    # Fallback generici
+    'unknown_issue': "Problema Sconosciuto",
+    'unknown_type': "Tipo Problema Non Specificato"
+}
+
 
 # Messaggi e testi dell'applicazione
 MESSAGES = {
@@ -198,3 +236,5 @@ LOGGING_CONFIG = {
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'file': 'seo_analyzer.log'
 }
+
+[end of config.py]
