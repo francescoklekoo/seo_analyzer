@@ -801,22 +801,17 @@ class PDFGenerator:
             self.story = []
 
             self._add_header()
-            # self.story.append(PageBreak()) # Nuova pagina dopo l'header
+            # self.story.append(PageBreak()) # Consider keeping if a distinct title page is always desired. For now, let content flow.
 
             self._add_executive_summary()
-            # self.story.append(PageBreak()) # Nuova pagina dopo il riassunto
 
             self._add_site_health_chart() # Aggiungi il grafico del Site Health
-            # self.story.append(PageBreak()) # Nuova pagina dopo il grafico
 
             self._add_score_overview()
-            # self.story.append(PageBreak()) # Nuova pagina dopo la panoramica punteggi
 
-            self._add_detailed_analysis_section()
-            # self.story.append(PageBreak()) # Nuova pagina dopo l'analisi dettagliata
+            self._add_detailed_analysis_section() # This method has its own internal page breaks
 
-            self._add_recommendations_section()
-            # self.story.append(PageBreak()) # Nuova pagina dopo le raccomandazioni
+            self._add_recommendations_section() # This method also has its own internal page break
 
             self._add_appendix()
             
