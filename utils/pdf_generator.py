@@ -86,7 +86,7 @@ class PDFGenerator:
             self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_ERROR), fontName=FONT_FAMILY_BOLD))
         
     def _add_header(self):
-        self.story.append(Paragraph(self.analysis_results['summary']['report_title'], self.styles['CustomTitle']))
+        self.story.append(Paragraph(f"Site Audit Report per: {self.domain}", self.styles['CustomTitle']))
         self.story.append(Paragraph(self.domain, self.styles['CustomSubtitle']))
         self.story.append(Spacer(1, 0.2 * inch))
         self.story.append(Paragraph(f"Generato in data: {self.analysis_results['summary']['analysis_date']}", self.styles['SmallText']))
@@ -96,6 +96,9 @@ class PDFGenerator:
         flowables = []
         flowables.append(Paragraph("Riassunto Esecutivo", self.styles['SectionHeading']))
         flowables.append(Spacer(1, 0.2 * inch))
+
+        chart_image = self._get_site_health_chart_flowable()
+
         overall_score = self.analysis_results['overall_score']
         evaluation = self._get_evaluation_text(overall_score)
         detailed_issues = self.analysis_results.get('detailed_issues', {})
@@ -113,18 +116,130 @@ class PDFGenerator:
         elif len(issue_parts) == 2: issues_string = f"identificando {issue_parts[0]} e {issue_parts[1]}"
         else: issues_string = f"identificando {issue_parts[0]}, {issue_parts[1]} e {issue_parts[2]}"
         summary_text = f"""L'analisi SEO del sito <b>{self.domain}</b> ha rivelato un punteggio complessivo di <font color="{self._get_score_color_hex(overall_score)}"><b>{overall_score}/100</b></font>. Valutazione: <b>{evaluation}</b>. Sono state analizzate <b>{self.analysis_results['summary']['total_pages_analyzed']}</b> pagine, {issues_string} e generando <b>{self.analysis_results['summary']['total_recommendations']}</b> raccomandazioni per il miglioramento."""
-        flowables.append(Paragraph(summary_text, self.styles['BodyText']))
-        flowables.append(Spacer(1, 0.2 * inch))
+        summary_paragraph = Paragraph(summary_text, self.styles['BodyText'])
+
+        if chart_image:
+            chart_col_width = 3 * inch # Changed from 4 inch
+            page_content_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+            text_col_width = page_content_width - chart_col_width - (0.2 * inch) # 0.2 inch for padding
+
+            table_data = [[chart_image, summary_paragraph]]
+            chart_summary_table = Table(table_data, colWidths=[chart_col_width, text_col_width])
+            chart_summary_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('LEFTPADDING', (1,0), (1,0), 0.1*inch),
+                ('RIGHTPADDING', (0,0), (0,0), 0.1*inch)
+            ]))
+            flowables.append(chart_summary_table)
+        else:
+            flowables.append(summary_paragraph) # Fallback if chart fails
+
+        flowables.append(Spacer(1, 0.3 * inch)) # Spacer after chart/summary table or summary paragraph
+
+        # Issue Count Boxes
+        COLOR_ERROR_HEX = PDF_CONFIG['colors'].get('error', '#DC3545')
+        COLOR_WARNING_HEX = PDF_CONFIG['colors'].get('warning', '#FFC107')
+        # For Notices, let's use 'secondary' or a custom blue if 'info' isn't defined or suitable
+        COLOR_NOTICE_HEX = PDF_CONFIG['colors'].get('info', PDF_CONFIG['colors'].get('secondary', '#17A2B8'))
+
+        count_box_base_style = ParagraphStyle(
+            name='CountBoxBaseStyle',
+            alignment=TA_CENTER,
+            leading=14 # Adjusted leading for two lines (number + label)
+        )
+        error_text_style = ParagraphStyle(
+            name='ErrorCountBoxStyle', parent=count_box_base_style,
+            textColor=colors.HexColor(COLOR_ERROR_HEX)
+        )
+        warning_text_style = ParagraphStyle(
+            name='WarningCountBoxStyle', parent=count_box_base_style,
+            textColor=colors.HexColor(COLOR_WARNING_HEX)
+        )
+        notice_text_style = ParagraphStyle(
+            name='NoticeCountBoxStyle', parent=count_box_base_style,
+            textColor=colors.HexColor(COLOR_NOTICE_HEX)
+        )
+
+        error_p = Paragraph(f"<font size='16'><b>{num_errors}</b></font><br/><font size='10'>Errori</font>", error_text_style)
+        warning_p = Paragraph(f"<font size='16'><b>{num_warnings}</b></font><br/><font size='10'>Avvertimenti</font>", warning_text_style)
+        notice_p = Paragraph(f"<font size='16'><b>{num_notices}</b></font><br/><font size='10'>Avvisi</font>", notice_text_style)
+
+        box_data = [[error_p, warning_p, notice_p]]
+
+        page_content_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+        # Calculate column width for 3 boxes with small gaps between them
+        gap = 0.15 * inch
+        num_boxes = 3
+        box_col_width = (page_content_width - (num_boxes - 1) * gap) / num_boxes
+
+        # Create table with explicit gaps by making it 5 columns: [box, gap, box, gap, box]
+        # This approach gives more control over gap color (transparent)
+        # However, a simpler 3-column table with cell padding or relying on BOX outline is also fine.
+        # For now, let's use 3 columns and rely on BOX for separation appearance.
+        issue_counts_table = Table(box_data, colWidths=[box_col_width, box_col_width, box_col_width], rowHeights=[0.8*inch])
+
+        issue_counts_table.setStyle(TableStyle([
+            ('BOX', (0,0), (0,0), 1.5, colors.HexColor(COLOR_ERROR_HEX)),
+            ('BOX', (1,0), (1,0), 1.5, colors.HexColor(COLOR_WARNING_HEX)),
+            ('BOX', (2,0), (2,0), 1.5, colors.HexColor(COLOR_NOTICE_HEX)),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+        ]))
+        flowables.append(issue_counts_table)
+        flowables.append(Spacer(1, 0.3 * inch)) # Spacer after the boxes
+
         strengths, weaknesses = self._identify_strengths_weaknesses()
-        flowables.append(Paragraph("Punti di Forza:", self.styles['BodyText']))
+
+        table_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+
+        # Define colors for striping from PDF_CONFIG or use defaults
+        bg_color_even_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7')
+        bg_color_odd_hex = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+        bg_color_even = colors.HexColor(bg_color_even_hex)
+        bg_color_odd = colors.HexColor(bg_color_odd_hex)
+
+        base_table_style_cmds = [
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 10),
+            ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ('TOPPADDING', (0,0), (-1,-1), 6),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ]
+
+        # Strengths Section
+        flowables.append(Paragraph("Punti di Forza:", self.styles['BodyText'])) # This was BodyText as per current code
         if strengths:
-            for s in strengths: flowables.append(Paragraph(f"• {s}", self.styles['ListItem']))
-        else: flowables.append(Paragraph("Nessun punto di forza specifico identificato.", self.styles['ListItem']))
+            strengths_data = [[Paragraph(s, self.styles['BodyText'])] for s in strengths]
+            strengths_table = Table(strengths_data, colWidths=[table_width])
+
+            current_strengths_style_cmds = list(base_table_style_cmds) # Copy base
+            for i, _ in enumerate(strengths):
+                color = bg_color_even if i % 2 == 0 else bg_color_odd
+                current_strengths_style_cmds.append(('BACKGROUND', (0,i), (0,i), color))
+            strengths_table.setStyle(TableStyle(current_strengths_style_cmds))
+            flowables.append(strengths_table)
+        else:
+            flowables.append(Paragraph("Nessun punto di forza specifico identificato.", self.styles['ListItem']))
+
         flowables.append(Spacer(1, 0.1 * inch))
-        flowables.append(Paragraph("Aree di Miglioramento:", self.styles['BodyText']))
+
+        # Weaknesses Section
+        flowables.append(Paragraph("Aree di Miglioramento:", self.styles['BodyText'])) # This was BodyText
         if weaknesses:
-            for w in weaknesses: flowables.append(Paragraph(f"• {w}", self.styles['ListItem']))
-        else: flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
+            weaknesses_data = [[Paragraph(w, self.styles['BodyText'])] for w in weaknesses]
+            weaknesses_table = Table(weaknesses_data, colWidths=[table_width])
+
+            current_weaknesses_style_cmds = list(base_table_style_cmds) # Copy base
+            for i, _ in enumerate(weaknesses):
+                color = bg_color_even if i % 2 == 0 else bg_color_odd
+                current_weaknesses_style_cmds.append(('BACKGROUND', (0,i), (0,i), color))
+            weaknesses_table.setStyle(TableStyle(current_weaknesses_style_cmds))
+            flowables.append(weaknesses_table)
+        else:
+            flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
+
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
@@ -148,109 +263,94 @@ class PDFGenerator:
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
-    def _add_site_health_chart(self):
+    def _get_site_health_chart_flowable(self):
         """
         Crea un grafico a ciambella (donut chart) che mostra la percentuale di salute del sito
         con un cerchio di completamento esterno e la percentuale al centro.
+        Restituisce l'oggetto Image di ReportLab.
         """
-        flowables = []
-        flowables.append(Paragraph("Site Health Overview", self.styles['SectionHeading']))
-        flowables.append(Spacer(1, 0.2 * inch))
-        
-        # Ottieni il punteggio complessivo
-        overall_score = self.analysis_results['overall_score']
-        health_percentage = overall_score
-        problem_percentage = 100 - overall_score
-        
-        # Colori e stili
-        COLOR_SUCCESS = '#28A745'
-        COLOR_ERROR = '#DC3545'
-        COLOR_BACKGROUND = '#F8F9FA'
-        FONT_FAMILY = 'Arial'
-        
-        # Crea la figura
-        fig, ax = plt.subplots(figsize=(6, 6), facecolor='white')
-        ax.set_facecolor('white')
-        
-        # Dati per il donut chart
-        sizes = [health_percentage, problem_percentage]
-        colors = [COLOR_SUCCESS, COLOR_ERROR]
-        labels = [f'Sano', f'Problemi']
-        
-        # Crea il donut chart
-        wedges, texts = ax.pie(sizes, colors=colors, startangle=90, 
-                            counterclock=False, wedgeprops=dict(width=0.3))
-        
-        # Rimuovi le etichette automatiche
-        for text in texts:
-            text.set_visible(False)
-        
-        # Aggiungi il cerchio di completamento esterno
-        circle_outer = plt.Circle((0, 0), 0.85, fill=False, linewidth=8, 
-                                color=COLOR_SUCCESS, alpha=0.3)
-        ax.add_patch(circle_outer)
-        
-        # Aggiungi l'arco di completamento
-        theta1 = 90  # Inizia dall'alto
-        theta2 = 90 - (health_percentage * 360 / 100)  # Arco basato sulla percentuale
-        
-        # Crea l'arco di completamento
-        angles = np.linspace(np.radians(theta1), np.radians(theta2), 100)
-        x_outer = 0.85 * np.cos(angles)
-        y_outer = 0.85 * np.sin(angles)
-        
-        ax.plot(x_outer, y_outer, linewidth=8, color=COLOR_SUCCESS, solid_capstyle='round')
-        
-        # Aggiungi la percentuale al centro
-        ax.text(0, 0.1, f'{int(health_percentage)}%', 
-                horizontalalignment='center', verticalalignment='center',
-                fontsize=36, fontweight='bold', color='#005A9C', fontfamily=FONT_FAMILY)
-        
-        # Aggiungi l'etichetta "Site Health"
-        ax.text(0, -0.15, 'Site Health', 
-                horizontalalignment='center', verticalalignment='center',
-                fontsize=14, color='#222222', fontfamily=FONT_FAMILY)
-        
-        # Aggiungi la legenda
-        legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_SUCCESS, 
-                    markersize=12, label=f'Sano ({health_percentage:.0f}%)'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_ERROR, 
-                    markersize=12, label=f'Problemi ({problem_percentage:.0f}%)')
-        ]
-        
-        ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.3, 1),
-                fontsize=10, frameon=False)
-        
-        # Rimuovi assi e imposta aspetto uguale
-        ax.set_xlim(-1.2, 1.2)
-        ax.set_ylim(-1.2, 1.2)
-        ax.set_aspect('equal')
-        ax.axis('off')
-        
-        # Rimuovi spazi bianchi
-        plt.tight_layout()
-        
-        # Salva il grafico come immagine temporanea
-        import io
-        import base64
-        from reportlab.platypus import Image
-        
-        # Salva in un buffer
-        img_buffer = io.BytesIO()
-        plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight', 
-                    facecolor='white', edgecolor='none')
-        img_buffer.seek(0)
-        
-        # Crea l'oggetto Image per ReportLab
-        chart_image = Image(img_buffer, width=4*inch, height=4*inch)
-        flowables.append(chart_image)
-        
-        # Chiudi la figura per liberare memoria
-        plt.close(fig)
-        
-        flowables.append(Spacer(1, 0.5 * inch))
-        self.story.append(KeepTogether(flowables))
+        try:
+            # Ottieni il punteggio complessivo
+            overall_score = self.analysis_results['overall_score']
+        except KeyError:
+            # Handle missing overall_score if necessary, or let it raise
+            print("Warning: 'overall_score' not found in analysis_results for chart generation.")
+            return None # Or a placeholder image/message
+
+            health_percentage = overall_score
+            problem_percentage = 100 - overall_score
+
+            # Colori e stili
+            COLOR_SUCCESS_CHART = '#28A745' # Renamed to avoid conflict if other COLOR_SUCCESS exists
+            COLOR_ERROR_CHART = '#DC3545'   # Renamed for clarity
+            FONT_FAMILY_CHART = 'Arial'     # Renamed for clarity
+
+            fig, ax = plt.subplots(figsize=(5, 5), facecolor='white') # Changed from (6,6)
+            ax.set_facecolor('white')
+
+            sizes = [health_percentage, problem_percentage]
+            chart_colors = [COLOR_SUCCESS_CHART, COLOR_ERROR_CHART] # Use renamed variables
+
+            wedges, texts = ax.pie(sizes, colors=chart_colors, startangle=90,
+                                counterclock=False, wedgeprops=dict(width=0.3))
+
+            for text_obj in texts: # Renamed variable to avoid conflict
+                text_obj.set_visible(False)
+
+            circle_outer = plt.Circle((0, 0), 0.85, fill=False, linewidth=8,
+                                    color=COLOR_SUCCESS_CHART, alpha=0.3)
+            ax.add_patch(circle_outer)
+
+            theta1 = 90
+            theta2 = 90 - (health_percentage * 360 / 100)
+
+            angles = np.linspace(np.radians(theta1), np.radians(theta2), 100)
+            x_outer = 0.85 * np.cos(angles)
+            y_outer = 0.85 * np.sin(angles)
+
+            ax.plot(x_outer, y_outer, linewidth=8, color=COLOR_SUCCESS_CHART, solid_capstyle='round')
+
+            ax.text(0, 0.1, f'{int(health_percentage)}%',
+                    horizontalalignment='center', verticalalignment='center',
+                    fontsize=36, fontweight='bold', color='#005A9C', fontfamily=FONT_FAMILY_CHART)
+
+            ax.text(0, -0.15, 'Site Health',
+                    horizontalalignment='center', verticalalignment='center',
+                    fontsize=14, color='#222222', fontfamily=FONT_FAMILY_CHART)
+
+            legend_elements = [
+                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_SUCCESS_CHART,
+                        markersize=12, label=f'Sano ({health_percentage:.0f}%)'),
+                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_ERROR_CHART,
+                        markersize=12, label=f'Problemi ({problem_percentage:.0f}%)')
+            ]
+
+            ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.3, 1),
+                    fontsize=10, frameon=False)
+
+            ax.set_xlim(-1.2, 1.2)
+            ax.set_ylim(-1.2, 1.2)
+            ax.set_aspect('equal')
+            ax.axis('off')
+
+            plt.tight_layout()
+
+            img_buffer = io.BytesIO()
+            plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight',
+                        facecolor='white', edgecolor='none')
+            img_buffer.seek(0)
+
+            # RLImage is already imported as Image, so just use Image
+            chart_image = RLImage(img_buffer, width=3*inch, height=3*inch) # Changed from 4*inch
+
+            plt.close(fig)
+            return chart_image
+        except Exception as e:
+            print(f"Errore durante la generazione del grafico Site Health: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
 
     def _add_issues_table_section(self):
         flowables = []
@@ -671,7 +771,7 @@ class PDFGenerator:
             self.doc = SimpleDocTemplate(filename, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
             self.story = []
             self._add_header()
-            self._add_site_health_chart()
+            # self._add_site_health_chart() # Call is removed, chart is now part of executive summary
             self._add_executive_summary()
             self._add_score_overview()
             self.story.append(PageBreak())

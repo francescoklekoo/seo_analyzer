@@ -127,12 +127,25 @@ class SEOAnalyzer:
                 })
         
         # Calcola il punteggio
-        if analysis['total_pages'] > 0:
-            optimal_ratio = len(analysis['optimal_titles']) / analysis['total_pages']
-            duplicate_penalty = len(analysis['duplicate_titles']) / analysis['total_pages']
-            missing_penalty = analysis['pages_without_title'] / analysis['total_pages']
+        total_pages = analysis['total_pages']
+        if total_pages > 0:
+            missing_title_ratio = analysis['pages_without_title'] / total_pages
+            # Number of unique titles that are duplicated
+            num_unique_duplicate_titles = len(analysis['duplicate_titles'])
+            duplicate_titles_impact_ratio = num_unique_duplicate_titles / total_pages
+
+            too_short_titles_ratio = len(analysis['too_short_titles']) / total_pages
+            too_long_titles_ratio = len(analysis['too_long_titles']) / total_pages
+
+            penalty = 0
+            penalty += missing_title_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['error']
+            penalty += duplicate_titles_impact_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
+            penalty += too_short_titles_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+            penalty += too_long_titles_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
             
-            analysis['score'] = max(0, int((optimal_ratio - duplicate_penalty - missing_penalty) * 100))
+            analysis['score'] = max(0, int((1 - penalty) * 100))
+        else:
+            analysis['score'] = 100 # Or 0 if no pages means no score - prompt says 100
         
         return analysis
     
@@ -203,12 +216,25 @@ class SEOAnalyzer:
                 })
         
         # Calcola il punteggio
-        if analysis['total_pages'] > 0:
-            optimal_ratio = len(analysis['optimal_metas']) / analysis['total_pages']
-            duplicate_penalty = len(analysis['duplicate_metas']) / analysis['total_pages']
-            missing_penalty = analysis['pages_without_meta'] / analysis['total_pages']
-            
-            analysis['score'] = max(0, int((optimal_ratio - duplicate_penalty - missing_penalty) * 100))
+        total_pages = analysis['total_pages']
+        if total_pages > 0:
+            missing_meta_ratio = analysis['pages_without_meta'] / total_pages
+            num_unique_duplicate_metas = len(analysis['duplicate_metas'])
+            duplicate_metas_impact_ratio = num_unique_duplicate_metas / total_pages
+
+            too_short_metas_ratio = len(analysis['too_short_metas']) / total_pages
+            too_long_metas_ratio = len(analysis['too_long_metas']) / total_pages
+
+            penalty = 0
+            # Missing meta is a warning, duplicates warning, length issues notice
+            penalty += missing_meta_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
+            penalty += duplicate_metas_impact_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
+            penalty += too_short_metas_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+            penalty += too_long_metas_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+
+            analysis['score'] = max(0, int((1 - penalty) * 100))
+        else:
+            analysis['score'] = 100
         
         return analysis
     
@@ -248,11 +274,21 @@ class SEOAnalyzer:
                 analysis['heading_structure'][h_key].append(count)
         
         # Calcola il punteggio
-        if analysis['total_pages'] > 0:
-            h1_score = analysis['pages_with_h1'] / analysis['total_pages']
-            multiple_h1_penalty = analysis['pages_multiple_h1'] / analysis['total_pages']
+        total_pages = analysis['total_pages']
+        if total_pages > 0:
+            missing_h1_ratio = analysis['pages_without_h1'] / total_pages
+            multiple_h1_ratio = analysis['pages_multiple_h1'] / total_pages
             
-            analysis['score'] = max(0, int((h1_score - multiple_h1_penalty) * 100))
+            penalty = 0
+            penalty += missing_h1_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
+            penalty += multiple_h1_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
+            # Consider adding penalties for missing H2/H3 as 'notice' if data is available
+            # e.g., missing_h2_ratio = len(self.analysis_results['detailed_issues'].get('missing_h2_pages', [])) / total_pages
+            # penalty += missing_h2_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+
+            analysis['score'] = max(0, int((1 - penalty) * 100))
+        else:
+            analysis['score'] = 100
         
         return analysis
     
@@ -299,12 +335,25 @@ class SEOAnalyzer:
                 else: # title attribute is missing
                     analysis['images_without_title_attr'] += 1
         
-        # Calcola il punteggio (currently only based on alt text)
+        # Calcola il punteggio
         if analysis['total_images'] > 0:
-            alt_ratio = analysis['images_with_alt'] / analysis['total_images']
-            analysis['score'] = int(alt_ratio * 100)
+            total_images = analysis['total_images']
+            missing_alt_ratio = analysis['images_without_alt'] / total_images
+            empty_alt_ratio = analysis['images_with_empty_alt'] / total_images
+
+            # Optional: Penalties for missing/empty title attributes
+            # missing_title_attr_ratio = analysis['images_without_title_attr'] / total_images
+            # empty_title_attr_ratio = analysis['images_with_empty_title_attr'] / total_images
+
+            penalty = 0
+            penalty += missing_alt_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning'] # Missing ALT is warning
+            penalty += empty_alt_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']    # Empty ALT is notice
+            # penalty += missing_title_attr_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+            # penalty += empty_title_attr_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+
+            analysis['score'] = max(0, int((1 - penalty) * 100))
         else:
-            analysis['score'] = 100  # Nessuna immagine = nessun problema
+            analysis['score'] = 100  # No images = no image-related problems
         
         return analysis
     
@@ -350,11 +399,19 @@ class SEOAnalyzer:
             analysis['average_text_ratio'] = statistics.mean(analysis['text_html_ratios'])
         
         # Calcola il punteggio
-        if analysis['total_pages'] > 0:
-            good_content_ratio = analysis['pages_good_word_count'] / analysis['total_pages']
-            good_ratio_pages = (analysis['total_pages'] - analysis['pages_low_text_ratio']) / analysis['total_pages']
+        total_pages = analysis['total_pages']
+        if total_pages > 0:
+            low_word_count_ratio = analysis['pages_low_word_count'] / total_pages
+            # Assuming 'pages_low_text_ratio' counts pages with low ratio
+            low_text_ratio_ratio = analysis['pages_low_text_ratio'] / total_pages
+
+            penalty = 0
+            penalty += low_word_count_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning'] # Low word count is warning
+            penalty += low_text_ratio_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']  # Low text/HTML ratio is notice
             
-            analysis['score'] = int((good_content_ratio + good_ratio_pages) / 2 * 100)
+            analysis['score'] = max(0, int((1 - penalty) * 100))
+        else:
+            analysis['score'] = 100
         
         return analysis
     
@@ -400,10 +457,27 @@ class SEOAnalyzer:
             analysis['average_internal_links_per_page'] = analysis['internal_links'] / len(self.pages_data)
         
         # Calcola il punteggio
-        internal_ratio = analysis['internal_links'] / max(1, analysis['total_links'])
-        few_links_penalty = analysis['pages_with_few_internal_links'] / max(1, len(self.pages_data))
+        penalty = 0
+        if len(self.pages_data) > 0:
+            # Penalty for too few internal links on pages (notice)
+            if analysis['pages_with_few_internal_links'] > 0: # Check to avoid division by zero if len(self.pages_data) could be 0 earlier
+                 penalty += (analysis['pages_with_few_internal_links'] / len(self.pages_data)) * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+
+            if analysis['total_links'] > 0 :
+                # Penalty for links without text (notice)
+                penalty += (analysis['links_without_text'] / analysis['total_links']) * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+                # If broken_links were analyzed and counted:
+                # num_broken_links = len(analysis.get('broken_links', [])) # Assuming 'broken_links' might be added to analysis dict
+                # penalty += (num_broken_links / analysis['total_links']) * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
         
-        analysis['score'] = max(0, int((internal_ratio - few_links_penalty) * 100))
+        current_score = max(0, int((1 - penalty) * 100))
+
+        if analysis['total_links'] == 0 and len(self.pages_data) > 0 : # No links on site with pages
+             analysis['score'] = 70 # Arbitrary low score if no links at all
+        elif len(self.pages_data) == 0: # No pages
+             analysis['score'] = 100
+        else:
+            analysis['score'] = current_score
         
         return analysis
     
@@ -460,11 +534,24 @@ class SEOAnalyzer:
         # Calcola il punteggio
         total_pages = len(self.pages_data)
         if total_pages > 0:
-            canonical_score = analysis['pages_with_canonical'] / total_pages
-            lang_score = analysis['pages_with_lang'] / total_pages
-            schema_score = analysis['pages_with_schema'] / total_pages
+            missing_canonical_ratio = analysis['pages_without_canonical'] / total_pages
+            missing_lang_ratio = analysis['pages_without_lang'] / total_pages
+            missing_schema_ratio = analysis['pages_without_schema'] / total_pages
+
+            num_unique_duplicate_canonicals = 0
+            if 'duplicate_canonicals' in analysis: # Ensure key exists
+                 num_unique_duplicate_canonicals = len(analysis['duplicate_canonicals'])
+            duplicate_canonicals_impact_ratio = num_unique_duplicate_canonicals / total_pages
+
+            penalty = 0
+            penalty += missing_canonical_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+            penalty += missing_lang_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+            penalty += missing_schema_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['notice']
+            penalty += duplicate_canonicals_impact_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
             
-            analysis['score'] = int((canonical_score + lang_score + schema_score) / 3 * 100)
+            analysis['score'] = max(0, int((1 - penalty) * 100))
+        else:
+            analysis['score'] = 100
         
         return analysis
     
@@ -504,11 +591,18 @@ class SEOAnalyzer:
             analysis['average_page_size'] = statistics.mean(analysis['page_sizes'])
         
         # Calcola il punteggio
-        if analysis['total_pages'] > 0:
-            fast_ratio = analysis['fast_pages'] / analysis['total_pages']
-            large_penalty = analysis['large_pages'] / analysis['total_pages']
+        total_pages = analysis['total_pages']
+        if total_pages > 0:
+            slow_pages_ratio = analysis['slow_pages'] / total_pages
+            large_pages_ratio = analysis['large_pages'] / total_pages
+
+            penalty = 0
+            penalty += slow_pages_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning']
+            penalty += large_pages_ratio * CATEGORY_ISSUE_PENALTY_FACTORS['warning'] # Treat large pages as warning
             
-            analysis['score'] = max(0, int((fast_ratio - large_penalty) * 100))
+            analysis['score'] = max(0, int((1 - penalty) * 100))
+        else:
+            analysis['score'] = 100
         
         return analysis
     

@@ -117,58 +117,76 @@ PDF_CONFIG = {
 
 # Etichette user-friendly per i tipi di problemi nel report PDF
 PDF_ISSUE_TYPE_LABELS = {
-    # Tipi usati in detailed_issues['errors'/'warnings'/'notices'].type
-    'missing_title': "Title Tag Mancante",
-    'duplicate_title': "Title Duplicato",
-    'short_title': "Title Tag Troppo Corto",
-    'long_title': "Title Tag Troppo Lungo",
-    'missing_meta': "Meta Description Mancante",
-    'duplicate_meta': "Meta Description Duplicata",
-    'short_meta_description': "Meta Description Troppo Corta",
-    'long_meta_description': "Meta Description Troppo Lunga",
-    'missing_h1': "Tag H1 Mancante",
-    'multiple_h1': "Tag H1 Multipli",
-    'missing_h2': "Tag H2 Mancante",
-    'missing_h3': "Tag H3 Mancante",
-    'missing_alt_attr': "Attributo ALT Immagine Mancante",
-    'empty_alt_attr': "Attributo ALT Immagine Vuoto",
-    'missing_title_attr': "Attributo Title Immagine Mancante",
-    'empty_title_attr': "Attributo Title Immagine Vuoto",
-    'broken_image': "Immagine Interrotta",
-    'low_content': "Conteggio Parole Basso",
-    'low_text_html_ratio': "Rapporto Testo/HTML Basso",
-    'slow_page': "Pagina Lenta (Caricamento)",
-    'large_page': "Pagina Pesante (Dimensioni Grandi)",
-    'missing_canonical': "URL Canonico Mancante",
-    'missing_lang': "Attributo Lingua Mancante",
-    'missing_schema': "Schema Markup Mancante",
-    'server_error': "Errore Server (Es. 5xx)",
-    'client_error': "Errore Client (Es. 4xx)",
+    # User-specified / preferred labels:
+    'missing_title': 'Titolo mancante',
+    'duplicate_title': 'Titolo duplicato',
+    'short_title': 'Titolo troppo corto',
+    'long_title': 'Titolo troppo lungo',
+    'missing_meta_description': 'Meta description mancante', # Covers 'missing_meta'
+    'duplicate_meta': 'Meta description duplicato', # User's explicit preference
+    'short_meta_description': 'Meta description troppo corta',
+    'long_meta_description': 'Meta description troppo lunga',
+    'missing_h1': 'H1 mancante',
+    'multiple_h1_tags': 'Tag H1 multipli', # Covers 'multiple_h1'
+    'missing_h2': 'H2 mancanti', # User's preference for plural
+    'missing_alt_attribute': 'Attributo ALT mancante', # Covers 'missing_alt_attr'
+    'empty_alt_attribute': 'Attributo ALT vuoto', # Covers 'empty_alt_attr'
+    'broken_image': 'Immagine interrotta', # Keeping existing good label
+    'low_word_count': 'Conteggio parole basso', # Specific key, good label
+    'low_text_html_ratio': 'Basso rapporto testo/HTML',
+    'slow_page_load': 'Caricamento pagina lento', # Covers 'slow_page'
+    'large_html_size': 'Dimensioni HTML elevate', # Covers 'large_page'
+    'http_status_4xx': 'Errore client (4xx)', # Covers 'client_error'
+    'http_status_5xx': 'Errore server (5xx)', # Covers 'server_error'
+    'no_canonical_tag': 'Tag Canonical mancante', # Covers 'missing_canonical'
+    'missing_lang_attribute': 'Attributo Lingua mancante', # Covers 'missing_lang'
+    'no_schema_markup': 'Markup Schema mancante', # Covers 'missing_schema'
 
-    # Tipi derivati dalle chiavi delle liste specifiche in detailed_issues
-    # (usati nel fallback di _add_issues_table_section)
-    'pages_without_title': "Title Tag Mancante",
-    'pages_without_meta': "Meta Description Mancante",
-    'missing_h1_pages': "Tag H1 Mancante",
-    'multiple_h1_pages': "Tag H1 Multipli",
-    'images_without_alt': "Attributo ALT Immagine Mancante",
-    'images_with_empty_alt': "Attributo ALT Immagine Vuoto",
-    'images_without_title_attr': "Attributo Title Immagine Mancante",
-    'images_with_empty_title_attr': "Attributo Title Immagine Vuoto",
-    'low_word_count_pages': "Conteggio Parole Basso",
-    'large_html_pages': "Pagina Pesante (Dimensioni Grandi)",
-    'slow_pages': "Pagina Lenta (Caricamento)",
-    'status_4xx_pages': "Errore Client (4xx)",
-    'status_5xx_pages': "Errore Server (5xx)",
-    'pages_without_canonical': "URL Canonico Mancante",
-    'pages_without_lang': "Attributo Lingua Mancante",
-    'pages_without_schema': "Schema Markup Mancante",
+    # Aliases/duplicates from existing list pointing to new preferred labels if functionality relies on old keys:
+    'missing_meta': 'Meta description mancante', # Alias for 'missing_meta_description'
+    'multiple_h1': 'Tag H1 multipli',          # Alias for 'multiple_h1_tags'
+    # 'missing_alt_attr' already covered by user preference if key is 'missing_alt_attribute'
+    # 'empty_alt_attr' already covered by user preference if key is 'empty_alt_attribute'
+    'low_content': 'Conteggio parole basso', # Alias for 'low_word_count'
+    'slow_page': 'Caricamento pagina lento',
+    'large_page': 'Dimensioni HTML elevate',
+    'missing_canonical': 'Tag Canonical mancante',
+    'missing_lang': 'Attributo Lingua mancante',
+    'missing_schema': 'Markup Schema mancante',
+    'server_error': 'Errore server (5xx)',
+    'client_error': 'Errore client (4xx)',
 
-    # Fallback generici
-    'unknown_issue': "Problema Sconosciuto",
-    'unknown_type': "Tipo Problema Non Specificato"
+    # Existing labels for specific page lists (standardized where possible)
+    'pages_without_title': 'Titolo mancante',
+    'pages_without_meta': 'Meta description mancante',
+    'missing_h1_pages': 'H1 mancante',
+    'multiple_h1_pages': 'Tag H1 multipli',
+    'images_without_alt': 'Attributo ALT mancante',
+    'images_with_empty_alt': 'Attributo ALT vuoto',
+    'images_without_title_attr': 'Attributo Title immagine mancante', # Kept specific "immagine" as it was distinct
+    'images_with_empty_title_attr': 'Attributo Title immagine vuoto', # Kept specific "immagine"
+    'low_word_count_pages': 'Conteggio parole basso',
+    'large_html_pages': 'Dimensioni HTML elevate',
+    'slow_pages': 'Caricamento pagina lento', # Note: This key 'slow_pages' is now an alias and also a page list key.
+                                            # The PDF generator might use it for specific list reporting.
+                                            # Value should be consistent.
+    'status_4xx_pages': 'Errore client (4xx)',
+    'status_5xx_pages': 'Errore server (5xx)',
+    'pages_without_canonical': 'Tag Canonical mancante',
+    'pages_without_lang': 'Attributo Lingua mancante',
+    'pages_without_schema': 'Markup Schema mancante',
+
+    # Fallback generici from existing (good to keep)
+    'unknown_issue': 'Problema Sconosciuto',
+    'unknown_type': 'Tipo Problema Non Specificato'
 }
 
+# Fattori di penalità per categoria di problemi nel calcolo del punteggio
+CATEGORY_ISSUE_PENALTY_FACTORS = {
+    'error': 1.0,    # Le problematiche classificate come 'error' hanno un impatto di penalità completo sul punteggio della categoria
+    'warning': 0.20, # Le problematiche classificate come 'warning' hanno il 20% dell'impatto di penalità
+    'notice': 0.02,  # Le problematiche classificate come 'notice' hanno il 2% dell'impatto di penalità
+}
 
 # Messaggi e testi dell'applicazione
 MESSAGES = {
