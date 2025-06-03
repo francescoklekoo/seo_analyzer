@@ -62,12 +62,21 @@ class PDFGenerator:
         style_name = 'SectionHeading'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=FONT_SIZE_HEADING, leading=FONT_SIZE_HEADING * 1.2, spaceAfter=8, textColor=HexColor(COLOR_PRIMARY)))
+        style_name = 'SectionSubHeadingStyle' # New Style
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=12, leading=12 * 1.2, spaceAfter=6, textColor=HexColor(COLOR_TEXT_PRIMARY)))
+        style_name = 'SpecificProblemHeadingStyle' # New Style for specific problem types in weaknesses
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=FONT_SIZE_BODY, leading=FONT_SIZE_BODY * 1.2, spaceBefore=4, spaceAfter=2, leftIndent=10, textColor=HexColor(COLOR_TEXT_PRIMARY)))
+        style_name = 'IssueDetailItemStyle' # New Style for issue details under specific problems
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], leftIndent=20, spaceAfter=2, bulletIndent=10)) # Smaller leftIndent than ListItem
         style_name = 'BodyText'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_BODY, leading=FONT_SIZE_BODY * 1.4, spaceAfter=6, textColor=HexColor(COLOR_TEXT_PRIMARY)))
         style_name = 'ListItem'
         if style_name not in self.styles:
-            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], leftIndent=20, spaceAfter=4))
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], leftIndent=30, spaceAfter=4, bulletIndent=20)) # Increased indent for general list items
         style_name = 'SmallText'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_SMALL, leading=FONT_SIZE_SMALL * 1.2, alignment=TA_CENTER, textColor=HexColor(COLOR_TEXT_SECONDARY)))
@@ -222,7 +231,7 @@ class PDFGenerator:
         ]
 
         # Strengths Section
-        flowables.append(Paragraph("Punti di Forza:", self.styles['BodyText'])) # This was BodyText as per current code
+        flowables.append(Paragraph("Punti di Forza:", self.styles['SectionSubHeadingStyle']))
         if strengths:
             strengths_data = [[Paragraph(s, self.styles['BodyText'])] for s in strengths]
             strengths_table = Table(strengths_data, colWidths=[table_width])
@@ -238,18 +247,52 @@ class PDFGenerator:
 
         flowables.append(Spacer(1, 0.1 * inch))
 
-        # Weaknesses Section
-        flowables.append(Paragraph("Aree di Miglioramento:", self.styles['BodyText'])) # This was BodyText
-        if weaknesses:
-            weaknesses_data = [[Paragraph(w, self.styles['BodyText'])] for w in weaknesses]
-            weaknesses_table = Table(weaknesses_data, colWidths=[table_width])
+        # Weaknesses Section - Restructured
+        flowables.append(Paragraph("Aree di Miglioramento:", self.styles['SectionSubHeadingStyle']))
 
-            current_weaknesses_style_cmds = list(base_table_style_cmds) # Copy base
-            for i, _ in enumerate(weaknesses):
-                color = bg_color_even if i % 2 == 0 else bg_color_odd
-                current_weaknesses_style_cmds.append(('BACKGROUND', (0,i), (0,i), color))
-            weaknesses_table.setStyle(TableStyle(current_weaknesses_style_cmds))
-            flowables.append(weaknesses_table)
+        if weaknesses and isinstance(weaknesses, dict) and (weaknesses.get('errors') or weaknesses.get('warnings') or weaknesses.get('notices')):
+            macro_order = [
+                ('errors', 'Errori Critici'),
+                ('warnings', 'Avvertimenti Importanti'),
+                ('notices', 'Avvisi e Ottimizzazioni Minori')
+            ]
+
+            has_any_weakness_to_show = False
+            for macro_key, macro_display_name in macro_order:
+                if macro_key in weaknesses and weaknesses[macro_key]:
+                    has_any_weakness_to_show = True
+                    # Add macro heading (e.g., "Errori Critici")
+                    # Using SectionSubHeadingStyle for these main categories of weaknesses for now.
+                    # If a different style is desired, it can be defined and used here.
+                    flowables.append(Paragraph(macro_display_name, self.styles['SectionSubHeadingStyle'])) # BodyText bold or a new style
+
+                    specific_problems = weaknesses[macro_key]
+                    for problem_label, problem_instances in specific_problems.items():
+                        # Add specific problem heading (e.g., "Meta description duplicato")
+                        flowables.append(Paragraph(problem_label, self.styles['SpecificProblemHeadingStyle']))
+
+                        for instance in problem_instances:
+                            # Add each instance as a list item
+                            # Limiting detail length for display in summary. Full details are in other sections.
+                            details_display = instance['details']
+                            if len(details_display) > 150: # Truncate long details for summary
+                                details_display = details_display[:147] + "..."
+
+                            # Display URL and then details. If details are 'N/A' or same as URL, just show URL.
+                            if instance['url'] != 'N/A':
+                                text = f"• {instance['url']}"
+                                if details_display != 'N/A' and details_display != instance['url']:
+                                    text += f" ({details_display})"
+                            else: # Should ideally not happen if URL is always present
+                                text = f"• {details_display}"
+
+                            flowables.append(Paragraph(text, self.styles['IssueDetailItemStyle']))
+                        flowables.append(Spacer(1, 0.05 * inch)) # Small spacer after a group of instances
+                    flowables.append(Spacer(1, 0.1 * inch)) # Spacer after a macro category
+
+            if not has_any_weakness_to_show:
+                 flowables.append(Paragraph("Nessuna area di miglioramento specifica identificata in base ai problemi rilevati.", self.styles['ListItem']))
+
         else:
             flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
 
@@ -282,14 +325,13 @@ class PDFGenerator:
         con un cerchio di completamento esterno e la percentuale al centro.
         Restituisce l'oggetto Image di ReportLab.
         """
-        print("DEBUG PDF: _get_site_health_chart_flowable START")
         try:
             # Ottieni il punteggio complessivo
             try:
                 overall_score = self.analysis_results['overall_score']
-                print(f"DEBUG PDF: overall_score = {overall_score}")
             except KeyError:
-                print("DEBUG PDF WARNING: 'overall_score' not found in analysis_results for chart generation.")
+                # Consider logging this warning instead of printing directly if a logging system is in place
+                print("WARNING: 'overall_score' not found in analysis_results for chart generation.")
                 return None
 
             health_percentage = overall_score
@@ -300,7 +342,7 @@ class PDFGenerator:
             COLOR_ERROR_CHART = '#DC3545'   # Renamed for clarity
             FONT_FAMILY_CHART = 'Arial'     # Renamed for clarity
 
-            fig, ax = plt.subplots(figsize=(5, 5), facecolor='white') # Changed from (6,6)
+            fig, ax = plt.subplots(figsize=(4.5, 4.5), facecolor='white') # Changed from (5,5)
             ax.set_facecolor('white')
 
             sizes = [health_percentage, problem_percentage]
@@ -356,17 +398,15 @@ class PDFGenerator:
             img_buffer.seek(0)
 
             # RLImage is already imported as Image, so just use Image
-            chart_image = RLImage(img_buffer, width=3*inch, height=3*inch) # Changed from 4*inch
+            chart_image = RLImage(img_buffer, width=2.5*inch, height=2.5*inch) # Changed from 3*inch
 
             plt.close(fig) # Assicura che la figura sia chiusa
-            print("DEBUG PDF: Chart image created and fig closed.")
-            print("DEBUG PDF: _get_site_health_chart_flowable successfully generated chart_image object.")
             return chart_image
         except Exception as e:
-            print(f"DEBUG PDF ERROR in _get_site_health_chart_flowable: {e}")
-            print(f"Errore durante la generazione del grafico Site Health: {e}")
+            # Consider logging this error instead of printing directly if a logging system is in place
+            print(f"ERROR in _get_site_health_chart_flowable: Errore durante la generazione del grafico Site Health: {e}")
             import traceback
-            traceback.print_exc()
+            traceback.print_exc() # This is useful for debugging but might be removed for production
             return None
 
 
@@ -784,19 +824,56 @@ class PDFGenerator:
         else: return '#DC3545'
 
     def _identify_strengths_weaknesses(self):
-        strengths = []; weaknesses = []
+        strengths = []
+        # Strengths identification remains the same
         categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score']}
         for category, score in categories.items():
             if score >= 80: strengths.append(f"{category} ottimizzato correttamente (punteggio: {score}/100)")
-            elif score < 50: weaknesses.append(f"{category} necessita miglioramenti urgenti (punteggio: {score}/100)")
-            elif score < 70: weaknesses.append(f"{category} richiede attenzione (punteggio: {score}/100)")
+            # Weaknesses based on scores are not included here anymore, as per new structure focusing on detailed_issues
+
+        weaknesses_structured = {
+            'errors': {},
+            'warnings': {},
+            'notices': {}
+        }
         detailed_issues = self.analysis_results.get('detailed_issues', {})
-        for issue_type, issues_list in detailed_issues.items():
-            if isinstance(issues_list, list):
-                for issue in issues_list:
-                    if 'url' in issue and 'type' in issue: weaknesses.append(f"Problema: {issue.get('type')} su {issue.get('url')}")
-                    elif isinstance(issue, str): weaknesses.append(f"Problema rilevato: {issue_type} - {issue}")
-        return strengths, weaknesses
+
+        macro_map = {
+            'errors': 'errors',
+            'warnings': 'warnings',
+            'notices': 'notices'
+        }
+
+        for macro_key, detailed_issue_list_key in macro_map.items():
+            issues_list = detailed_issues.get(detailed_issue_list_key, [])
+            if not isinstance(issues_list, list):
+                continue
+
+            for issue in issues_list:
+                if not isinstance(issue, dict):
+                    continue
+
+                specific_type_key = issue.get('type', 'unknown_type')
+                # Get user-friendly label or create a fallback
+                user_friendly_label = PDF_ISSUE_TYPE_LABELS.get(specific_type_key, specific_type_key.replace('_', ' ').capitalize())
+
+                # Prepare issue details for presentation
+                # Prioritize 'image' for details if it exists, then 'details', then 'issue' field or 'N/A'
+                details_text = issue.get('image', issue.get('details', issue.get('issue', 'N/A')))
+
+                issue_entry = {
+                    'url': issue.get('url', 'N/A'),
+                    'details': details_text
+                }
+
+                if user_friendly_label not in weaknesses_structured[macro_key]:
+                    weaknesses_structured[macro_key][user_friendly_label] = []
+                weaknesses_structured[macro_key][user_friendly_label].append(issue_entry)
+
+        # Remove macro categories if they are empty
+        weaknesses_structured = {k: v for k, v in weaknesses_structured.items() if v}
+
+        return strengths, weaknesses_structured
         
     def generate_pdf(self, filename: str) -> bool:
         try:
