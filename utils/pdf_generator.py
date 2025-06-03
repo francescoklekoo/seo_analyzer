@@ -276,10 +276,39 @@ class PDFGenerator:
             if column_widths is None:
                 total_width = 17 * cm; num_cols = len(headers); column_widths = [total_width / num_cols] * num_cols
             table = Table(table_data, colWidths=column_widths)
-            table.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,0), HexColor(PDF_CONFIG['colors']['secondary'])), ('TEXTCOLOR', (0,0), (-1,0), white), ('ALIGN', (0,0), (-1,0), 'CENTER'), ('FONTNAME', (0,0), (-1,0), PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')), ('FONTSIZE', (0,0), (-1,0), PDF_CONFIG['font_sizes'].get('small',9)), ('BOTTOMPADDING', (0,0), (-1,0), 6), ('TOPPADDING', (0,0), (-1,0), 6), ('BACKGROUND', (0,1), (-1,-1), HexColor(PDF_CONFIG['colors']['light_gray'])), ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors']['border'])), ('BOX', (0,0), (-1,-1), 1, colors.HexColor(PDF_CONFIG['colors']['secondary_dark'])), ('VALIGN', (0,0), (-1,-1), 'TOP'), ('FONTNAME', (0,1), (-1,-1), PDF_CONFIG['font_family']), ('FONTSIZE', (0,1), (-1,-1), PDF_CONFIG['font_sizes'].get('extra_small', 8.5)), ('TEXTCOLOR', (0,1), (-1,-1), colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#000000'))), ('ALIGN', (0,1), (-1,-1), 'LEFT')]))
-            for i_row in range(1, len(table_data)):
-                if i_row % 2 == 0: table.getStyle().add('BACKGROUND', (0,i_row), (-1,i_row), white)
-                else: table.getStyle().add('BACKGROUND', (0,i_row), (-1,i_row), HexColor(PDF_CONFIG['colors']['light_gray']))
+            initial_style_commands = [
+                ('BACKGROUND', (0,0), (-1,0), HexColor(PDF_CONFIG['colors']['secondary'])),
+                ('TEXTCOLOR', (0,0), (-1,0), white),
+                ('ALIGN', (0,0), (-1,0), 'CENTER'),
+                ('FONTNAME', (0,0), (-1,0), PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')),
+                ('FONTSIZE', (0,0), (-1,0), PDF_CONFIG['font_sizes'].get('small',9)),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), HexColor(PDF_CONFIG['colors']['light_gray'])), # Default background for all data rows
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors']['border'])),
+                ('BOX', (0,0), (-1,-1), 1, colors.HexColor(PDF_CONFIG['colors']['secondary_dark'])),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('FONTNAME', (0,1), (-1,-1), PDF_CONFIG['font_family']),
+                ('FONTSIZE', (0,1), (-1,-1), PDF_CONFIG['font_sizes'].get('extra_small', 8.5)),
+                ('TEXTCOLOR', (0,1), (-1,-1), colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#000000'))),
+                ('ALIGN', (0,1), (-1,-1), 'LEFT')
+            ]
+
+            # For alternating row colors:
+            # Get the commands from the initial style
+            new_style_commands = list(initial_style_commands) # Make a mutable copy
+
+            for i_row in range(1, len(table_data)): # Start from 1 to skip header row
+                if i_row % 2 == 0: # Even rows (0-indexed i_row means 2nd data row, 4th, etc.)
+                    new_style_commands.append(('BACKGROUND', (0, i_row), (-1, i_row), white))
+                else: # Odd rows (1st data row, 3rd, etc.)
+                    # The default background set in initial_style_commands for (0,1),(-1,-1) will cover odd rows if it's light_gray
+                    # If we want a different color for odd rows explicitly, we add it here.
+                    # The current initial style already sets all data rows to light_gray, so we only need to override evens.
+                    # However, to match the original logic where light_gray was explicitly set for odd rows in the loop:
+                    new_style_commands.append(('BACKGROUND', (0, i_row), (-1, i_row), HexColor(PDF_CONFIG['colors']['light_gray'])))
+
+            table.setStyle(TableStyle(new_style_commands))
             flowables_subsection.append(table)
             flowables_subsection.append(Spacer(1, 0.3 * inch))
             self.story.append(KeepTogether(flowables_subsection))

@@ -406,7 +406,7 @@ class MainWindow:
         
         self.score_label = ctk.CTkLabel(
             self.score_frame,
-            text="Punteggio SEO: --",
+            text="Site Health: --",
             font=ctk.CTkFont(family=GC_FONTS['family_main'], size=GC_FONTS['title_size']-2, weight="bold"), # Slightly smaller than main title
             text_color=GC_COLORS['text_on_primary_button'] # Assuming score_frame has a dark background
         )
@@ -709,7 +709,7 @@ class MainWindow:
         score_color = self._get_score_color(current_overall_score)
         
         self.score_label.configure(
-            text=f"Punteggio SEO: {int(current_overall_score)}/100",
+            text=f"Site Health: {int(current_overall_score)}/100",
             text_color=score_color
         )
         
