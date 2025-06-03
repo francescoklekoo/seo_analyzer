@@ -299,9 +299,9 @@ class PDFGenerator:
             return
 
         header_row = [
-            Paragraph("Pagina URL", self.styles['BodyText']),
-            Paragraph("Tipo di Problema", self.styles['BodyText']),
-            Paragraph("Dettaglio/Elemento Coinvolto", self.styles['BodyText'])
+            Paragraph("Pagina URL", self.styles['SmallText']),
+            Paragraph("Tipo di Problema", self.styles['SmallText']),
+            Paragraph("Dettaglio/Elemento Coinvolto", self.styles['SmallText'])
         ]
         data = [header_row]
 
@@ -315,17 +315,57 @@ class PDFGenerator:
                 detail_content = detail_content[:67] + "..."
 
             data.append([
-                Paragraph(str(issue_item_dict.get('url', 'N/A')), self.styles['BodyText']),
-                Paragraph(user_friendly_label, self.styles['BodyText']),
-                Paragraph(detail_content, self.styles['BodyText'])
+                Paragraph(str(issue_item_dict.get('url', 'N/A')), self.styles['SmallText']),
+                Paragraph(user_friendly_label, self.styles['SmallText']),
+                Paragraph(detail_content, self.styles['SmallText'])
             ])
 
         table = Table(data, colWidths=[6*cm, 5*cm, 6*cm])
-        COLOR_TABLE_HEADER_BG = PDF_CONFIG['colors'].get('primary_dark', '#004080'); COLOR_TABLE_HEADER_TEXT = PDF_CONFIG['colors'].get('white', '#FFFFFF'); COLOR_TABLE_ROW_BG_ODD = PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5'); COLOR_TABLE_ROW_BG_EVEN = PDF_CONFIG['colors'].get('white', '#FFFFFF'); COLOR_BORDER = PDF_CONFIG['colors'].get('border_light', '#B0C4DE'); FONT_FAMILY_TABLE_HEADER = PDF_CONFIG['font_family_bold']; FONT_FAMILY_TABLE_BODY = PDF_CONFIG['font_family']; FONT_SIZE_TABLE_HEADER = PDF_CONFIG['font_sizes'].get('small', 9); FONT_SIZE_TABLE_BODY = PDF_CONFIG['font_sizes'].get('extra_small', 8); COLOR_TEXT_PRIMARY_FOR_TABLE = PDF_CONFIG['colors'].get('text_primary', '#222222')
-        issues_table_style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)), ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_TEXT)), ('ALIGN', (0, 0), (-1, 0), 'CENTER'), ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER), ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER), ('BOTTOMPADDING', (0, 0), (-1, 0), 8), ('TOPPADDING', (0, 0), (-1, 0), 8), ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY), ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY), ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)), ('ALIGN', (0, 1), (-1, -1), 'LEFT'), ('VALIGN', (0, 1), (-1, -1), 'TOP'), ('BOTTOMPADDING', (0, 1), (-1, -1), 5), ('TOPPADDING', (0, 1), (-1, -1), 5), ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN))])
+        # Define colors and fonts from PDF_CONFIG for clarity and consistency
+        color_header_bg = PDF_CONFIG['colors'].get('primary_dark', '#004080')
+        color_header_text = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+        color_row_odd = PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5')
+        color_row_even = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+        color_border = PDF_CONFIG['colors'].get('border_light', '#B0C4DE')
+        font_header = PDF_CONFIG['font_family_bold']
+        font_body = PDF_CONFIG['font_family']
+        fontsize_header = PDF_CONFIG['font_sizes'].get('small', 9)
+        fontsize_body = PDF_CONFIG['font_sizes'].get('extra_small', 8) # Matches SmallText style
+        color_text_body = PDF_CONFIG['colors'].get('text_primary', '#222222')
+
+        issues_table_style = TableStyle([
+            # Header Row
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor(color_header_bg)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(color_header_text)),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), font_header),
+            ('FONTSIZE', (0, 0), (-1, 0), fontsize_header),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+
+            # Data Rows
+            ('FONTNAME', (0, 1), (-1, -1), font_body),
+            ('FONTSIZE', (0, 1), (-1, -1), fontsize_body),
+            ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(color_text_body)),
+            ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 1), (-1, -1), 'TOP'), # Ensure multi-line content is aligned to top
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6), # Adjusted padding for body
+            ('TOPPADDING', (0, 1), (-1, -1), 6),   # Adjusted padding for body
+
+            # Default background for all data rows (even rows)
+            ('BACKGROUND', (0, 1), (-1, -1), HexColor(color_row_even)),
+
+            # Grid and Box
+            ('GRID', (0, 0), (-1, -1), 0.5, HexColor(color_border)),
+            ('BOX', (0, 0), (-1, -1), 1, HexColor(color_border)),
+        ])
+
+        # Apply odd row striping
         for i in range(1, len(data)):
-            if i % 2 != 0: issues_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
-        issues_table_style.add('GRID', (0, 0), (-1, -1), 0.5, HexColor(COLOR_BORDER)); issues_table_style.add('BOX', (0, 0), (-1, -1), 1, HexColor(COLOR_BORDER))
+            if i % 2 != 0: # Odd rows (1-indexed in loop, so 1st, 3rd, 5th data row)
+                issues_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(color_row_odd))
+
         table.setStyle(issues_table_style)
         flowables.append(table)
         flowables.append(Spacer(1, 0.5 * inch))
@@ -346,17 +386,44 @@ class PDFGenerator:
         def add_issue_table_subsection(section_title_text: str, issues: List[Dict], headers: List[str], data_keys: List[str], column_widths: List = None):
             if not issues: return
             flowables_subsection = [Paragraph(section_title_text, self.styles['BodyText']), Spacer(1, 0.1 * inch)]
-            table_data = [[Paragraph(h, self.styles['BodyText']) for h in headers]]
+            # Use SmallText for headers to match cell content style if not overridden by TableStyle FONTSIZE
+            table_data = [[Paragraph(h, self.styles['SmallText']) for h in headers]]
             for issue_item in issues:
                 row = []
                 for key in data_keys:
-                    raw_text = str(issue_item.get(key, 'N/A'))
-                    if len(raw_text) > 100 and ("http" in raw_text or "www" in raw_text): raw_text = raw_text[:97] + "..."
-                    elif len(raw_text) > 150: raw_text = raw_text[:147] + "..."
-                    row.append(Paragraph(raw_text, self.styles['BodyText']))
+                    full_url = str(issue_item.get(key, 'N/A')) # Full URL for href
+                    display_text = full_url
+
+                    # Truncate display_text if it's a long URL or very long string
+                    if ("http" in display_text or "www" in display_text) and len(display_text) > 70: # Increased limit slightly for URLs
+                        display_text = display_text[:67] + "..."
+                    elif len(display_text) > 100: # General very long string truncation
+                        display_text = display_text[:97] + "..."
+
+                    cell_paragraph_style = self.styles['SmallText'] # Default style for cells
+
+                    if key in ['url', 'image_src', 'href', 'link', 'src']: # Check if the key suggests it's a URL
+                        # Ensure full_url is not 'N/A' before creating a link
+                        if full_url != 'N/A' and "http" in full_url: # Basic check for a valid URL
+                            link_color = PDF_CONFIG['colors'].get('link', 'blue') # Get link color from config or default to blue
+                            cell_content = f'<a href="{full_url}" color="{link_color}">{display_text}</a>'
+                        else:
+                            cell_content = display_text # Non-linkable 'N/A' or invalid URL
+                    else:
+                        cell_content = display_text
+
+                    row.append(Paragraph(cell_content, cell_paragraph_style))
                 table_data.append(row)
             if column_widths is None:
-                total_width = 17 * cm; num_cols = len(headers); column_widths = [total_width / num_cols] * num_cols
+                # Ensure total_width calculation is robust if page margins change
+                page_width, _ = A4 # Standard A4 size, could get from self.doc.width if available before build
+                effective_page_width = page_width - (self.doc.leftMargin + self.doc.rightMargin if self.doc else 4*cm) # Use current margins (2cm+2cm)
+                total_width = effective_page_width
+                num_cols = len(headers)
+                if num_cols > 0:
+                    column_widths = [total_width / num_cols] * num_cols
+                else:
+                    column_widths = [] # Avoid division by zero
             table = Table(table_data, colWidths=column_widths)
             initial_style_commands = [
                 ('BACKGROUND', (0,0), (-1,0), HexColor(PDF_CONFIG['colors']['secondary'])),
@@ -601,11 +668,11 @@ class PDFGenerator:
         
     def generate_pdf(self, filename: str) -> bool:
         try:
-            self.doc = SimpleDocTemplate(filename, pagesize=A4, leftMargin=PDF_CONFIG['margin']['left']*cm, rightMargin=PDF_CONFIG['margin']['right']*cm, topMargin=PDF_CONFIG['margin']['top']*cm, bottomMargin=PDF_CONFIG['margin']['bottom']*cm)
+            self.doc = SimpleDocTemplate(filename, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
             self.story = []
             self._add_header()
-            self._add_executive_summary()
             self._add_site_health_chart()
+            self._add_executive_summary()
             self._add_score_overview()
             self.story.append(PageBreak())
             self._add_issues_table_section()
