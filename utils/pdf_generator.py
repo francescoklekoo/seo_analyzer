@@ -282,13 +282,15 @@ class PDFGenerator:
         con un cerchio di completamento esterno e la percentuale al centro.
         Restituisce l'oggetto Image di ReportLab.
         """
+        print("DEBUG PDF: _get_site_health_chart_flowable START")
         try:
             # Ottieni il punteggio complessivo
-            overall_score = self.analysis_results['overall_score']
-        except KeyError:
-            # Handle missing overall_score if necessary, or let it raise
-            print("Warning: 'overall_score' not found in analysis_results for chart generation.")
-            return None # Or a placeholder image/message
+            try:
+                overall_score = self.analysis_results['overall_score']
+                print(f"DEBUG PDF: overall_score = {overall_score}")
+            except KeyError:
+                print("DEBUG PDF WARNING: 'overall_score' not found in analysis_results for chart generation.")
+                return None
 
             health_percentage = overall_score
             problem_percentage = 100 - overall_score
@@ -356,9 +358,12 @@ class PDFGenerator:
             # RLImage is already imported as Image, so just use Image
             chart_image = RLImage(img_buffer, width=3*inch, height=3*inch) # Changed from 4*inch
 
-            plt.close(fig)
+            plt.close(fig) # Assicura che la figura sia chiusa
+            print("DEBUG PDF: Chart image created and fig closed.")
+            print("DEBUG PDF: _get_site_health_chart_flowable successfully generated chart_image object.")
             return chart_image
         except Exception as e:
+            print(f"DEBUG PDF ERROR in _get_site_health_chart_flowable: {e}")
             print(f"Errore durante la generazione del grafico Site Health: {e}")
             import traceback
             traceback.print_exc()
