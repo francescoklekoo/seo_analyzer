@@ -16,6 +16,7 @@ from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import numpy as np
 import io
 import base64
 from datetime import datetime
@@ -148,25 +149,106 @@ class PDFGenerator:
         self.story.append(KeepTogether(flowables))
 
     def _add_site_health_chart(self):
+        """
+        Crea un grafico a ciambella (donut chart) che mostra la percentuale di salute del sito
+        con un cerchio di completamento esterno e la percentuale al centro.
+        """
         flowables = []
         flowables.append(Paragraph("Site Health Overview", self.styles['SectionHeading']))
         flowables.append(Spacer(1, 0.2 * inch))
+        
+        # Ottieni il punteggio complessivo
         overall_score = self.analysis_results['overall_score']
-        health_percentage = overall_score; problem_percentage = 100 - overall_score
-        data = [health_percentage, problem_percentage]; labels = [f'Sano ({health_percentage:.0f}%)', f'Problemi ({problem_percentage:.0f}%)']
-        COLOR_SUCCESS = '#28A745'; COLOR_ERROR = '#DC3545'; FONT_FAMILY = 'Helvetica'; FONT_FAMILY_BOLD = 'Helvetica-Bold'; FONT_SIZE_SMALL_CHART = 8; FONT_SIZE_BODY_CHART = 10; FONT_SIZE_SCORE_CHART = 32; COLOR_TEXT_PRIMARY_CHART = '#222222'; COLOR_PRIMARY_CHART_LABEL = '#005A9C'
-        colors_pie = [HexColor(COLOR_SUCCESS), HexColor(COLOR_ERROR)]
-        drawing = Drawing(400, 200); pie = Pie(); pie.x = 100; pie.y = 50; pie.height = 150; pie.width = 150; pie.data = data; pie.labels = labels; pie.slices.strokeWidth = 0.5
-        for i, color_val in enumerate(colors_pie):
-            pie.slices[i].fillColor = color_val; pie.slices[i].fontName = FONT_FAMILY; pie.slices[i].fontSize = FONT_SIZE_SMALL_CHART; pie.slices[i].labelRadius = 1.2
-        center_x = pie.x + pie.width / 2; center_y = pie.y + pie.height / 2
-        overall_score_text = String(center_x, center_y, f"{int(overall_score)}%", fontName=FONT_FAMILY_BOLD, fontSize=FONT_SIZE_SCORE_CHART, fillColor=HexColor(COLOR_PRIMARY_CHART_LABEL), textAnchor='middle')
-        drawing.add(overall_score_text)
-        site_health_label_y_offset = FONT_SIZE_SCORE_CHART * 0.65
-        site_health_label = String(center_x, center_y - site_health_label_y_offset, "Site Health", fontName=FONT_FAMILY, fontSize=FONT_SIZE_BODY_CHART, fillColor=HexColor(COLOR_TEXT_PRIMARY_CHART), textAnchor='middle')
-        drawing.add(site_health_label)
-        drawing.add(pie)
-        flowables.append(drawing)
+        health_percentage = overall_score
+        problem_percentage = 100 - overall_score
+        
+        # Colori e stili
+        COLOR_SUCCESS = '#28A745'
+        COLOR_ERROR = '#DC3545'
+        COLOR_BACKGROUND = '#F8F9FA'
+        FONT_FAMILY = 'Arial'
+        
+        # Crea la figura
+        fig, ax = plt.subplots(figsize=(6, 6), facecolor='white')
+        ax.set_facecolor('white')
+        
+        # Dati per il donut chart
+        sizes = [health_percentage, problem_percentage]
+        colors = [COLOR_SUCCESS, COLOR_ERROR]
+        labels = [f'Sano', f'Problemi']
+        
+        # Crea il donut chart
+        wedges, texts = ax.pie(sizes, colors=colors, startangle=90, 
+                            counterclock=False, wedgeprops=dict(width=0.3))
+        
+        # Rimuovi le etichette automatiche
+        for text in texts:
+            text.set_visible(False)
+        
+        # Aggiungi il cerchio di completamento esterno
+        circle_outer = plt.Circle((0, 0), 0.85, fill=False, linewidth=8, 
+                                color=COLOR_SUCCESS, alpha=0.3)
+        ax.add_patch(circle_outer)
+        
+        # Aggiungi l'arco di completamento
+        theta1 = 90  # Inizia dall'alto
+        theta2 = 90 - (health_percentage * 360 / 100)  # Arco basato sulla percentuale
+        
+        # Crea l'arco di completamento
+        angles = np.linspace(np.radians(theta1), np.radians(theta2), 100)
+        x_outer = 0.85 * np.cos(angles)
+        y_outer = 0.85 * np.sin(angles)
+        
+        ax.plot(x_outer, y_outer, linewidth=8, color=COLOR_SUCCESS, solid_capstyle='round')
+        
+        # Aggiungi la percentuale al centro
+        ax.text(0, 0.1, f'{int(health_percentage)}%', 
+                horizontalalignment='center', verticalalignment='center',
+                fontsize=36, fontweight='bold', color='#005A9C', fontfamily=FONT_FAMILY)
+        
+        # Aggiungi l'etichetta "Site Health"
+        ax.text(0, -0.15, 'Site Health', 
+                horizontalalignment='center', verticalalignment='center',
+                fontsize=14, color='#222222', fontfamily=FONT_FAMILY)
+        
+        # Aggiungi la legenda
+        legend_elements = [
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_SUCCESS, 
+                    markersize=12, label=f'Sano ({health_percentage:.0f}%)'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_ERROR, 
+                    markersize=12, label=f'Problemi ({problem_percentage:.0f}%)')
+        ]
+        
+        ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.3, 1),
+                fontsize=10, frameon=False)
+        
+        # Rimuovi assi e imposta aspetto uguale
+        ax.set_xlim(-1.2, 1.2)
+        ax.set_ylim(-1.2, 1.2)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        
+        # Rimuovi spazi bianchi
+        plt.tight_layout()
+        
+        # Salva il grafico come immagine temporanea
+        import io
+        import base64
+        from reportlab.platypus import Image
+        
+        # Salva in un buffer
+        img_buffer = io.BytesIO()
+        plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight', 
+                    facecolor='white', edgecolor='none')
+        img_buffer.seek(0)
+        
+        # Crea l'oggetto Image per ReportLab
+        chart_image = Image(img_buffer, width=4*inch, height=4*inch)
+        flowables.append(chart_image)
+        
+        # Chiudi la figura per liberare memoria
+        plt.close(fig)
+        
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
@@ -539,5 +621,3 @@ class PDFGenerator:
             import traceback
             traceback.print_exc()
             return False
-
-[end of utils/pdf_generator.py]

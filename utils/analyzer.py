@@ -44,14 +44,14 @@ class SEOAnalyzer:
         self.analysis_results['detailed_issues'] = self._analyze_detailed_issues()
         
         # Calcola Site Health. Questo metodo ora chiama _calculate_weighted_category_score()
-        # (che è la logica copiata dalla prima _generate_recommendations) e poi applica le penalità.
+        # e restituisce il punteggio complessivo basato sulle categorie, senza penalità dirette.
         site_health_data = self._calculate_site_health()
         self.analysis_results['site_health'] = site_health_data
         
         # Il punteggio generale del sito è ora direttamente la percentuale di salute.
-        self.analysis_results['overall_score'] = site_health_data['health_percentage']
+        self.analysis_results['overall_score'] = self._calculate_weighted_category_score()
 
-        # Genera raccomandazioni testuali (utilizzando la seconda definizione di _generate_recommendations)
+        # Genera raccomandazioni testuali
         self.analysis_results['recommendations'] = self._generate_recommendations()
         
         # Crea il riassunto
@@ -905,59 +905,16 @@ class SEOAnalyzer:
             }
 
         # Definisci le penalità per tipo di problema
-        CRITICAL_PENALTY_PER_ISSUE = 5.0
-        WARNING_PENALTY_PER_ISSUE = 2.0
-        NOTICE_PENALTY_PER_ISSUE = 0.5
-
-        # Calculate base_score from weighted categories (logic copied from the first _generate_recommendations)
-        temp_scores_for_base = {}
-        # Populate temp_scores_for_base from self.analysis_results based on SEO_WEIGHTS keys
-        if 'title_analysis' in self.analysis_results and isinstance(self.analysis_results['title_analysis'], dict):
-            temp_scores_for_base['title_tags'] = self.analysis_results['title_analysis'].get('score', 0)
-        if 'meta_description_analysis' in self.analysis_results and isinstance(self.analysis_results['meta_description_analysis'], dict):
-            temp_scores_for_base['meta_descriptions'] = self.analysis_results['meta_description_analysis'].get('score', 0)
-        if 'headings_analysis' in self.analysis_results and isinstance(self.analysis_results['headings_analysis'], dict):
-            temp_scores_for_base['headings'] = self.analysis_results['headings_analysis'].get('score', 0)
-        if 'images_analysis' in self.analysis_results and isinstance(self.analysis_results['images_analysis'], dict):
-            temp_scores_for_base['images_alt'] = self.analysis_results['images_analysis'].get('score', 0)
-        if 'links_analysis' in self.analysis_results and isinstance(self.analysis_results['links_analysis'], dict):
-            temp_scores_for_base['internal_links'] = self.analysis_results['links_analysis'].get('score', 0)
-        if 'performance_analysis' in self.analysis_results and isinstance(self.analysis_results['performance_analysis'], dict):
-            temp_scores_for_base['page_speed'] = self.analysis_results['performance_analysis'].get('score', 0)
-        if 'mobile_analysis' in self.analysis_results and isinstance(self.analysis_results['mobile_analysis'], dict):
-            temp_scores_for_base['mobile_friendly'] = self.analysis_results['mobile_analysis'].get('score', 0)
-        if 'ssl_analysis' in self.analysis_results and isinstance(self.analysis_results['ssl_analysis'], dict):
-            temp_scores_for_base['ssl_certificate'] = self.analysis_results['ssl_analysis'].get('score', 0)
-        if 'content_analysis' in self.analysis_results and isinstance(self.analysis_results['content_analysis'], dict):
-            temp_scores_for_base['content_quality'] = self.analysis_results['content_analysis'].get('score', 0)
-        
-        valid_keys_for_base = [key for key in temp_scores_for_base if key in SEO_WEIGHTS]
-        if not valid_keys_for_base:
-            self.logger.warning("No valid scores found for weighted category calculation in site_health.")
-            base_score = 0.0
-        else:
-            weighted_sum_for_base = sum(temp_scores_for_base[key] * SEO_WEIGHTS[key] for key in valid_keys_for_base)
-            total_weight_for_base = sum(SEO_WEIGHTS[key] for key in valid_keys_for_base)
-            base_score = float(weighted_sum_for_base / total_weight_for_base) if total_weight_for_base > 0 else 0.0
-        # End of base_score calculation logic
+        # Il punteggio di salute è ora il punteggio complessivo ponderato delle categorie.
+        health_percentage = self._calculate_weighted_category_score()
 
         detailed_issues = self.analysis_results.get('detailed_issues', {'errors': [], 'warnings': [], 'notices': []})
         num_critical_issues = len(detailed_issues.get('errors', []))
         num_warning_issues = len(detailed_issues.get('warnings', []))
         num_notice_issues = len(detailed_issues.get('notices', []))
-
-        current_health = base_score # Start with the weighted score
-        current_health -= num_critical_issues * CRITICAL_PENALTY_PER_ISSUE
-        current_health -= num_warning_issues * WARNING_PENALTY_PER_ISSUE
-        current_health -= num_notice_issues * NOTICE_PENALTY_PER_ISSUE
-
-        if num_critical_issues == 0 and (num_warning_issues > 0 or num_notice_issues > 0):
-            current_health = min(current_health, 99.0)
-
-        final_health_percentage = max(0, min(100, int(round(current_health))))
             
         return {
-            'health_percentage': final_health_percentage,
+            'health_percentage': health_percentage,
             'total_pages': total_pages,
             'total_critical_issues': num_critical_issues,
             'total_warning_issues': num_warning_issues,
@@ -966,19 +923,11 @@ class SEOAnalyzer:
 
     def _calculate_overall_score(self) -> int:
         """Calcola il punteggio SEO complessivo.
-        Questo ora restituisce direttamente 'health_percentage' calcolato da _calculate_site_health.
+        Questo ora restituisce direttamente il punteggio ponderato delle categorie.
         """
-        # Assicurati che site_health sia già calcolato e disponibile
-        if 'site_health' in self.analysis_results and \
-           'health_percentage' in self.analysis_results['site_health']:
-            return self.analysis_results['site_health']['health_percentage']
-        else:
-            # Fallback nel caso in cui site_health non sia stato calcolato, anche se non dovrebbe succedere
-            # nel flusso normale dato che _calculate_site_health è chiamato prima.
-            self.logger.warning("Attempted to calculate overall_score before site_health was available. Returning 0.")
-            return 0
+        return self._calculate_weighted_category_score()
     
-    def _generate_recommendations(self) -> List[Dict]:
+    def _calculate_weighted_category_score(self) -> int:
         scores = {}
         
         # Raccogli tutti i punteggi

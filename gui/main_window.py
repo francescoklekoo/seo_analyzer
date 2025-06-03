@@ -65,7 +65,6 @@ class MainWindow:
         self.crawl_data = None
         self.is_crawling = False
         self.is_analyzing = False
-        self.adjusted_overall_score = 0 # Aggiunto per memorizzare il punteggio aggiustato
         
         # Setup variables prima dell'UI
         self._setup_variables()
@@ -401,16 +400,19 @@ class MainWindow:
         scroll_frame.pack(fill="both", expand=True, padx=GC_PADDING['small'], pady=GC_PADDING['small'])
         
         # Punteggio generale
+        # Punteggio generale - Sostituito con Canvas per il grafico circolare
         self.score_frame = ctk.CTkFrame(scroll_frame, corner_radius=GC_CORNER_RADIUS['main_frames'], fg_color=GC_COLORS['background_input'])
         self.score_frame.pack(fill="x", pady=(0, GC_PADDING['medium']), padx=GC_PADDING['small'])
         
-        self.score_label = ctk.CTkLabel(
+        # Canvas per il grafico circolare
+        self.score_canvas = tk.Canvas(
             self.score_frame,
-            text="Site Health: --",
-            font=ctk.CTkFont(family=GC_FONTS['family_main'], size=GC_FONTS['title_size']-2, weight="bold"), # Slightly smaller than main title
-            text_color=GC_COLORS['text_on_primary_button'] # Assuming score_frame has a dark background
+            width=150, # Dimensione del grafico
+            height=150,
+            bg=GC_COLORS['background_input'], # Sfondo del canvas uguale al frame
+            highlightthickness=0 # Rimuove il bordo di default del canvas
         )
-        self.score_label.pack(pady=GC_PADDING['medium'])
+        self.score_canvas.pack(pady=GC_PADDING['medium'])
         
         # Metriche principali
         self.metrics_frame = ctk.CTkFrame(scroll_frame, corner_radius=GC_CORNER_RADIUS['main_frames'], fg_color=GC_COLORS['background_input'])
@@ -436,7 +438,7 @@ class MainWindow:
         )
         self.metrics_text.pack(fill="x", expand=True, padx=GC_PADDING['small'], pady=(0, GC_PADDING['small']))
         
-        # Problemi principali
+        # Problemi principali (spostati sotto il grafico)
         self.issues_frame = ctk.CTkFrame(scroll_frame, corner_radius=GC_CORNER_RADIUS['main_frames'], fg_color=GC_COLORS['background_input'])
         self.issues_frame.pack(fill="x", pady=(0, GC_PADDING['medium']), padx=GC_PADDING['small'])
         
@@ -685,9 +687,8 @@ class MainWindow:
         """Aggiorna l'interfaccia con i risultati dell'analisi"""
         if not self.analysis_results:
             # Se analysis_results è None, imposta il punteggio a 0
-            # self.adjusted_overall_score = 0 # Questa variabile non è più necessaria come prima
             current_overall_score = 0
-            self.score_label.configure(text=f"Punteggio SEO: {current_overall_score}/100", text_color=GUI_CONFIG['colors']['error'])
+            self._draw_site_health_graph(current_overall_score, GC_COLORS['error']) # Disegna il grafico con 0 e colore errore
             self.metrics_text.delete("1.0", "end")
             self.metrics_text.insert("1.0", "Nessun risultato di analisi disponibile.")
             self.issues_text.delete("1.0", "end")
@@ -699,19 +700,11 @@ class MainWindow:
             return
             
         # Il 'overall_score' in analysis_results è ora il 'health_percentage' calcolato da analyzer.py
-        # che include già le penalità.
         current_overall_score = self.analysis_results.get('overall_score', 0)
-        # La variabile self.adjusted_overall_score può essere rimossa o semplicemente aggiornata.
-        # Per coerenza, la aggiorniamo, anche se la logica di aggiustamento locale è rimossa.
-        self.adjusted_overall_score = current_overall_score
             
-        # Aggiorna punteggio generale
+        # Aggiorna punteggio generale disegnando il grafico
         score_color = self._get_score_color(current_overall_score)
-        
-        self.score_label.configure(
-            text=f"Site Health: {int(current_overall_score)}/100",
-            text_color=score_color
-        )
+        self._draw_site_health_graph(int(current_overall_score), score_color)
         
         # Aggiorna metriche
         self._update_metrics(current_overall_score) # Passa il punteggio corretto
@@ -1167,7 +1160,7 @@ class MainWindow:
         summary = self.analysis_results['summary']
         
         # Usa il punteggio generale (ora 'overall_score' è già quello "aggiustato")
-        overall_score_display = self.analysis_results.get('overall_score', self.adjusted_overall_score) # Fallback a self.adjusted_overall_score se necessario
+        overall_score_display = self.analysis_results.get('overall_score', 0) # Use the actual overall_score
 
         preview_content = f"""
 SEO ANALYZER REPORT
@@ -1245,14 +1238,9 @@ RACCOMANDAZIONI PRINCIPALI
             self.root.after(0, lambda: self.progress_bar.set(0.1))
             self.root.after(0, lambda: self.progress_label.configure(text="Generazione PDF - 10%"))
             
-            # Create a deep copy of analysis_results and update the overall_score
+            # Create a deep copy of analysis_results
             analysis_results_for_pdf = copy.deepcopy(self.analysis_results)
-            # Assicurati che overall_score esista prima di tentare di modificarlo
-            if 'overall_score' in analysis_results_for_pdf:
-                analysis_results_for_pdf['overall_score'] = int(self.adjusted_overall_score) # Use the adjusted score
-            else:
-                # Se overall_score non esiste, lo aggiungiamo
-                analysis_results_for_pdf['overall_score'] = int(self.adjusted_overall_score)
+            # The overall_score is already correctly set in analysis_results by analyzer.py
             
             # Genera PDF
             domain = analysis_results_for_pdf['summary']['domain']

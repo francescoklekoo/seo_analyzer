@@ -95,6 +95,7 @@ PDF_CONFIG = {
         'bottom': 2.5
     },
     'font_family': 'Helvetica',
+    'font_family_bold': 'Helvetica',
     'font_sizes': {
         'title': 18,
         'heading': 14,
@@ -236,5 +237,3 @@ LOGGING_CONFIG = {
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'file': 'seo_analyzer.log'
 }
-
-[end of config.py]

@@ -1069,3 +1069,163 @@ Configurazione attuale:
 2025-05-30 16:07:41,026 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
 2025-05-30 16:07:41,027 - utils.analyzer - INFO - Inizio analisi SEO completa
 2025-05-30 16:07:41,088 - utils.analyzer - INFO - Analisi SEO completata
+2025-06-03 10:51:08,775 - __main__ - INFO - ==================================================
+2025-06-03 10:51:08,775 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-06-03 10:51:08,775 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-06-03 10:51:08,775 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-06-03 10:51:08,775 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-06-03 10:51:08,775 - __main__ - INFO - ==================================================
+2025-06-03 10:51:08,775 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-06-03 10:51:08,775 - __main__ - INFO - Verifica requisiti di sistema...
+2025-06-03 10:51:08,775 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-06-03 10:51:08,776 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-06-03 10:51:08,776 - __main__ - INFO - Verifica dipendenze...
+2025-06-03 10:51:08,905 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-06-03 10:51:08,905 - __main__ - INFO - Avvio interfaccia grafica...
+2025-06-03 10:51:09,958 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-06-03 10:51:09,958 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-06-03 10:51:22,012 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-06-03 10:51:22,132 - utils.crawler - ERROR - Errore configurazione Selenium: name 'SELENIUM_CONFIG' is not defined
+2025-06-03 10:51:47,058 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-06-03 10:51:47,080 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-06-03 10:51:47,131 - utils.analyzer - INFO - Analisi SEO completata
+2025-06-03 11:22:59,795 - __main__ - INFO - ==================================================
+2025-06-03 11:22:59,795 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-06-03 11:22:59,795 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-06-03 11:22:59,795 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-06-03 11:22:59,795 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-06-03 11:22:59,795 - __main__ - INFO - ==================================================
+2025-06-03 11:22:59,795 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-06-03 11:22:59,795 - __main__ - INFO - Verifica requisiti di sistema...
+2025-06-03 11:22:59,795 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-06-03 11:22:59,795 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-06-03 11:22:59,795 - __main__ - INFO - Verifica dipendenze...
+2025-06-03 11:22:59,991 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-06-03 11:22:59,991 - __main__ - INFO - Avvio interfaccia grafica...
+2025-06-03 11:23:01,551 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-06-03 11:23:01,551 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-06-03 11:23:08,612 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-06-03 11:23:08,794 - utils.crawler - ERROR - Errore configurazione Selenium: name 'SELENIUM_CONFIG' is not defined
+2025-06-03 11:23:34,751 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-06-03 11:23:34,753 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-06-03 11:23:34,801 - utils.analyzer - INFO - Analisi SEO completata
+2025-06-03 11:38:40,854 - __main__ - INFO - ==================================================
+2025-06-03 11:38:40,855 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-06-03 11:38:40,855 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-06-03 11:38:40,855 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-06-03 11:38:40,855 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-06-03 11:38:40,855 - __main__ - INFO - ==================================================
+2025-06-03 11:38:40,855 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-06-03 11:38:40,855 - __main__ - INFO - Verifica requisiti di sistema...
+2025-06-03 11:38:40,855 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-06-03 11:38:40,855 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-06-03 11:38:40,855 - __main__ - INFO - Verifica dipendenze...
+2025-06-03 11:38:40,989 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-06-03 11:38:40,989 - __main__ - INFO - Avvio interfaccia grafica...
+2025-06-03 11:38:42,064 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-06-03 11:38:42,064 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-06-03 11:38:48,571 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-06-03 11:38:48,706 - utils.crawler - ERROR - Errore configurazione Selenium: name 'SELENIUM_CONFIG' is not defined
+2025-06-03 11:39:13,298 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-06-03 11:39:13,300 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-06-03 11:39:13,355 - utils.analyzer - INFO - Analisi SEO completata
+2025-06-03 11:44:23,958 - __main__ - INFO - ==================================================
+2025-06-03 11:44:23,958 - __main__ - INFO - SEO Analyzer Pro - Avvio applicazione
+2025-06-03 11:44:23,958 - __main__ - INFO - Versione Python: 3.13.3 (main, Apr  8 2025, 13:54:08) [Clang 17.0.0 (clang-1700.0.13.3)]
+2025-06-03 11:44:23,958 - __main__ - INFO - Directory di lavoro: /Users/francesco/Desktop/progetti_py/seo_analyzer
+2025-06-03 11:44:23,958 - __main__ - INFO - File di log: /Users/francesco/Desktop/progetti_py/seo_analyzer/logs/seo_analyzer.log
+2025-06-03 11:44:23,958 - __main__ - INFO - ==================================================
+2025-06-03 11:44:23,958 - __main__ - INFO - 
+╔══════════════════════════════════════════════════════════════╗
+║                      SEO ANALYZER PRO                       ║
+║                         Versione 1.0                        ║
+╠══════════════════════════════════════════════════════════════╣
+║ Analizzatore SEO completo per siti web                      ║
+║                                                              ║
+║ Caratteristiche:                                             ║
+║ • Crawling automatico del sito                              ║
+║ • Analisi SEO completa (Title, Meta, Images, Performance)   ║
+║ • Generazione report PDF professionali                      ║
+║ • Interfaccia grafica moderna                               ║
+║ • Raccomandazioni personalizzate                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configurazione attuale:
+• Tema GUI: dark
+• Max pagine per crawling: 50
+• Timeout richieste: 30s
+• Directory report: /Users/francesco/Desktop/progetti_py/seo_analyzer/reports
+    
+2025-06-03 11:44:23,958 - __main__ - INFO - Verifica requisiti di sistema...
+2025-06-03 11:44:23,959 - __main__ - INFO - ✓ Directory del progetto create/verificate
+2025-06-03 11:44:23,959 - __main__ - INFO - ✓ Requisiti di sistema soddisfatti
+2025-06-03 11:44:23,959 - __main__ - INFO - Verifica dipendenze...
+2025-06-03 11:44:24,051 - __main__ - INFO - ✓ Tutte le dipendenze sono installate correttamente
+2025-06-03 11:44:24,051 - __main__ - INFO - Avvio interfaccia grafica...
+2025-06-03 11:44:25,037 - __main__ - INFO - ✓ Applicazione avviata con successo
+2025-06-03 11:44:25,037 - __main__ - INFO - Interfaccia grafica caricata, in attesa dell'utente...
+2025-06-03 11:44:31,888 - utils.crawler - INFO - Inizio crawling di https://klekoo.com
+2025-06-03 11:44:31,954 - utils.crawler - ERROR - Errore configurazione Selenium: name 'SELENIUM_CONFIG' is not defined
+2025-06-03 11:44:56,797 - utils.crawler - INFO - Crawling completato. Analizzate 22 pagine
+2025-06-03 11:44:56,798 - utils.analyzer - INFO - Inizio analisi SEO completa
+2025-06-03 11:44:56,858 - utils.analyzer - INFO - Analisi SEO completata
