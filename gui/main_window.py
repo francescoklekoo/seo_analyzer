@@ -54,7 +54,7 @@ class MainWindow:
     def __init__(self):
         # Finestra principale
         self.root = ctk.CTk()
-        self.root.title(GUI_CONFIG['window_title']) # Original title from actual config
+        self.root.title("Analisi Site Health") # Changed window title
         self.root.geometry(GUI_CONFIG['window_size']) # Original size from actual config
         self.root.minsize(950, 750) # Slightly increased minsize
         self.root.configure(fg_color=GC_COLORS['background_main'])

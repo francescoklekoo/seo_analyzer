@@ -29,28 +29,29 @@ class SEOAnalyzer:
         self.logger.info("Inizio analisi SEO completa")
         
         # Analisi individuali
-        self.analysis_results = {
-            'title_analysis': self._analyze_titles(),
-            'meta_description_analysis': self._analyze_meta_descriptions(),
-            'headings_analysis': self._analyze_headings(),
-            'images_analysis': self._analyze_images(),
-            'content_analysis': self._analyze_content(),
-            'links_analysis': self._analyze_links(),
-            'technical_analysis': self._analyze_technical(),
-            'performance_analysis': self._analyze_performance(),
-            'mobile_analysis': self._analyze_mobile_friendly(),
-            'ssl_analysis': self._analyze_ssl(),
-            'detailed_issues': self._analyze_detailed_issues(),  # Nuova analisi dettagliata
-            'site_health': self._calculate_site_health(),  # Calcolo stato sito
-            'overall_score': 0,
-            'recommendations': [],
-            'summary': {}
-        }
+        self.analysis_results['title_analysis'] = self._analyze_titles()
+        self.analysis_results['meta_description_analysis'] = self._analyze_meta_descriptions()
+        self.analysis_results['headings_analysis'] = self._analyze_headings()
+        self.analysis_results['images_analysis'] = self._analyze_images()
+        self.analysis_results['content_analysis'] = self._analyze_content()
+        self.analysis_results['links_analysis'] = self._analyze_links()
+        self.analysis_results['technical_analysis'] = self._analyze_technical()
+        self.analysis_results['performance_analysis'] = self._analyze_performance()
+        self.analysis_results['mobile_analysis'] = self._analyze_mobile_friendly()
+        self.analysis_results['ssl_analysis'] = self._analyze_ssl()
+
+        # L'analisi dettagliata dei problemi deve avvenire dopo le analisi individuali.
+        self.analysis_results['detailed_issues'] = self._analyze_detailed_issues()
         
-        # Calcola il punteggio generale
-        self.analysis_results['overall_score'] = self._calculate_overall_score()
+        # Calcola Site Health. Questo metodo ora chiama _calculate_weighted_category_score()
+        # (che è la logica copiata dalla prima _generate_recommendations) e poi applica le penalità.
+        site_health_data = self._calculate_site_health()
+        self.analysis_results['site_health'] = site_health_data
         
-        # Genera raccomandazioni
+        # Il punteggio generale del sito è ora direttamente la percentuale di salute.
+        self.analysis_results['overall_score'] = site_health_data['health_percentage']
+
+        # Genera raccomandazioni testuali (utilizzando la seconda definizione di _generate_recommendations)
         self.analysis_results['recommendations'] = self._generate_recommendations()
         
         # Crea il riassunto
@@ -908,32 +909,55 @@ class SEOAnalyzer:
         WARNING_PENALTY_PER_ISSUE = 2.0
         NOTICE_PENALTY_PER_ISSUE = 0.5
 
-        # Recupera i conteggi dei problemi da detailed_issues
-        # Assicurati che _analyze_detailed_issues sia chiamato prima di questo metodo
-        # e che self.analysis_results['detailed_issues'] sia popolato.
-        detailed_issues = self.analysis_results.get('detailed_issues', 
-                                                 {'errors': [], 'warnings': [], 'notices': []}) # Default if key missing
+        # Calculate base_score from weighted categories (logic copied from the first _generate_recommendations)
+        temp_scores_for_base = {}
+        # Populate temp_scores_for_base from self.analysis_results based on SEO_WEIGHTS keys
+        if 'title_analysis' in self.analysis_results and isinstance(self.analysis_results['title_analysis'], dict):
+            temp_scores_for_base['title_tags'] = self.analysis_results['title_analysis'].get('score', 0)
+        if 'meta_description_analysis' in self.analysis_results and isinstance(self.analysis_results['meta_description_analysis'], dict):
+            temp_scores_for_base['meta_descriptions'] = self.analysis_results['meta_description_analysis'].get('score', 0)
+        if 'headings_analysis' in self.analysis_results and isinstance(self.analysis_results['headings_analysis'], dict):
+            temp_scores_for_base['headings'] = self.analysis_results['headings_analysis'].get('score', 0)
+        if 'images_analysis' in self.analysis_results and isinstance(self.analysis_results['images_analysis'], dict):
+            temp_scores_for_base['images_alt'] = self.analysis_results['images_analysis'].get('score', 0)
+        if 'links_analysis' in self.analysis_results and isinstance(self.analysis_results['links_analysis'], dict):
+            temp_scores_for_base['internal_links'] = self.analysis_results['links_analysis'].get('score', 0)
+        if 'performance_analysis' in self.analysis_results and isinstance(self.analysis_results['performance_analysis'], dict):
+            temp_scores_for_base['page_speed'] = self.analysis_results['performance_analysis'].get('score', 0)
+        if 'mobile_analysis' in self.analysis_results and isinstance(self.analysis_results['mobile_analysis'], dict):
+            temp_scores_for_base['mobile_friendly'] = self.analysis_results['mobile_analysis'].get('score', 0)
+        if 'ssl_analysis' in self.analysis_results and isinstance(self.analysis_results['ssl_analysis'], dict):
+            temp_scores_for_base['ssl_certificate'] = self.analysis_results['ssl_analysis'].get('score', 0)
+        if 'content_analysis' in self.analysis_results and isinstance(self.analysis_results['content_analysis'], dict):
+            temp_scores_for_base['content_quality'] = self.analysis_results['content_analysis'].get('score', 0)
         
+        valid_keys_for_base = [key for key in temp_scores_for_base if key in SEO_WEIGHTS]
+        if not valid_keys_for_base:
+            self.logger.warning("No valid scores found for weighted category calculation in site_health.")
+            base_score = 0.0
+        else:
+            weighted_sum_for_base = sum(temp_scores_for_base[key] * SEO_WEIGHTS[key] for key in valid_keys_for_base)
+            total_weight_for_base = sum(SEO_WEIGHTS[key] for key in valid_keys_for_base)
+            base_score = float(weighted_sum_for_base / total_weight_for_base) if total_weight_for_base > 0 else 0.0
+        # End of base_score calculation logic
+
+        detailed_issues = self.analysis_results.get('detailed_issues', {'errors': [], 'warnings': [], 'notices': []})
         num_critical_issues = len(detailed_issues.get('errors', []))
         num_warning_issues = len(detailed_issues.get('warnings', []))
         num_notice_issues = len(detailed_issues.get('notices', []))
 
-        # Calcola il punteggio di salute
-        health_percentage = 100.0
-        health_percentage -= num_critical_issues * CRITICAL_PENALTY_PER_ISSUE
-        health_percentage -= num_warning_issues * WARNING_PENALTY_PER_ISSUE
-        health_percentage -= num_notice_issues * NOTICE_PENALTY_PER_ISSUE
+        current_health = base_score # Start with the weighted score
+        current_health -= num_critical_issues * CRITICAL_PENALTY_PER_ISSUE
+        current_health -= num_warning_issues * WARNING_PENALTY_PER_ISSUE
+        current_health -= num_notice_issues * NOTICE_PENALTY_PER_ISSUE
 
-        # If there are no critical errors, but there are warnings or notices,
-        # the score shouldn't be a perfect 100%.
         if num_critical_issues == 0 and (num_warning_issues > 0 or num_notice_issues > 0):
-            health_percentage = min(health_percentage, 99.0)
-        
-        # Assicura che il punteggio sia tra 0 e 100 e intero
-        health_percentage = max(0, min(100, int(round(health_percentage))))
+            current_health = min(current_health, 99.0)
+
+        final_health_percentage = max(0, min(100, int(round(current_health))))
             
         return {
-            'health_percentage': health_percentage,
+            'health_percentage': final_health_percentage,
             'total_pages': total_pages,
             'total_critical_issues': num_critical_issues,
             'total_warning_issues': num_warning_issues,
