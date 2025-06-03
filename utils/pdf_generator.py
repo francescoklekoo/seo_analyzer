@@ -92,12 +92,83 @@ class PDFGenerator:
         self.story.append(Paragraph(f"Generato in data: {self.analysis_results['summary']['analysis_date']}", self.styles['SmallText']))
         self.story.append(Spacer(1, 0.5 * inch))
 
+    def _add_chart_and_counts_section(self):
+        section_flowables = []
+
+        # Get Chart
+        chart_image = self._get_site_health_chart_flowable()
+        if chart_image:
+            section_flowables.append(chart_image)
+            section_flowables.append(Spacer(1, 0.3 * inch))
+
+        # Issue Counts Logic
+        # Ensure analysis_results and detailed_issues are available, or pass them if needed.
+        # Assuming they are available via self.analysis_results as in _add_executive_summary
+        detailed_issues = self.analysis_results.get('detailed_issues', {})
+        num_errors = len(detailed_issues.get('errors', []))
+        num_warnings = len(detailed_issues.get('warnings', []))
+        num_notices = len(detailed_issues.get('notices', []))
+
+        color_error_hex = PDF_CONFIG['colors'].get('error', '#DC3545')
+        color_warning_hex = PDF_CONFIG['colors'].get('warning', '#FFC107')
+        color_notice_hex = PDF_CONFIG['colors'].get('info', PDF_CONFIG['colors'].get('secondary', '#17A2B8'))
+
+        # Use self.styles.get to safely access 'Normal' or fallback to 'BodyText'
+        parent_style = self.styles.get('Normal', self.styles['BodyText'])
+        count_box_base_style = ParagraphStyle(
+            name='CountBoxBaseStyle',
+            parent=parent_style,
+            alignment=TA_CENTER,
+            leading=14
+        )
+        error_text_style = ParagraphStyle(
+            name='ErrorCountBoxStyle', parent=count_box_base_style,
+            textColor=colors.HexColor(color_error_hex)
+        )
+        warning_text_style = ParagraphStyle(
+            name='WarningCountBoxStyle', parent=count_box_base_style,
+            textColor=colors.HexColor(color_warning_hex)
+        )
+        notice_text_style = ParagraphStyle(
+            name='NoticeCountBoxStyle', parent=count_box_base_style,
+            textColor=colors.HexColor(color_notice_hex)
+        )
+
+        error_p = Paragraph(f"<font size='16'><b>{num_errors}</b></font><br/><font size='10'>Errori</font>", error_text_style)
+        warning_p = Paragraph(f"<font size='16'><b>{num_warnings}</b></font><br/><font size='10'>Avvertimenti</font>", warning_text_style)
+        notice_p = Paragraph(f"<font size='16'><b>{num_notices}</b></font><br/><font size='10'>Avvisi</font>", notice_text_style)
+
+        box_data = [[error_p, warning_p, notice_p]]
+
+        # Ensure self.doc is available for margins, or use fixed values if called before self.doc init
+        # This method is called from generate_pdf after self.doc is initialized.
+        page_content_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+        col_width = (page_content_width - 2 * 0.1*inch) / 3 # Allowing 0.1 inch gap on each side of middle box
+
+        issue_counts_table = Table(box_data, colWidths=[col_width, col_width, col_width], rowHeights=[0.8*inch])
+
+        counts_table_style = TableStyle([
+            ('BOX', (0,0), (0,0), 1.5, colors.HexColor(color_error_hex)),
+            ('BOX', (1,0), (1,0), 1.5, colors.HexColor(color_warning_hex)),
+            ('BOX', (2,0), (2,0), 1.5, colors.HexColor(color_notice_hex)),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+        ])
+        issue_counts_table.setStyle(counts_table_style)
+        section_flowables.append(issue_counts_table)
+
+        if section_flowables:
+            self.story.append(KeepTogether(section_flowables))
+            self.story.append(Spacer(1, 0.3 * inch)) # Spacer after the whole section
+
     def _add_executive_summary(self):
         flowables = []
         flowables.append(Paragraph("Riassunto Esecutivo", self.styles['SectionHeading']))
         flowables.append(Spacer(1, 0.2 * inch))
 
-        chart_image = self._get_site_health_chart_flowable()
+        # chart_image = self._get_site_health_chart_flowable() # REMOVED
 
         overall_score = self.analysis_results['overall_score']
         evaluation = self._get_evaluation_text(overall_score)
@@ -118,77 +189,19 @@ class PDFGenerator:
         summary_text = f"""L'analisi SEO del sito <b>{self.domain}</b> ha rivelato un punteggio complessivo di <font color="{self._get_score_color_hex(overall_score)}"><b>{overall_score}/100</b></font>. Valutazione: <b>{evaluation}</b>. Sono state analizzate <b>{self.analysis_results['summary']['total_pages_analyzed']}</b> pagine, {issues_string} e generando <b>{self.analysis_results['summary']['total_recommendations']}</b> raccomandazioni per il miglioramento."""
         summary_paragraph = Paragraph(summary_text, self.styles['BodyText'])
 
-        if chart_image:
-            chart_col_width = 3 * inch # Changed from 4 inch
-            page_content_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-            text_col_width = page_content_width - chart_col_width - (0.2 * inch) # 0.2 inch for padding
+        # chart_image and chart_summary_table logic REMOVED
+        # issue_counts_table and related logic REMOVED
+        flowables.append(summary_paragraph) # Appending the main summary text directly.
+                                            # The chart and counts are in _add_chart_and_counts_section
 
-            table_data = [[chart_image, summary_paragraph]]
-            chart_summary_table = Table(table_data, colWidths=[chart_col_width, text_col_width])
-            chart_summary_table.setStyle(TableStyle([
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('LEFTPADDING', (1,0), (1,0), 0.1*inch),
-                ('RIGHTPADDING', (0,0), (0,0), 0.1*inch)
-            ]))
-            flowables.append(chart_summary_table)
-        else:
-            flowables.append(summary_paragraph) # Fallback if chart fails
+        # Spacing after summary_paragraph if needed, or rely on paragraph's spaceAfter
+        # flowables.append(Spacer(1, 0.2 * inch)) # This was the original spacer after summary text.
+                                                 # The new structure has a spacer after the chart/counts section.
+                                                 # And another spacer after the summary_paragraph (now this one)
+                                                 # before Strengths/Weaknesses.
+                                                 # Let's keep a spacer here for now.
+        flowables.append(Spacer(1, 0.2 * inch))
 
-        flowables.append(Spacer(1, 0.3 * inch)) # Spacer after chart/summary table or summary paragraph
-
-        # Issue Count Boxes
-        COLOR_ERROR_HEX = PDF_CONFIG['colors'].get('error', '#DC3545')
-        COLOR_WARNING_HEX = PDF_CONFIG['colors'].get('warning', '#FFC107')
-        # For Notices, let's use 'secondary' or a custom blue if 'info' isn't defined or suitable
-        COLOR_NOTICE_HEX = PDF_CONFIG['colors'].get('info', PDF_CONFIG['colors'].get('secondary', '#17A2B8'))
-
-        count_box_base_style = ParagraphStyle(
-            name='CountBoxBaseStyle',
-            alignment=TA_CENTER,
-            leading=14 # Adjusted leading for two lines (number + label)
-        )
-        error_text_style = ParagraphStyle(
-            name='ErrorCountBoxStyle', parent=count_box_base_style,
-            textColor=colors.HexColor(COLOR_ERROR_HEX)
-        )
-        warning_text_style = ParagraphStyle(
-            name='WarningCountBoxStyle', parent=count_box_base_style,
-            textColor=colors.HexColor(COLOR_WARNING_HEX)
-        )
-        notice_text_style = ParagraphStyle(
-            name='NoticeCountBoxStyle', parent=count_box_base_style,
-            textColor=colors.HexColor(COLOR_NOTICE_HEX)
-        )
-
-        error_p = Paragraph(f"<font size='16'><b>{num_errors}</b></font><br/><font size='10'>Errori</font>", error_text_style)
-        warning_p = Paragraph(f"<font size='16'><b>{num_warnings}</b></font><br/><font size='10'>Avvertimenti</font>", warning_text_style)
-        notice_p = Paragraph(f"<font size='16'><b>{num_notices}</b></font><br/><font size='10'>Avvisi</font>", notice_text_style)
-
-        box_data = [[error_p, warning_p, notice_p]]
-
-        page_content_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        # Calculate column width for 3 boxes with small gaps between them
-        gap = 0.15 * inch
-        num_boxes = 3
-        box_col_width = (page_content_width - (num_boxes - 1) * gap) / num_boxes
-
-        # Create table with explicit gaps by making it 5 columns: [box, gap, box, gap, box]
-        # This approach gives more control over gap color (transparent)
-        # However, a simpler 3-column table with cell padding or relying on BOX outline is also fine.
-        # For now, let's use 3 columns and rely on BOX for separation appearance.
-        issue_counts_table = Table(box_data, colWidths=[box_col_width, box_col_width, box_col_width], rowHeights=[0.8*inch])
-
-        issue_counts_table.setStyle(TableStyle([
-            ('BOX', (0,0), (0,0), 1.5, colors.HexColor(COLOR_ERROR_HEX)),
-            ('BOX', (1,0), (1,0), 1.5, colors.HexColor(COLOR_WARNING_HEX)),
-            ('BOX', (2,0), (2,0), 1.5, colors.HexColor(COLOR_NOTICE_HEX)),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('TOPPADDING', (0,0), (-1,-1), 10),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
-        ]))
-        flowables.append(issue_counts_table)
-        flowables.append(Spacer(1, 0.3 * inch)) # Spacer after the boxes
 
         strengths, weaknesses = self._identify_strengths_weaknesses()
 
@@ -771,7 +784,7 @@ class PDFGenerator:
             self.doc = SimpleDocTemplate(filename, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
             self.story = []
             self._add_header()
-            # self._add_site_health_chart() # Call is removed, chart is now part of executive summary
+            self._add_chart_and_counts_section() # NEWLY ADDED CALL
             self._add_executive_summary()
             self._add_score_overview()
             self.story.append(PageBreak())
