@@ -420,16 +420,30 @@ class PDFGenerator:
 
         for issue_item_dict in all_issues_list:
             technical_type = str(issue_item_dict.get('type', 'unknown_type'))
-            user_friendly_label = PDF_ISSUE_TYPE_LABELS.get(technical_type, technical_type.replace('_', ' ').capitalize())
+            user_friendly_label_template = PDF_ISSUE_TYPE_LABELS.get(technical_type, technical_type.replace('_', ' ').capitalize())
+
+            specific_url = str(issue_item_dict.get('url', 'N/A'))
+            specific_details = str(issue_item_dict.get('details', ''))
+
+            # Placeholder substitution
+            user_friendly_label = user_friendly_label_template.replace("{{url}}", specific_url)
+            user_friendly_label = user_friendly_label.replace("{{pagina}}", specific_url) # Retrocompatibility
+            user_friendly_label = user_friendly_label.replace("{{details}}", specific_details)
+            user_friendly_label = user_friendly_label.replace("{{elemento}}", specific_details) # Retrocompatibility
 
             detail_content = str(issue_item_dict.get('details', 'N/A'))
             # Truncate if detail_content is a long URL (common for image src)
+            # Also, ensure it's not the same as what might be in the label already if {{details}} was used.
+            # For now, we just truncate as before.
             if "http" in detail_content and len(detail_content) > 70: # Simple heuristic
                 detail_content = detail_content[:67] + "..."
+            elif len(detail_content) > 100: # General truncation for very long details
+                 detail_content = detail_content[:97] + "..."
+
 
             data.append([
-                Paragraph(str(issue_item_dict.get('url', 'N/A')), self.styles['SmallText']),
-                Paragraph(user_friendly_label, self.styles['SmallText']),
+                Paragraph(specific_url, self.styles['SmallText']), # Use specific_url directly for the URL column
+                Paragraph(user_friendly_label, self.styles['SmallText']), # Formatted label
                 Paragraph(detail_content, self.styles['SmallText'])
             ])
 

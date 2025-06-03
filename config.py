@@ -255,3 +255,12 @@ LOGGING_CONFIG = {
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'file': 'seo_analyzer.log'
 }
+
+# Configurazioni Selenium
+SELENIUM_CONFIG = {
+    'headless': True,
+    'chrome_options': ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1920x1080"],
+    'window_size': [1920, 1080],
+    'page_load_timeout': 30,
+    'implicit_wait': 10,
+}

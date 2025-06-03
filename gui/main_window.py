@@ -551,10 +551,26 @@ class MainWindow:
         self.start_button.configure(state="disabled", fg_color=GUI_CONFIG['colors']['disabled'])
         self.stop_button.configure(state="normal", fg_color=GUI_CONFIG['colors']['error'])
         self.export_pdf_button.configure(state="disabled", fg_color=GUI_CONFIG['colors']['disabled'])
-        self.preview_button.configure(state="disabled", fg_color=GUI_CONFIG['colors']['disabled']) 
-        
-        # Aggiorna configurazioni
-        CRAWL_CONFIG['max_pages'] = self.max_pages_var.get()
+        self.preview_button.configure(state="disabled", fg_color=GUI_CONFIG['colors']['disabled'])
+
+        # Validazione e aggiornamento configurazioni
+        try:
+            max_pages_value = self.max_pages_var.get()
+            if max_pages_value <= 0:
+                messagebox.showwarning("Valore non valido", "Il numero massimo di pagine deve essere maggiore di zero.")
+                self._reset_ui_state() # Resetta i pulsanti
+                return
+            CRAWL_CONFIG['max_pages'] = max_pages_value
+        except tk.TclError:
+            max_pages_input_str = self.max_pages_spinbox.get()
+            if not max_pages_input_str.strip():
+                # Campo vuoto, usa il default da CRAWL_CONFIG e aggiorna la var
+                CRAWL_CONFIG['max_pages'] = CRAWL_CONFIG['max_pages'] # Mantiene il valore corrente di default
+                self.max_pages_var.set(CRAWL_CONFIG['max_pages'])
+            else:
+                messagebox.showerror("Input non valido", f"Valore non valido per 'Massimo pagine': '{max_pages_input_str}'. Inserisci un numero intero.")
+                self._reset_ui_state() # Resetta i pulsanti
+                return
         
         # Avvia thread di analisi
         thread = threading.Thread(target=self._run_analysis, args=(url,))
@@ -1117,6 +1133,65 @@ class MainWindow:
         
         self.recommendations_text.delete("1.0", "end")
         self.recommendations_text.insert("1.0", rec_text)
+
+    def _draw_site_health_graph(self, score, color_hex):
+        # Cancella il canvas precedente
+        self.score_canvas.delete("all")
+
+        canvas_width = self.score_canvas.winfo_width()
+        canvas_height = self.score_canvas.winfo_height()
+
+        # Se le dimensioni non sono ancora disponibili (es. finestra non completamente disegnata),
+        # usa le dimensioni di default con cui è stato creato.
+        if canvas_width <= 1 or canvas_height <= 1:
+            canvas_width = 150
+            canvas_height = 150
+
+        center_x = canvas_width / 2
+        center_y = canvas_height / 2
+        radius = min(canvas_width, canvas_height) / 2 - 15 # Lascia un po' di padding
+        thickness = 15 # Spessore del ciambella
+
+        # Colore di sfondo per la parte non riempita del grafico
+        background_color = GC_COLORS.get('disabled', '#495057') # Un grigio scuro per tema scuro
+
+        # Disegna l'arco di sfondo (cerchio completo)
+        self.score_canvas.create_arc(
+            center_x - radius, center_y - radius,
+            center_x + radius, center_y + radius,
+            start=90, extent=359.9, # extent 359.9 per evitare problemi con cerchi completi
+            style=tk.ARC,
+            outline=background_color,
+            width=thickness
+        )
+
+        # Disegna l'arco del punteggio
+        # L'angolo di estensione è proporzionale al punteggio
+        # Inizia da 90 gradi (alto) e va in senso orario (negativo per extent in Tkinter)
+        extent_angle = (score / 100) * 359.9
+        self.score_canvas.create_arc(
+            center_x - radius, center_y - radius,
+            center_x + radius, center_y + radius,
+            start=90, extent=-extent_angle, # Negativo per senso orario
+            style=tk.ARC,
+            outline=color_hex, # Colore passato come argomento
+            width=thickness
+        )
+
+        # Testo del punteggio al centro
+        score_text = f"{score}%"
+        text_color = GC_COLORS.get('text_primary', '#F0F0F0')
+        text_font_family = GC_FONTS.get('family_main', 'Segoe UI')
+        # Calcola una dimensione del font ragionevole basata sul raggio
+        font_size = max(10, int(radius / 2.5))
+
+        self.score_canvas.create_text(
+            center_x, center_y,
+            text=score_text,
+            fill=text_color,
+            font=(text_font_family, font_size, "bold"),
+            anchor=tk.CENTER
+        )
         
     def _get_score_color(self, score: int) -> str:
         """Restituisce il colore basato sul punteggio"""
@@ -1521,31 +1596,120 @@ class SettingsWindow:
     def _save_settings(self):
         """Salva le impostazioni"""
         try:
-            # Aggiorna configurazioni globali
-            CRAWL_CONFIG['max_pages'] = self.max_pages_var.get()
-            CRAWL_CONFIG['timeout'] = self.timeout_var.get()
-            CRAWL_CONFIG['delay'] = self.delay_var.get()
+            # Crawling settings
+            try:
+                max_pages_val = self.max_pages_var.get()
+                if max_pages_val <= 0:
+                    messagebox.showerror("Errore Input", "Il numero massimo di pagine (Crawling) deve essere un intero positivo.")
+                    return
+                CRAWL_CONFIG['max_pages'] = max_pages_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Massimo pagine' (Crawling). Inserisci un numero intero.")
+                return
+
+            try:
+                timeout_val = self.timeout_var.get()
+                if timeout_val <= 0:
+                    messagebox.showerror("Errore Input", "Il timeout (Crawling) deve essere un intero positivo.")
+                    return
+                CRAWL_CONFIG['timeout'] = timeout_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Timeout' (Crawling). Inserisci un numero intero.")
+                return
+
+            try:
+                delay_val = self.delay_var.get()
+                if delay_val < 0:
+                    messagebox.showerror("Errore Input", "Il delay (Crawling) non può essere negativo.")
+                    return
+                CRAWL_CONFIG['delay'] = delay_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Delay' (Crawling). Inserisci un numero.")
+                return
+
             CRAWL_CONFIG['follow_external'] = self.follow_external_var.get()
             CRAWL_CONFIG['respect_robots'] = self.respect_robots_var.get()
+
+            # SEO settings
+            try:
+                title_min_val = self.title_min_var.get()
+                if title_min_val < 0:
+                    messagebox.showerror("Errore Input", "Lunghezza minima titolo (SEO) non può essere negativa.")
+                    return
+                SEO_CONFIG['title_min_length'] = title_min_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Lunghezza title min' (SEO).")
+                return
+
+            try:
+                title_max_val = self.title_max_var.get()
+                if title_max_val < 0: # Or <= title_min_val
+                    messagebox.showerror("Errore Input", "Lunghezza massima titolo (SEO) non può essere negativa.")
+                    return
+                SEO_CONFIG['title_max_length'] = title_max_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Lunghezza title max' (SEO).")
+                return
+
+            try:
+                meta_min_val = self.meta_min_var.get()
+                if meta_min_val < 0:
+                    messagebox.showerror("Errore Input", "Lunghezza minima meta description (SEO) non può essere negativa.")
+                    return
+                SEO_CONFIG['meta_description_min_length'] = meta_min_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Lunghezza meta min' (SEO).")
+                return
             
-            SEO_CONFIG['title_min_length'] = self.title_min_var.get()
-            SEO_CONFIG['title_max_length'] = self.title_max_var.get()
-            SEO_CONFIG['meta_description_min_length'] = self.meta_min_var.get()
-            SEO_CONFIG['meta_description_max_length'] = self.meta_max_var.get()
-            SEO_CONFIG['min_word_count'] = self.min_words_var.get()
+            try:
+                meta_max_val = self.meta_max_var.get()
+                if meta_max_val < 0: # Or <= meta_min_val
+                    messagebox.showerror("Errore Input", "Lunghezza massima meta description (SEO) non può essere negativa.")
+                    return
+                SEO_CONFIG['meta_description_max_length'] = meta_max_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Lunghezza meta max' (SEO).")
+                return
+
+            try:
+                min_words_val = self.min_words_var.get()
+                if min_words_val < 0:
+                    messagebox.showerror("Errore Input", "Minimo parole per pagina (SEO) non può essere negativo.")
+                    return
+                SEO_CONFIG['min_word_count'] = min_words_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Minimo parole per pagina' (SEO).")
+                return
+
+            # PDF settings
+            try:
+                font_title_val = self.font_title_var.get()
+                if font_title_val <= 0:
+                    messagebox.showerror("Errore Input", "Dimensione font titolo (PDF) deve essere positiva.")
+                    return
+                PDF_CONFIG['font_sizes']['title'] = font_title_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Dimensione font titolo (PDF)'.")
+                return
             
-            PDF_CONFIG['font_sizes']['title'] = self.font_title_var.get()
-            # Assicurati che tutti i margini siano aggiornati
-            PDF_CONFIG['margin']['top'] = self.margin_var.get()
-            PDF_CONFIG['margin']['bottom'] = self.margin_var.get()
-            PDF_CONFIG['margin']['left'] = self.margin_var.get()
-            PDF_CONFIG['margin']['right'] = self.margin_var.get()
-            
+            try:
+                margin_val = self.margin_var.get()
+                if margin_val < 0:
+                    messagebox.showerror("Errore Input", "Margine pagina PDF non può essere negativo.")
+                    return
+                PDF_CONFIG['margin']['top'] = margin_val
+                PDF_CONFIG['margin']['bottom'] = margin_val
+                PDF_CONFIG['margin']['left'] = margin_val
+                PDF_CONFIG['margin']['right'] = margin_val
+            except tk.TclError:
+                messagebox.showerror("Errore Input", "Valore non valido per 'Margini pagina PDF (cm)'.")
+                return
+
             messagebox.showinfo("Successo", "Impostazioni salvate con successo!")
             self.window.destroy()
-            
-        except Exception as e:
-            messagebox.showerror("Errore", f"Errore nel salvare le impostazioni: {str(e)}")
+
+        except Exception as e: # Catch any other unexpected error during save
+            messagebox.showerror("Errore", f"Errore imprevisto nel salvare le impostazioni: {str(e)}")
 
 
 def main():
