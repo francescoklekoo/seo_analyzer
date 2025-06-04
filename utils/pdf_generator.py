@@ -71,6 +71,21 @@ class PDFGenerator:
         style_name = 'IssueDetailItemStyle' # New Style for issue details under specific problems
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], leftIndent=20, spaceAfter=2, bulletIndent=10)) # Smaller leftIndent than ListItem
+
+        # Styles for the Weaknesses Table
+        style_name = 'TableMacroCategoryStyle'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=FONT_SIZE_BODY, leading=FONT_SIZE_BODY * 1.2, textColor=HexColor(COLOR_TEXT_PRIMARY), spaceBefore=6, spaceAfter=4))
+        style_name = 'TableSpecificProblemStyle'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=FONT_SIZE_BODY, textColor=HexColor(COLOR_TEXT_SECONDARY), leftIndent=0, spaceAfter=2)) # Indent managed by cell padding
+        style_name = 'TableDetailURLStyle'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_SMALL, textColor=HexColor(COLOR_TEXT_PRIMARY), leftIndent=0))
+        style_name = 'TableDetailStyle'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_SMALL, textColor=HexColor(COLOR_TEXT_SECONDARY), leftIndent=0))
+
         style_name = 'BodyText'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_BODY, leading=FONT_SIZE_BODY * 1.4, spaceAfter=6, textColor=HexColor(COLOR_TEXT_PRIMARY)))
@@ -247,52 +262,111 @@ class PDFGenerator:
 
         flowables.append(Spacer(1, 0.1 * inch))
 
-        # Weaknesses Section - Restructured
+        # Weaknesses Section - Restructured into a Table
         flowables.append(Paragraph("Aree di Miglioramento:", self.styles['SectionSubHeadingStyle']))
 
-        if weaknesses and isinstance(weaknesses, dict) and (weaknesses.get('errors') or weaknesses.get('warnings') or weaknesses.get('notices')):
-            macro_order = [
-                ('errors', 'Errori Critici'),
-                ('warnings', 'Avvertimenti Importanti'),
-                ('notices', 'Avvisi e Ottimizzazioni Minori')
-            ]
+        table_data = []
+        table_style_cmds = [
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 2), # Reduced general padding
+            ('RIGHTPADDING', (0,0), (-1,-1), 2),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors'].get('border_light', '#DDDDDD')))
+        ]
 
-            has_any_weakness_to_show = False
-            for macro_key, macro_display_name in macro_order:
+        # Define colors for striping from PDF_CONFIG or use defaults for table
+        bg_color_even_hex_table = PDF_CONFIG['colors'].get('light_gray', '#F0F0F0') # Standard light_gray for tables
+        bg_color_odd_hex_table = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+        bg_color_even_table = colors.HexColor(bg_color_even_hex_table)
+        bg_color_odd_table = colors.HexColor(bg_color_odd_hex_table)
+
+        # Define colors for macro category headers
+        color_error_bg_hex = PDF_CONFIG['colors'].get('error_light', '#FADBD8') # Softer red
+        color_warning_bg_hex = PDF_CONFIG['colors'].get('warning_light', '#FEF9E7') # Softer yellow
+        color_notice_bg_hex = PDF_CONFIG['colors'].get('info_light', '#E8F8F5') # Softer blue/green
+
+        row_idx = 0
+        has_any_weakness_to_show = False
+
+        if weaknesses and isinstance(weaknesses, dict) and (weaknesses.get('errors') or weaknesses.get('warnings') or weaknesses.get('notices')):
+            macro_order_map = {
+                'errors': ('Errori Critici', colors.HexColor(color_error_bg_hex)),
+                'warnings': ('Avvertimenti Importanti', colors.HexColor(color_warning_bg_hex)),
+                'notices': ('Avvisi e Ottimizzazioni Minori', colors.HexColor(color_notice_bg_hex))
+            }
+
+            for macro_key, (macro_display_name, macro_bg_color) in macro_order_map.items():
                 if macro_key in weaknesses and weaknesses[macro_key]:
                     has_any_weakness_to_show = True
-                    # Add macro heading (e.g., "Errori Critici")
-                    # Using SectionSubHeadingStyle for these main categories of weaknesses for now.
-                    # If a different style is desired, it can be defined and used here.
-                    flowables.append(Paragraph(macro_display_name, self.styles['SectionSubHeadingStyle'])) # BodyText bold or a new style
+                    # Macro Category Row
+                    table_data.append([Paragraph(macro_display_name, self.styles['TableMacroCategoryStyle'])])
+                    table_style_cmds.extend([
+                        ('SPAN', (0, row_idx), (1, row_idx)),
+                        ('BACKGROUND', (0, row_idx), (1, row_idx), macro_bg_color),
+                        ('TEXTCOLOR', (0,row_idx), (1,row_idx), colors.black), # Ensure text is readable
+                        ('TOPPADDING', (0,row_idx), (1,row_idx), 6),
+                        ('BOTTOMPADDING', (0,row_idx), (1,row_idx), 6)
+                    ])
+                    row_idx += 1
 
                     specific_problems = weaknesses[macro_key]
+                    is_first_problem_in_macro = True
                     for problem_label, problem_instances in specific_problems.items():
-                        # Add specific problem heading (e.g., "Meta description duplicato")
-                        flowables.append(Paragraph(problem_label, self.styles['SpecificProblemHeadingStyle']))
+                        # Specific Problem Type Row
+                        # Indent specific problem label slightly for visual hierarchy
+                        indented_problem_label = f"&nbsp;&nbsp;&nbsp;{problem_label}"
+                        table_data.append([Paragraph(indented_problem_label, self.styles['TableSpecificProblemStyle'])])
+                        table_style_cmds.extend([
+                            ('SPAN', (0, row_idx), (1, row_idx)),
+                            ('BACKGROUND', (0, row_idx), (1, row_idx), bg_color_odd_table if not is_first_problem_in_macro else macro_bg_color), # Keep macro bg for first item or use odd
+                             ('LEFTPADDING', (0, row_idx), (0, row_idx), 10), # Indent specific problem type
+                        ])
+                        is_first_problem_in_macro = False
+                        row_idx += 1
 
-                        for instance in problem_instances:
-                            # Add each instance as a list item
-                            # Limiting detail length for display in summary. Full details are in other sections.
+                        for i, instance in enumerate(problem_instances):
                             details_display = instance['details']
-                            if len(details_display) > 150: # Truncate long details for summary
-                                details_display = details_display[:147] + "..."
+                            if len(details_display) > 100: # Truncate long details for table cells
+                                details_display = details_display[:97] + "..."
 
-                            # Display URL and then details. If details are 'N/A' or same as URL, just show URL.
-                            if instance['url'] != 'N/A':
-                                text = f"• {instance['url']}"
-                                if details_display != 'N/A' and details_display != instance['url']:
-                                    text += f" ({details_display})"
-                            else: # Should ideally not happen if URL is always present
-                                text = f"• {details_display}"
+                            url_text = instance['url']
+                            if len(url_text) > 70: # Truncate long URLs
+                                url_text = url_text[:67] + "..."
 
-                            flowables.append(Paragraph(text, self.styles['IssueDetailItemStyle']))
-                        flowables.append(Spacer(1, 0.05 * inch)) # Small spacer after a group of instances
-                    flowables.append(Spacer(1, 0.1 * inch)) # Spacer after a macro category
+                            # Issue Detail Row (URL and Details)
+                            row_items = [Paragraph(url_text, self.styles['TableDetailURLStyle'])]
 
-            if not has_any_weakness_to_show:
-                 flowables.append(Paragraph("Nessuna area di miglioramento specifica identificata in base ai problemi rilevati.", self.styles['ListItem']))
+                            if details_display != 'N/A' and details_display != instance['url']:
+                                row_items.append(Paragraph(details_display, self.styles['TableDetailStyle']))
+                            else:
+                                row_items.append(Paragraph('-', self.styles['TableDetailStyle'])) # Placeholder if no distinct detail
 
+                            table_data.append(row_items)
+
+                            # Striping for issue detail rows
+                            # Background color based on whether the detail row index is even or odd
+                            current_bg_color = bg_color_even_table if (row_idx - (len(specific_problems) +1)) % 2 == 0 else bg_color_odd_table
+                            table_style_cmds.append(('BACKGROUND', (0, row_idx), (1, row_idx), current_bg_color))
+                            table_style_cmds.extend([
+                                ('LEFTPADDING', (0,row_idx), (0,row_idx), 15), # Further indent URLs
+                                ('LEFTPADDING', (1,row_idx), (1,row_idx), 5)
+                            ])
+                            row_idx += 1
+
+            if has_any_weakness_to_show:
+                # Calculate available width for the table
+                page_width, _ = A4
+                available_width = page_width - self.doc.leftMargin - self.doc.rightMargin - (0.4 * inch) # Small margin adjustment
+
+                # Define column widths, e.g., 60% for URL, 40% for Details
+                col_widths = [available_width * 0.5, available_width * 0.5]
+
+                weaknesses_table = Table(table_data, colWidths=col_widths)
+                weaknesses_table.setStyle(TableStyle(table_style_cmds))
+                flowables.append(weaknesses_table)
+            else: # This case should ideally be caught by the outer if, but as a fallback
+                 flowables.append(Paragraph("Nessuna area di miglioramento specifica identificata.", self.styles['ListItem']))
         else:
             flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
 
@@ -398,7 +472,7 @@ class PDFGenerator:
             img_buffer.seek(0)
 
             # RLImage is already imported as Image, so just use Image
-            chart_image = RLImage(img_buffer, width=2.5*inch, height=2.5*inch) # Changed from 3*inch
+            chart_image = RLImage(img_buffer, width=2.5*inch, height=2.5*inch) # Removed keepAspectRatio
 
             plt.close(fig) # Assicura che la figura sia chiusa
             return chart_image

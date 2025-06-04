@@ -33,8 +33,6 @@ dummy_analysis_results = {
         'multiple_h1_pages': [{'url': 'https://example.com/multi-h1', 'issue': 'Page has multiple H1s'}],
         'missing_h2_pages': [{'url': 'https://example.com/no-h2', 'issue': 'Page has no H2s'}],
         'missing_h3_pages': [{'url': 'https://example.com/no-h3', 'issue': 'Page has no H3s'}],
-        # Note: 'images_without_alt' is duplicated here from the 'notices' section above for thoroughness,
-        # but in a real scenario, it would likely appear in one category in detailed_issues.
         'images_without_alt': [{'url': 'https://example.com/img-no-alt', 'image_src': 'image1.jpg', 'issue': 'Image missing alt'}],
         'images_with_empty_alt': [{'url': 'https://example.com/img-empty-alt', 'image_src': 'image2.jpg', 'issue': 'Image has empty alt'}],
         'images_without_title_attr': [{'url': 'https://example.com/img-no-title', 'image_src': 'image3.jpg', 'issue': 'Image missing title attr'}],
@@ -51,13 +49,13 @@ dummy_analysis_results = {
     },
     'title_analysis': {'score': 60, 'pages_with_title': 8, 'total_pages': 10, 'too_short_titles': [], 'too_long_titles': []},
     'meta_description_analysis': {'score': 70, 'pages_with_meta': 7, 'total_pages': 10, 'too_short_metas': [], 'too_long_metas': []},
-    'headings_analysis': {'score': 80, 'total_pages': 10}, # Added total_pages for consistency
+    'headings_analysis': {'score': 80, 'total_pages': 10},
     'images_analysis': {'score': 50, 'total_images': 20, 'images_with_alt': 15, 'images_without_alt': 5, 'images_with_empty_alt': 0, 'images_with_title_attr': 10, 'images_without_title_attr': 5, 'images_with_empty_title_attr': 0, 'total_pages': 10},
     'content_analysis': {'score': 65, 'total_pages': 10},
     'links_analysis': {'score': 70, 'total_pages': 10},
     'performance_analysis': {
         'score': 75, 'fast_pages': 5, 'slow_pages': 2,
-        'average_response_time': 1.5, 'average_page_size': 1024*500, # 500KB
+        'average_response_time': 1.5, 'average_page_size': 1024*500,
         'total_pages': 10
     },
     'technical_analysis': {'score': 85, 'total_pages': 10},
@@ -68,12 +66,11 @@ dummy_analysis_results = {
     ]
 }
 
-# Fill in potentially missing analysis keys with default valid structures
-default_score_details = {'score': 0, 'total_pages': 0} # Added total_pages to default
+default_score_details = {'score': 0, 'total_pages': 0}
 list_based_details = [
     'too_short_titles', 'too_long_titles', 'too_short_metas', 'too_long_metas'
 ]
-page_count_details = { # These are specific counts within an analysis, not total_pages for the analysis itself
+page_count_details = {
     'pages_with_title': 0, 'pages_with_meta': 0,
 }
 
