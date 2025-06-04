@@ -14,6 +14,8 @@ from reportlab.graphics.charts.piecharts import Pie
 from reportlab.graphics.charts.barcharts import VerticalBarChart # Not used, but good to have
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
+import matplotlib
+matplotlib.use('Agg') # Set backend BEFORE importing pyplot
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
@@ -262,115 +264,98 @@ class PDFGenerator:
 
         flowables.append(Spacer(1, 0.1 * inch))
 
-        # Weaknesses Section - Restructured into a Table
+        # Weaknesses Section - New structure with multiple small tables
         flowables.append(Paragraph("Aree di Miglioramento:", self.styles['SectionSubHeadingStyle']))
+        flowables.append(Spacer(1, 0.1 * inch)) # Space after main title
 
-        table_data = []
-        table_style_cmds = [
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 2), # Reduced general padding
-            ('RIGHTPADDING', (0,0), (-1,-1), 2),
-            ('TOPPADDING', (0,0), (-1,-1), 2),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors'].get('border_light', '#DDDDDD')))
-        ]
-
-        # Define colors for striping from PDF_CONFIG or use defaults for table
-        bg_color_even_hex_table = PDF_CONFIG['colors'].get('light_gray', '#F0F0F0') # Standard light_gray for tables
-        bg_color_odd_hex_table = PDF_CONFIG['colors'].get('white', '#FFFFFF')
-        bg_color_even_table = colors.HexColor(bg_color_even_hex_table)
-        bg_color_odd_table = colors.HexColor(bg_color_odd_hex_table)
-
-        # Define colors for macro category headers
-        color_error_bg_hex = PDF_CONFIG['colors'].get('error_light', '#FADBD8') # Softer red
-        color_warning_bg_hex = PDF_CONFIG['colors'].get('warning_light', '#FEF9E7') # Softer yellow
-        color_notice_bg_hex = PDF_CONFIG['colors'].get('info_light', '#E8F8F5') # Softer blue/green
-
-        row_idx = 0
         has_any_weakness_to_show = False
 
-        if weaknesses and isinstance(weaknesses, dict) and (weaknesses.get('errors') or weaknesses.get('warnings') or weaknesses.get('notices')):
+        if weaknesses and isinstance(weaknesses, dict):
             macro_order_map = {
-                'errors': ('Errori Critici', colors.HexColor(color_error_bg_hex)),
-                'warnings': ('Avvertimenti Importanti', colors.HexColor(color_warning_bg_hex)),
-                'notices': ('Avvisi e Ottimizzazioni Minori', colors.HexColor(color_notice_bg_hex))
+                'errors': 'Errori Critici',
+                'warnings': 'Avvertimenti Importanti',
+                'notices': 'Avvisi e Ottimizzazioni Minori'
             }
 
-            for macro_key, (macro_display_name, macro_bg_color) in macro_order_map.items():
+            # Define colors for striping from PDF_CONFIG or use defaults for table
+            bg_color_even_hex_table = PDF_CONFIG['colors'].get('light_gray', '#F0F0F0')
+            bg_color_odd_hex_table = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+            bg_color_even_table = colors.HexColor(bg_color_even_hex_table)
+            bg_color_odd_table = colors.HexColor(bg_color_odd_hex_table)
+
+            # Specific problem title background
+            specific_problem_title_bg_hex = PDF_CONFIG['colors'].get('secondary_light', '#E4EAF1') # A light neutral color
+            specific_problem_title_bg = colors.HexColor(specific_problem_title_bg_hex)
+
+            for macro_key, macro_display_name in macro_order_map.items():
                 if macro_key in weaknesses and weaknesses[macro_key]:
-                    has_any_weakness_to_show = True
-                    # Macro Category Row
-                    table_data.append([Paragraph(macro_display_name, self.styles['TableMacroCategoryStyle'])])
-                    table_style_cmds.extend([
-                        ('SPAN', (0, row_idx), (1, row_idx)),
-                        ('BACKGROUND', (0, row_idx), (1, row_idx), macro_bg_color),
-                        ('TEXTCOLOR', (0,row_idx), (1,row_idx), colors.black), # Ensure text is readable
-                        ('TOPPADDING', (0,row_idx), (1,row_idx), 6),
-                        ('BOTTOMPADDING', (0,row_idx), (1,row_idx), 6)
-                    ])
-                    row_idx += 1
+                    if not has_any_weakness_to_show: # First time we find a macro category with issues
+                        has_any_weakness_to_show = True
+
+                    # Add Macro Category Title as a standalone Paragraph
+                    flowables.append(Paragraph(macro_display_name, self.styles['TableMacroCategoryStyle']))
+                    # flowables.append(Spacer(1, 0.05 * inch)) # Small space after macro title
 
                     specific_problems = weaknesses[macro_key]
-                    is_first_problem_in_macro = True
                     for problem_label, problem_instances in specific_problems.items():
-                        # Specific Problem Type Row
-                        # Indent specific problem label slightly for visual hierarchy
-                        indented_problem_label = f"&nbsp;&nbsp;&nbsp;{problem_label}"
-                        table_data.append([Paragraph(indented_problem_label, self.styles['TableSpecificProblemStyle'])])
-                        table_style_cmds.extend([
-                            ('SPAN', (0, row_idx), (1, row_idx)),
-                            ('BACKGROUND', (0, row_idx), (1, row_idx), bg_color_odd_table if not is_first_problem_in_macro else macro_bg_color), # Keep macro bg for first item or use odd
-                             ('LEFTPADDING', (0, row_idx), (0, row_idx), 10), # Indent specific problem type
-                        ])
-                        is_first_problem_in_macro = False
-                        row_idx += 1
+                        flowables.append(Spacer(1, 0.15 * inch)) # Space BEFORE each specific problem table
 
+                        table_data_specific = []
+                        table_style_specific_cmds = [
+                            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                            ('LEFTPADDING', (0,0), (-1,-1), 3),
+                            ('RIGHTPADDING', (0,0), (-1,-1), 3),
+                            ('TOPPADDING', (0,0), (-1,-1), 3),
+                            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+                            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))),
+                        ]
+
+                        # Specific Problem Title Row
+                        table_data_specific.append([Paragraph(problem_label, self.styles['TableSpecificProblemStyle'])])
+                        table_style_specific_cmds.extend([
+                            ('SPAN', (0,0), (1,0)), # Span title row
+                            ('BACKGROUND', (0,0), (1,0), specific_problem_title_bg),
+                            ('TEXTCOLOR', (0,0), (1,0), colors.black),
+                            ('TOPPADDING', (0,0), (1,0), 5),
+                            ('BOTTOMPADDING', (0,0), (1,0), 5),
+                        ])
+
+                        # Issue Detail Rows
                         for i, instance in enumerate(problem_instances):
                             details_display = instance['details']
-                            if len(details_display) > 100: # Truncate long details for table cells
-                                details_display = details_display[:97] + "..."
+                            if len(details_display) > 120: # Truncate for cell
+                                details_display = details_display[:117] + "..."
 
                             url_text = instance['url']
-                            if len(url_text) > 70: # Truncate long URLs
-                                url_text = url_text[:67] + "..."
+                            if len(url_text) > 80: # Truncate for cell
+                                url_text = url_text[:77] + "..."
 
-                            # Issue Detail Row (URL and Details)
                             row_items = [Paragraph(url_text, self.styles['TableDetailURLStyle'])]
-
                             if details_display != 'N/A' and details_display != instance['url']:
                                 row_items.append(Paragraph(details_display, self.styles['TableDetailStyle']))
                             else:
-                                row_items.append(Paragraph('-', self.styles['TableDetailStyle'])) # Placeholder if no distinct detail
+                                row_items.append(Paragraph('-', self.styles['TableDetailStyle']))
+                            table_data_specific.append(row_items)
 
-                            table_data.append(row_items)
+                            # Striping for detail rows (i+1 because title is row 0)
+                            current_bg_color = bg_color_even_table if i % 2 == 0 else bg_color_odd_table
+                            table_style_specific_cmds.append(('BACKGROUND', (0, i+1), (1, i+1), current_bg_color))
 
-                            # Striping for issue detail rows
-                            # Background color based on whether the detail row index is even or odd
-                            current_bg_color = bg_color_even_table if (row_idx - (len(specific_problems) +1)) % 2 == 0 else bg_color_odd_table
-                            table_style_cmds.append(('BACKGROUND', (0, row_idx), (1, row_idx), current_bg_color))
-                            table_style_cmds.extend([
-                                ('LEFTPADDING', (0,row_idx), (0,row_idx), 15), # Further indent URLs
-                                ('LEFTPADDING', (1,row_idx), (1,row_idx), 5)
-                            ])
-                            row_idx += 1
+                        if table_data_specific:
+                            page_width, _ = A4
+                            available_width = page_width - self.doc.leftMargin - self.doc.rightMargin - (0.2 * inch) # Ensure it fits
+                            col_widths_specific = [available_width * 0.5, available_width * 0.5]
 
-            if has_any_weakness_to_show:
-                # Calculate available width for the table
-                page_width, _ = A4
-                available_width = page_width - self.doc.leftMargin - self.doc.rightMargin - (0.4 * inch) # Small margin adjustment
+                            specific_problem_table = Table(table_data_specific, colWidths=col_widths_specific)
+                            specific_problem_table.setStyle(TableStyle(table_style_specific_cmds))
+                            flowables.append(specific_problem_table)
 
-                # Define column widths, e.g., 60% for URL, 40% for Details
-                col_widths = [available_width * 0.5, available_width * 0.5]
+                    flowables.append(Spacer(1, 0.1 * inch)) # Space after all tables in a macro category
 
-                weaknesses_table = Table(table_data, colWidths=col_widths)
-                weaknesses_table.setStyle(TableStyle(table_style_cmds))
-                flowables.append(weaknesses_table)
-            else: # This case should ideally be caught by the outer if, but as a fallback
-                 flowables.append(Paragraph("Nessuna area di miglioramento specifica identificata.", self.styles['ListItem']))
-        else:
+        if not has_any_weakness_to_show:
             flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
 
-        flowables.append(Spacer(1, 0.5 * inch))
+        flowables.append(Spacer(1, 0.5 * inch)) # Final spacer for the section
         self.story.append(KeepTogether(flowables))
 
     def _add_score_overview(self):
@@ -951,7 +936,11 @@ class PDFGenerator:
         
     def generate_pdf(self, filename: str) -> bool:
         try:
-            self.doc = SimpleDocTemplate(filename, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+            self.doc = SimpleDocTemplate(filename, pagesize=A4,
+                                         leftMargin=PDF_CONFIG['margin']['left']*cm,
+                                         rightMargin=PDF_CONFIG['margin']['right']*cm,
+                                         topMargin=PDF_CONFIG['margin']['top']*cm,
+                                         bottomMargin=PDF_CONFIG['margin']['bottom']*cm)
             self.story = []
             self._add_header()
             self._add_chart_and_counts_section() # NEWLY ADDED CALL

@@ -89,10 +89,10 @@ GUI_CONFIG = {
 PDF_CONFIG = {
     'page_size': 'A4',
     'margin': {
-        'left': 2.5,
-        'right': 2.5,
-        'top': 2.5,
-        'bottom': 2.5
+        'left': 2.0,
+        'right': 2.0,
+        'top': 2.0,
+        'bottom': 2.0
     },
     'font_family': 'Helvetica',
     'font_family_bold': 'Helvetica',
