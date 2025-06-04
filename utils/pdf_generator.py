@@ -116,8 +116,8 @@ class PDFGenerator:
             self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_ERROR), fontName=FONT_FAMILY_BOLD))
         
     def _add_header(self):
-        self.story.append(Paragraph(f"Site Audit Report per: {self.domain}", self.styles['CustomTitle']))
-        self.story.append(Paragraph(self.domain, self.styles['CustomSubtitle']))
+        self.story.append(Paragraph("Site Audit Report", self.styles['CustomTitle'])) # First line
+        self.story.append(Paragraph(self.domain, self.styles['CustomSubtitle']))      # Second line (domain name)
         self.story.append(Spacer(1, 0.2 * inch))
         self.story.append(Paragraph(f"Generato in data: {self.analysis_results['summary']['analysis_date']}", self.styles['SmallText']))
         self.story.append(Spacer(1, 0.5 * inch))
@@ -365,11 +365,17 @@ class PDFGenerator:
                                     technical_issue_type,
                                     PDF_ISSUE_RECOMMENDATIONS.get('generic_seo_tip', "Consultare le best practice SEO.")
                                 )
-                                flowables.append(Spacer(1, 0.05 * inch)) # Small spacer before recommendation
+                                specific_content_flowables = [specific_problem_table]
+                                specific_content_flowables.append(Spacer(1, 0.05 * inch)) # Small spacer before recommendation
                                 rec_paragraph_text = f"<b>Raccomandazione:</b> {recommendation_text}"
-                                flowables.append(Paragraph(rec_paragraph_text, self.styles['TableRecommendationStyle']))
+                                specific_content_flowables.append(Paragraph(rec_paragraph_text, self.styles['TableRecommendationStyle']))
+                                specific_content_flowables.append(Spacer(1, 0.05 * inch)) # Small spacer after recommendation
+                                flowables.append(KeepTogether(specific_content_flowables))
+                            else: # If not warning/notice, just add the table
+                                flowables.append(specific_problem_table)
 
-                    flowables.append(Spacer(1, 0.1 * inch)) # Space after a specific problem's content (table + recommendation)
+                    # Removed the Spacer(1, 0.1 * inch) that was here to avoid double spacing
+                    # as spacers are now inside the KeepTogether or around it.
 
         if not has_any_weakness_to_show:
             flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
@@ -403,11 +409,12 @@ class PDFGenerator:
         FONT_SIZE_TABLE_BODY = PDF_CONFIG['font_sizes'].get('small', 9) # Consistent small size
         COLOR_TEXT_PRIMARY_FOR_TABLE = PDF_CONFIG['colors'].get('text_primary', '#222222')
         HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
+        NEW_HEADER_BG_COLOR = colors.HexColor('#f5f5f5')
 
         score_table_style_cmds = [
             # Header Styling
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Black text for header
+            ('BACKGROUND', (0, 0), (-1, 0), NEW_HEADER_BG_COLOR), # New light gray background
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Ensure black text
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
@@ -641,11 +648,12 @@ class PDFGenerator:
         color_text_body = PDF_CONFIG['colors'].get('text_primary', '#222222')
 
         HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
+        NEW_HEADER_BG_COLOR = colors.HexColor('#f5f5f5')
 
         issues_table_style_cmds = [
             # Header Row Styling
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor(color_header_bg)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Black text for header
+            ('BACKGROUND', (0, 0), (-1, 0), NEW_HEADER_BG_COLOR), # New light gray background
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Ensure black text
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), font_header),
@@ -694,35 +702,57 @@ class PDFGenerator:
         if not items:
             return None
 
-        table_data = []
+        # Define header and data rows
+        header_row = [Paragraph("Parametro", self.styles['BodyText']), Paragraph("Valore", self.styles['BodyText'])]
+        table_data = [header_row] # Add header row first
+
         for name, value in items:
             table_data.append([
-                Paragraph(name, self.styles['BodyText']), # Consider a specific style for Metric Name if needed
+                Paragraph(name, self.styles['BodyText']),
                 Paragraph(str(value), self.styles['BodyText'])
             ])
 
         # Define column widths (e.g., 60% for name, 40% for value)
         col_widths = [available_width * 0.6, available_width * 0.4]
-
         summary_table = Table(table_data, colWidths=col_widths)
 
-        # Define colors from PDF_CONFIG for striping
+        # Styling elements
+        new_header_bg_color = colors.HexColor('#f5f5f5')
+        header_outline_color = colors.HexColor('#FFCC00')
+        font_header_name = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold') # Using BodyText's font but bold for header
+        font_header_size = PDF_CONFIG['font_sizes'].get('body', 10) # BodyText size for header
+
         bg_color_even_hex = PDF_CONFIG['colors'].get('white', '#FFFFFF')
-        bg_color_odd_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # A common light gray for odd rows
+        bg_color_odd_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7')
+        grid_color = colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))
 
         table_style_cmds = [
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 5),
-            ('RIGHTPADDING', (0,0), (-1,-1), 5),
-            ('TOPPADDING', (0,0), (-1,-1), 4),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))), # Subtle grid
+            # Header Styling
+            ('BACKGROUND', (0,0), (-1,0), new_header_bg_color),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+            ('ALIGN', (0,0), (-1,0), 'CENTER'),
+            ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+            ('FONTNAME', (0,0), (-1,0), font_header_name),
+            ('FONTSIZE', (0,0), (-1,0), font_header_size),
+            ('BOTTOMPADDING', (0,0), (-1,0), 5), # Adjusted padding for header
+            ('TOPPADDING', (0,0), (-1,0), 5),
+            ('BOX', (0,0), (0,0), 1.5, header_outline_color), # Outline for first header cell
+            ('BOX', (1,0), (1,0), 1.5, header_outline_color), # Outline for second header cell
+
+            # General Data Row Styling (starts from row 1 now)
+            ('VALIGN', (0,1), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,1), (-1,-1), 5),
+            ('RIGHTPADDING', (0,1), (-1,-1), 5),
+            ('TOPPADDING', (0,1), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,1), (-1,-1), 4),
+            ('GRID', (0,0), (-1,-1), 0.5, grid_color), # Grid for the whole table
         ]
 
-        for i, _ in enumerate(table_data):
-            if i % 2 == 0: # Even rows
+        # Striping for data rows (starting from row 1)
+        for i in range(1, len(table_data)): # i is the actual row index in table_data
+            if (i-1) % 2 == 0: # Even data row (i=1, 3, 5...) -> (i-1) = 0, 2, 4...
                 table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), colors.HexColor(bg_color_even_hex)))
-            else: # Odd rows
+            else: # Odd data row (i=2, 4, 6...) -> (i-1) = 1, 3, 5...
                 table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), colors.HexColor(bg_color_odd_hex)))
 
         summary_table.setStyle(TableStyle(table_style_cmds))
@@ -789,7 +819,8 @@ class PDFGenerator:
                     column_widths = [] # Avoid division by zero
             table = Table(table_data, colWidths=column_widths) # Use dynamically calculated or passed column_widths
 
-            header_bg_color = PDF_CONFIG['colors'].get('secondary', '#005A9C') # Existing dark blue
+            # header_bg_color = PDF_CONFIG['colors'].get('secondary', '#005A9C') # Existing dark blue - replaced
+            new_header_bg_color = colors.HexColor('#f5f5f5') # New light gray background
             header_outline_color = colors.HexColor('#FFCC00') # Amber/Yellow
             font_header_name = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
             font_header_size = PDF_CONFIG['font_sizes'].get('small', 9)
@@ -804,8 +835,8 @@ class PDFGenerator:
 
             style_cmds = [
                 # Header Styling
-                ('BACKGROUND', (0,0), (-1,0), HexColor(header_bg_color)),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.black), # Black text for header
+                ('BACKGROUND', (0,0), (-1,0), new_header_bg_color), # New light gray background
+                ('TEXTCOLOR', (0,0), (-1,0), colors.black), # Ensure black text
                 ('ALIGN', (0,0), (-1,0), 'CENTER'),
                 ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
                 ('FONTNAME', (0,0), (-1,0), font_header_name),
@@ -835,7 +866,8 @@ class PDFGenerator:
 
             table.setStyle(TableStyle(style_cmds))
             flowables_subsection.append(table)
-            flowables_subsection.append(Spacer(1, 0.3 * inch))
+            # Reduced spacer height after each detailed issue table
+            flowables_subsection.append(Spacer(1, 0.15 * inch))
             self.story.append(KeepTogether(flowables_subsection))
 
         # Calculate available_width once, assuming margins are set on self.doc
@@ -844,7 +876,10 @@ class PDFGenerator:
         available_width = page_width_a4 - doc_margins
 
         title_analysis = self.analysis_results['title_analysis']
-        self.story.append(Paragraph("Title Tags", self.styles['SectionHeading']))
+
+        title_category_flowables = []
+        title_category_flowables.append(Paragraph("Title Tags", self.styles['SectionHeading']))
+        title_category_flowables.append(Spacer(1, 0.1*inch)) # Reduced spacer
         title_summary_items = [
             ("Pagine con Title", f"{title_analysis.get('pages_with_title', 0)}/{title_analysis.get('total_pages', 0)}"),
             ("Pagine senza Title", str(len(detailed_issues.get('pages_without_title', [])))),
@@ -854,10 +889,14 @@ class PDFGenerator:
             ("Punteggio", f"{title_analysis.get('score', 'N/A')}/100")
         ]
         summary_table_title = self._create_summary_table_for_section(title_summary_items, available_width)
-        if summary_table_title: self.story.append(summary_table_title)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_title: title_category_flowables.append(summary_table_title)
+        # Spacer after summary table before first detailed table is now handled by the spacer
+        # at the start of add_issue_table_subsection or the one at its end.
+        # self.story.append(Spacer(1, 0.2 * inch)) # Removed this explicit spacer
+        self.story.append(KeepTogether(title_category_flowables))
 
         # Note: column_widths are now handled by add_issue_table_subsection if None is passed
+        # The add_issue_table_subsection itself uses KeepTogether for its content.
         add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
         add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []), headers=['Title Duplicato', 'URL Pagina Coinvolta', 'Conteggio'], data_keys=['title', 'url', 'duplicate_count'])
         add_issue_table_subsection(f"Title Troppo Corti (< {SEO_CONFIG.get('title_min_length', 30)} caratteri)", title_analysis.get('too_short_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'])
@@ -865,7 +904,9 @@ class PDFGenerator:
         self.story.append(PageBreak())
 
         meta_analysis = self.analysis_results['meta_description_analysis']
-        self.story.append(Paragraph("Meta Descriptions", self.styles['SectionHeading']))
+        meta_category_flowables = []
+        meta_category_flowables.append(Paragraph("Meta Descriptions", self.styles['SectionHeading']))
+        meta_category_flowables.append(Spacer(1, 0.1*inch))
         meta_summary_items = [
             ("Pagine con Meta Description", f"{meta_analysis.get('pages_with_meta',0)}/{meta_analysis.get('total_pages',0)}"),
             ("Pagine senza Meta Description", str(len(detailed_issues.get('pages_without_meta', [])))),
@@ -875,8 +916,8 @@ class PDFGenerator:
             ("Punteggio", f"{meta_analysis.get('score','N/A')}/100")
         ]
         summary_table_meta = self._create_summary_table_for_section(meta_summary_items, available_width)
-        if summary_table_meta: self.story.append(summary_table_meta)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_meta: meta_category_flowables.append(summary_table_meta)
+        self.story.append(KeepTogether(meta_category_flowables))
 
         add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
         add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []), headers=['Meta Description Duplicata', 'URL Pagina Coinvolta', 'Conteggio'], data_keys=['meta', 'url', 'duplicate_count'])
@@ -885,7 +926,9 @@ class PDFGenerator:
         self.story.append(PageBreak())
 
         headings_analysis = self.analysis_results.get('headings_analysis', {})
-        self.story.append(Paragraph("Headings (H1, H2, H3)", self.styles['SectionHeading']))
+        headings_category_flowables = []
+        headings_category_flowables.append(Paragraph("Headings (H1, H2, H3)", self.styles['SectionHeading']))
+        headings_category_flowables.append(Spacer(1, 0.1*inch))
         headings_summary_items = [
             ("Pagine senza H1", str(len(detailed_issues.get('missing_h1_pages', [])))),
             ("Pagine con H1 multipli", str(len(detailed_issues.get('multiple_h1_pages', [])))),
@@ -894,8 +937,8 @@ class PDFGenerator:
             ("Punteggio", f"{headings_analysis.get('score', 'N/A')}/100")
         ]
         summary_table_headings = self._create_summary_table_for_section(headings_summary_items, available_width)
-        if summary_table_headings: self.story.append(summary_table_headings)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_headings: headings_category_flowables.append(summary_table_headings)
+        self.story.append(KeepTogether(headings_category_flowables))
 
         add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
         add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
@@ -904,7 +947,9 @@ class PDFGenerator:
         self.story.append(PageBreak())
 
         images_analysis = self.analysis_results['images_analysis']
-        self.story.append(Paragraph("Immagini", self.styles['SectionHeading']))
+        images_category_flowables = []
+        images_category_flowables.append(Paragraph("Immagini", self.styles['SectionHeading']))
+        images_category_flowables.append(Spacer(1, 0.1*inch))
         images_summary_items = [
             ("Totale immagini analizzate", str(images_analysis.get('total_images',0))),
             ("Con ALT text (contenuto)", str(images_analysis.get('images_with_alt',0))),
@@ -917,8 +962,8 @@ class PDFGenerator:
             ("Punteggio", f"{images_analysis.get('score','N/A')}/100")
         ]
         summary_table_images = self._create_summary_table_for_section(images_summary_items, available_width)
-        if summary_table_images: self.story.append(summary_table_images)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_images: images_category_flowables.append(summary_table_images)
+        self.story.append(KeepTogether(images_category_flowables))
 
         img_headers = ['Pagina URL', 'URL Immagine', 'Problema']; img_data_keys = ['url', 'image_src', 'issue']
         add_issue_table_subsection("Immagini senza Attributo ALT HTML", detailed_issues.get('images_without_alt', []), headers=img_headers, data_keys=img_data_keys)
@@ -929,31 +974,37 @@ class PDFGenerator:
         self.story.append(PageBreak())
 
         content_analysis = self.analysis_results.get('content_analysis', {})
-        self.story.append(Paragraph("Contenuto", self.styles['SectionHeading']))
+        content_category_flowables = []
+        content_category_flowables.append(Paragraph("Contenuto", self.styles['SectionHeading']))
+        content_category_flowables.append(Spacer(1, 0.1*inch))
         content_summary_items = [
             ("Pagine con conteggio parole basso", str(len(detailed_issues.get('low_word_count_pages', [])))),
             ("Punteggio", f"{content_analysis.get('score', 'N/A')}/100")
         ]
         summary_table_content = self._create_summary_table_for_section(content_summary_items, available_width)
-        if summary_table_content: self.story.append(summary_table_content)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_content: content_category_flowables.append(summary_table_content)
+        self.story.append(KeepTogether(content_category_flowables))
 
         add_issue_table_subsection(f"Pagine con Conteggio Parole Basso (< {SEO_CONFIG.get('min_word_count',200)} parole)", detailed_issues.get('low_word_count_pages', []), headers=['URL Pagina', 'Conteggio Parole', 'Problema'], data_keys=['url', 'word_count', 'issue'])
         self.story.append(PageBreak())
 
         links_analysis = self.analysis_results.get('links_analysis', {})
-        self.story.append(Paragraph("Link", self.styles['SectionHeading']))
+        links_category_flowables = []
+        links_category_flowables.append(Paragraph("Link", self.styles['SectionHeading']))
+        links_category_flowables.append(Spacer(1, 0.1*inch))
         links_summary_items = [ # Add more specific link metrics if available
             ("Punteggio Link Analysis", f"{links_analysis.get('score', 'N/A')}/100")
         ]
         summary_table_links = self._create_summary_table_for_section(links_summary_items, available_width)
-        if summary_table_links: self.story.append(summary_table_links)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_links: links_category_flowables.append(summary_table_links)
+        self.story.append(KeepTogether(links_category_flowables))
         # Add specific link issue tables here if any (e.g., broken internal/external links)
         self.story.append(PageBreak())
 
         perf_analysis = self.analysis_results['performance_analysis']
-        self.story.append(Paragraph("Performance", self.styles['SectionHeading']))
+        perf_category_flowables = []
+        perf_category_flowables.append(Paragraph("Performance", self.styles['SectionHeading']))
+        perf_category_flowables.append(Spacer(1, 0.1*inch))
         perf_summary_items = [
             ("Pagine considerate veloci", str(perf_analysis.get('fast_pages',0))),
             ("Pagine considerate lente (istanze)", str(len(detailed_issues.get('slow_pages',[])))),
@@ -963,15 +1014,17 @@ class PDFGenerator:
             ("Punteggio", f"{perf_analysis.get('score','N/A')}/100")
         ]
         summary_table_perf = self._create_summary_table_for_section(perf_summary_items, available_width)
-        if summary_table_perf: self.story.append(summary_table_perf)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_perf: perf_category_flowables.append(summary_table_perf)
+        self.story.append(KeepTogether(perf_category_flowables))
 
         add_issue_table_subsection(f"Pagine con Dimensioni HTML Troppo Grandi (> {SEO_CONFIG.get('max_page_size_mb', 2)} MB)", detailed_issues.get('large_html_pages', []), headers=['URL Pagina', 'Dimensione (MB)', 'Problema'], data_keys=['url', 'size_mb', 'issue'])
         add_issue_table_subsection(f"Pagine con Velocità di Caricamento Bassa (> {PERFORMANCE_CONFIG.get('max_response_time',3)}s)", detailed_issues.get('slow_pages', []), headers=['URL Pagina', 'Tempo (s)', 'Problema'], data_keys=['url', 'response_time', 'issue'])
         self.story.append(PageBreak())
 
         technical_analysis = self.analysis_results.get('technical_analysis', {})
-        self.story.append(Paragraph("Aspetti Tecnici", self.styles['SectionHeading']))
+        tech_category_flowables = []
+        tech_category_flowables.append(Paragraph("Aspetti Tecnici", self.styles['SectionHeading']))
+        tech_category_flowables.append(Spacer(1, 0.1*inch))
         tech_summary_items = []
         tech_issues_to_report_map = {
             'status_4xx_pages': "Pagine con Errori Client (4xx)",
@@ -984,8 +1037,8 @@ class PDFGenerator:
             tech_summary_items.append((text_label, str(len(detailed_issues.get(key, [])))))
         tech_summary_items.append(("Punteggio", f"{technical_analysis.get('score', 'N/A')}/100"))
         summary_table_tech = self._create_summary_table_for_section(tech_summary_items, available_width)
-        if summary_table_tech: self.story.append(summary_table_tech)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_tech: tech_category_flowables.append(summary_table_tech)
+        self.story.append(KeepTogether(tech_category_flowables))
 
         tech_headers_default = ['URL Pagina', 'Problema Rilevato']; tech_data_keys_default = ['url', 'issue']
         for key, text_label in tech_issues_to_report_map.items():
@@ -997,7 +1050,9 @@ class PDFGenerator:
         self.story.append(PageBreak())
 
         ssl_analysis = self.analysis_results.get('ssl_analysis', {})
-        self.story.append(Paragraph("SSL / Sicurezza", self.styles['SectionHeading']))
+        ssl_category_flowables = []
+        ssl_category_flowables.append(Paragraph("SSL / Sicurezza", self.styles['SectionHeading']))
+        ssl_category_flowables.append(Spacer(1, 0.1*inch))
         ssl_summary_items = [
             ("Certificato SSL presente", 'Sì' if ssl_analysis.get('has_ssl') else 'No'),
             ("Certificato SSL valido", 'Sì' if ssl_analysis.get('ssl_valid') else 'No')
@@ -1008,8 +1063,8 @@ class PDFGenerator:
         if 'score' in ssl_analysis:
              ssl_summary_items.append(("Punteggio", f"{ssl_analysis.get('score','N/A')}/100"))
         summary_table_ssl = self._create_summary_table_for_section(ssl_summary_items, available_width)
-        if summary_table_ssl: self.story.append(summary_table_ssl)
-        self.story.append(Spacer(1, 0.2 * inch))
+        if summary_table_ssl: ssl_category_flowables.append(summary_table_ssl)
+        self.story.append(KeepTogether(ssl_category_flowables))
         # Add specific SSL issue tables here if any are generated by analyzer
         self.story.append(PageBreak())
 
@@ -1081,9 +1136,10 @@ class PDFGenerator:
             self.story.append(KeepTogether(item_flowables))
         self.story.append(Spacer(1, 0.3 * inch))
 
-    def _add_appendix(self):
-        self.story.append(KeepTogether([Paragraph("Appendice", self.styles['SectionHeading']), Spacer(1, 0.2 * inch)]))
-        methodology_flowables = [Paragraph("Metodologia di Analisi", self.styles['BodyText'])]
+    # _add_appendix method and its content are removed.
+    # The _add_issue_details_appendix method and its content are removed.
+
+    def _get_evaluation_text(self, score):
         methodology_text = """Questo report è stato generato utilizzando SEO Analyzer Pro, che esegue un'analisi completa del sito web basata sulle migliori pratiche SEO. L'analisi include:<ul><li>Crawling automatico del sito web</li><li>Verifica dei tag HTML principali (title, meta, headings)</li><li>Analisi delle immagini e degli alt text</li><li>Valutazione della qualità del contenuto</li><li>Test delle performance di caricamento</li><li>Controllo degli aspetti tecnici (SSL, canonical, etc.)</li></ul>Il punteggio finale è calcolato come media ponderata di tutti i fattori analizzati."""
         methodology_flowables.append(Paragraph(methodology_text, self.styles['BodyText']))
         methodology_flowables.append(Spacer(1, 0.2 * inch))
@@ -1213,9 +1269,10 @@ class PDFGenerator:
             self._add_issues_table_section()
             self._add_detailed_analysis_section()
             self._add_recommendations_section()
-            self.story.append(PageBreak())
-            self._add_issue_details_appendix()
-            self._add_appendix()
+            # self.story.append(PageBreak()) # Page break might be desired before recommendations, or not, depending on flow. Let's keep it for now.
+            # Removed sections:
+            # self._add_issue_details_appendix()
+            # self._add_appendix()
             self.doc.build(self.story)
             return True
         except Exception as e:
