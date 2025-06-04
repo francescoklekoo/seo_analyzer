@@ -181,6 +181,56 @@ PDF_ISSUE_TYPE_LABELS = {
     'unknown_type': 'Tipo Problema Non Specificato'
 }
 
+PDF_ISSUE_RECOMMENDATIONS = {
+    # Errori Comuni (anche se le raccomandazioni principali potrebbero venire da analisi più specifiche)
+    'missing_title': "Ogni pagina deve avere un tag title unico e descrittivo. È fondamentale per la SEO.",
+    'duplicate_title': "Evita titoli duplicati. Ogni pagina necessita di un titolo unico per distinguersi nei risultati di ricerca.",
+    'missing_meta_description': "Aggiungi una meta description univoca per ogni pagina. Questo testo appare nei risultati di ricerca e influenza il click-through rate.",
+    'duplicate_meta': "Rendi uniche le meta description per ogni pagina. Descrizioni duplicate possono confondere i motori di ricerca.", # 'duplicate_meta_description' is often the key
+    'duplicate_meta_descriptions': "Rendi uniche le meta description per ogni pagina. Descrizioni duplicate possono confondere i motori di ricerca.",
+    'missing_h1': "Includi un tag H1 su ogni pagina per definirne l'argomento principale. Dovrebbe essere unico per pagina.",
+    'broken_image': "Correggi i link delle immagini interrotte per migliorare l'esperienza utente e assicurare che i motori di ricerca possano indicizzarle.",
+    'http_status_4xx': "Risolvi gli errori client (4xx). Assicurati che tutti i link interni puntino a risorse valide e considera di implementare redirect 301 per pagine permanentemente spostate.",
+    'http_status_5xx': "Indaga e risolvi gli errori server (5xx). Questi problemi possono rendere il tuo sito inaccessibile a utenti e motori di ricerca.",
+    'no_canonical_tag': "Implementa i tag canonical per specificare la versione preferita di una pagina, specialmente se hai contenuti duplicati o molto simili.",
+
+    # Warnings (Problemi di media gravità)
+    'short_title': "Allunga il titolo della pagina per includere parole chiave pertinenti e descrivere meglio il contenuto (ideale: 30-60 caratteri).",
+    'long_title': "Accorcia il titolo della pagina per assicurarti che venga visualizzato correttamente nei risultati di ricerca (ideale: 30-60 caratteri).",
+    'short_meta_description': "Espandi la meta description per fornire un riassunto più convincente e dettagliato del contenuto della pagina (ideale: 120-160 caratteri).",
+    'long_meta_description': "Riduci la lunghezza della meta description per evitare che venga troncata nei risultati di ricerca (ideale: 120-160 caratteri).",
+    'multiple_h1_tags': "Assicurati che ogni pagina abbia un solo tag H1, che dovrebbe rappresentare il titolo principale o l'argomento della pagina.",
+    'low_word_count': "Aumenta la quantità di contenuto testuale sulla pagina per fornire più valore agli utenti e migliorare il ranking (minimo consigliato: 300 parole).",
+    'low_text_html_ratio': "Incrementa la proporzione di testo effettivo rispetto al codice HTML sulla pagina. Rimuovi codice non necessario o aggiungi più contenuto testuale.",
+    'slow_page_load': "Ottimizza la velocità di caricamento della pagina. Comprimi immagini, minimizza CSS/JS, usa la cache del browser e considera un hosting più performante.",
+    'large_html_size': "Riduci le dimensioni del documento HTML. Ottimizza il codice, rimuovi commenti e spazi non necessari, e considera di spostare CSS/JS inline in file esterni.",
+    'missing_lang_attribute': "Specifica la lingua principale del contenuto della pagina aggiungendo l'attributo 'lang' al tag <html> (es. <html lang=\"it\">).",
+    'no_schema_markup': "Implementa lo schema markup (dati strutturati) per aiutare i motori di ricerca a comprendere meglio il contenuto della tua pagina e abilitare rich snippet.",
+
+    # Notices (Ottimizzazioni e buone pratiche)
+    'images_without_alt': "Aggiungi un testo alternativo (attributo ALT) descrittivo a tutte le immagini per migliorare l'accessibilità e la SEO.",
+    'images_with_empty_alt': "Fornisci un testo alternativo significativo nell'attributo ALT delle immagini invece di lasciarlo vuoto, a meno che l'immagine sia puramente decorativa e non aggiunga contesto.",
+    'images_without_title_attr': "Considera di aggiungere un attributo 'title' alle immagini se fornisce informazioni contestuali aggiuntive utili al passaggio del mouse (opzionale per SEO, più per UX).",
+    'images_with_empty_title_attr': "Se usi l'attributo 'title' per le immagini, assicurati che contenga testo utile. Se non necessario, rimuovi l'attributo vuoto.",
+
+    # Aggiunte basate su chiavi comuni da PDF_ISSUE_TYPE_LABELS
+    'missing_h2': "Utilizza i tag H2 per strutturare le sezioni principali del tuo contenuto. Aiutano la leggibilità e la SEO.",
+    'pages_without_title': "Assicurati che ogni pagina abbia un tag <title> univoco e descrittivo.", # Alias di missing_title
+    'pages_without_meta': "Aggiungi una meta description a ogni pagina per migliorare la presentazione nei risultati di ricerca.", # Alias di missing_meta_description
+    'missing_h1_pages': "Ogni pagina dovrebbe avere un tag H1 per indicare il suo argomento principale.", # Alias di missing_h1
+    'multiple_h1_pages': "Utilizza un solo tag H1 per pagina. Titoli multipli H1 possono confondere i motori di ricerca.", # Alias di multiple_h1_tags
+    'large_html_pages': "Riduci le dimensioni dell'HTML per le pagine indicate per migliorare i tempi di caricamento.", # Alias di large_html_size
+    'slow_pages': "Ottimizza le pagine lente per migliorare l'esperienza utente e il ranking. Analizza le cause specifiche del rallentamento.", # Alias di slow_page_load
+    'status_4xx_pages': "Correggi i link che portano a pagine con errori 4xx (es. Pagina Non Trovata) per migliorare l'esperienza utente.", # Alias di http_status_4xx
+    'status_5xx_pages': "Risolvi gli errori server 5xx il prima possibile per garantire che le tue pagine siano accessibili.", # Alias di http_status_5xx
+    'pages_without_canonical': "Aggiungi tag canonical alle pagine per indicare la versione preferita ed evitare problemi di contenuto duplicato.", # Alias di no_canonical_tag
+    'pages_without_lang': "Definisci la lingua per ogni pagina usando l'attributo 'lang' nel tag <html>.", # Alias di missing_lang_attribute
+    'pages_without_schema': "Considera l'aggiunta di dati strutturati (Schema.org) per migliorare come i motori di ricerca interpretano e visualizzano le tue pagine.", # Alias di no_schema_markup
+
+    # General fallback recommendation
+    'generic_seo_tip': "Consulta le linee guida per i webmaster e le best practice SEO per ottimizzare ulteriormente questo aspetto."
+}
+
 # Fattori di penalità per categoria di problemi nel calcolo del punteggio
 CATEGORY_ISSUE_PENALTY_FACTORS = {
     'error': 1.0,    # Le problematiche classificate come 'error' hanno un impatto di penalità completo sul punteggio della categoria

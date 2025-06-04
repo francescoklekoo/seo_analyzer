@@ -87,6 +87,10 @@ class PDFGenerator:
         style_name = 'TableDetailStyle'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_SMALL, textColor=HexColor(COLOR_TEXT_SECONDARY), leftIndent=0))
+        style_name = 'TableRecommendationStyle' # New style for recommendations in table
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY, fontSize=FONT_SIZE_SMALL, textColor=HexColor(COLOR_TEXT_SECONDARY), leftIndent=5, spaceBefore=2, spaceAfter=2, bulletIndent=0, firstLineIndent=0))
+
 
         style_name = 'BodyText'
         if style_name not in self.styles:
@@ -340,6 +344,20 @@ class PDFGenerator:
                             # Striping for detail rows (i+1 because title is row 0)
                             current_bg_color = bg_color_even_table if i % 2 == 0 else bg_color_odd_table
                             table_style_specific_cmds.append(('BACKGROUND', (0, i+1), (1, i+1), current_bg_color))
+
+                            # Add recommendation row for warnings and notices
+                            if macro_key in ['warnings', 'notices']:
+                                current_row_idx_for_table = len(table_data_specific) # Index for the new recommendation row
+                                issue_type_for_rec = instance.get('type', 'unknown_type')
+                                recommendation_text = PDF_ISSUE_RECOMMENDATIONS.get(issue_type_for_rec, PDF_ISSUE_RECOMMENDATIONS.get('generic_seo_tip', "Consultare le best practice SEO."))
+
+                                table_data_specific.append([Paragraph(recommendation_text, self.styles['TableRecommendationStyle'])])
+                                table_style_specific_cmds.extend([
+                                    ('SPAN', (0, current_row_idx_for_table), (1, current_row_idx_for_table)),
+                                    ('BACKGROUND', (0, current_row_idx_for_table), (1, current_row_idx_for_table), current_bg_color), # Same background as parent
+                                    ('LEFTPADDING', (0, current_row_idx_for_table), (1, current_row_idx_for_table), 10), # Indent recommendation
+                                    ('BOTTOMPADDING', (0, current_row_idx_for_table), (1, current_row_idx_for_table), 4),
+                                ])
 
                         if table_data_specific:
                             page_width, _ = A4
@@ -922,7 +940,8 @@ class PDFGenerator:
 
                 issue_entry = {
                     'url': issue.get('url', 'N/A'),
-                    'details': details_text
+                    'details': details_text,
+                    'type': specific_type_key  # Ensure original type is passed
                 }
 
                 if user_friendly_label not in weaknesses_structured[macro_key]:

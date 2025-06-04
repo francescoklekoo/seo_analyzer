@@ -206,21 +206,35 @@ class WebCrawler:
         links = []
         for link in soup.find_all('a', href=True):
             href = link['href']
-            absolute_url = urljoin(base_url, href)
+            original_absolute_url = urljoin(base_url, href) # Keep original for reporting
             
+            # Normalize the URL for queueing and visited checks
+            normalized_url_for_crawl = self._normalize_url(original_absolute_url)
+
             links.append({
-                'url': absolute_url,
+                'url': original_absolute_url, # Store the link as it appeared on the page
                 'text': link.get_text().strip(),
                 'title': link.get('title', ''),
                 'rel': link.get('rel', []),
-                'is_external': urlparse(absolute_url).netloc != self.domain
+                'is_external': urlparse(original_absolute_url).netloc != self.domain
             })
             
-            # Aggiungi alla coda se è interno e non ancora visitato
-            if (self._should_crawl_url(absolute_url) and 
-                absolute_url not in self.visited_urls and
-                len(self.visited_urls) < CRAWL_CONFIG['max_pages']):
-                self.to_visit.put(absolute_url)
+            # Use normalized_url_for_crawl for deciding whether to crawl and for visited checks
+            # Check combined size of visited_urls and to_visit queue against max_pages
+            if (self._should_crawl_url(normalized_url_for_crawl) and
+                normalized_url_for_crawl not in self.visited_urls and
+                (len(self.visited_urls) + self.to_visit.qsize()) < CRAWL_CONFIG['max_pages']):
+
+                # Check again if it was added to visited_urls by another thread/process
+                # while this one was processing. This is a bit redundant if the main loop's
+                # check is solid, but can help reduce queue bloat with many identical links.
+                # For now, we'll rely on the main loop's check primarily.
+                # However, to avoid adding to queue if already visited (e.g. from sitemap or previous crawl iteration):
+                if normalized_url_for_crawl not in self.visited_urls:
+                     # Check if it's already in the queue to prevent duplicates there,
+                     # though Queue itself doesn't offer a direct "contains" check efficiently.
+                     # We will rely on visited_urls for this primarily.
+                    self.to_visit.put(normalized_url_for_crawl)
         
         return links
     
@@ -332,25 +346,38 @@ class WebCrawler:
                        len(self.visited_urls) < CRAWL_CONFIG['max_pages'] and
                        self.is_running):
                     
-                    current_url = self.to_visit.get()
+                    current_normalized_url = self.to_visit.get() # This is already normalized
                     
-                    if current_url in self.visited_urls:
+                    # Add to visited_urls immediately after getting from queue
+                    # to prevent re-processing if found again or if other threads are also working.
+                    # This is the primary mechanism to ensure a URL is processed only once.
+                    if current_normalized_url in self.visited_urls:
+                        pbar.update(1) # Update progress even if skipping already visited URL
                         continue
                     
+                    # Add to visited_urls BEFORE fetching.
+                    # This handles the case where fetching might be slow or result in redirects.
+                    # The key is that `current_normalized_url` (the one we decided to crawl) is marked as visited.
+                    self.visited_urls.add(current_normalized_url)
+
                     if self.callback:
-                        self.callback(f"Analizzando: {current_url}")
+                        self.callback(f"Analizzando: {current_normalized_url}") # Show user the URL being fetched
                     
-                    # Fetch della pagina
-                    page_data = self._fetch_page(current_url)
+                    # Fetch della pagina using the normalized URL
+                    page_data = self._fetch_page(current_normalized_url)
                     
                     if page_data:
+                        # page_data['url'] will be the final URL after any redirects.
+                        # This is stored in page_data. self.visited_urls stores normalized URLs.
                         self.pages_data.append(page_data)
-                        self.visited_urls.add(current_url)
-                        pbar.update(1)
+                        # pbar.update(1) # pbar is updated after popping from queue now
                         
                         if self.callback:
+                            # Callback shows count of unique processed pages
                             self.callback(f"Completate {len(self.visited_urls)} pagine su {CRAWL_CONFIG['max_pages']}")
                     
+                    pbar.update(1) # Update progress based on URLs popped from queue and processed
+
                     # Delay tra le richieste
                     time.sleep(CRAWL_CONFIG['delay'])
                     
