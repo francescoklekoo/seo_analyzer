@@ -24,6 +24,7 @@ CRAWL_CONFIG = {
     'max_depth': 3,   # Profondità massima di crawling
     'follow_external': False,  # Se seguire link esterni
     'respect_robots': True,    # Se rispettare robots.txt
+        'restrict_to_start_path': False  # NEW: Restrict crawl to the initial path (e.g., /it/, /en/)
 }
 
 # User agents per il crawling

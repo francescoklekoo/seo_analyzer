@@ -40,6 +40,7 @@ class WebCrawler:
         self.is_running = False
         self.session = requests.Session()
         self.driver = None
+        self.start_path_prefix = None # For 'restrict_to_start_path'
         
         # Configura la sessione HTTP
         self.session.headers.update(HTTP_HEADERS)
@@ -50,6 +51,30 @@ class WebCrawler:
             level=getattr(logging, LOGGING_CONFIG['level']),
             format=LOGGING_CONFIG['format']
         )
+
+        # Determine start_path_prefix if restriction is enabled
+        if CRAWL_CONFIG.get('restrict_to_start_path', False):
+            parsed_start_url = urlparse(self.start_url)
+            path = parsed_start_url.path
+            # Normalize path to ensure it starts with / if not empty, for consistency
+            if path and not path.startswith('/'):
+                path = '/' + path
+
+            if path and path != '/':
+                # Split path into segments, filter out empty ones
+                segments = [s for s in path.split('/') if s]
+                if segments:
+                    # The prefix is the first segment, enclosed in slashes
+                    self.start_path_prefix = f"/{segments[0]}/"
+                    self.logger.info(f"Path restriction enabled. Crawler will be restricted to paths starting with: {self.start_path_prefix}")
+                else:
+                    # Path was like "/" or "///", effectively no specific first directory
+                    self.start_path_prefix = "/"
+                    self.logger.info("Path restriction enabled, but start URL path is root or effectively empty. No specific sub-path restriction will be applied beyond domain.")
+            else:
+                # Start URL is example.com (no path)
+                self.start_path_prefix = "/"
+                self.logger.info("Path restriction enabled, but start URL has no path. No specific sub-path restriction will be applied beyond domain.")
         
     def _normalize_url(self, url: str) -> str:
         """Normalizza l'URL aggiungendo https se mancante"""
@@ -66,8 +91,23 @@ class WebCrawler:
         parsed_url = urlparse(url)
         
         # Controlla se è dello stesso dominio
-        if not CRAWL_CONFIG['follow_external'] and parsed_url.netloc != self.domain:
-            return False
+        if parsed_url.netloc != self.domain: # Primary check for same domain
+            if not CRAWL_CONFIG['follow_external']:
+                self.logger.debug(f"Skipping (external): {url}")
+                return False
+            else: # If following external, path restriction does not apply
+                pass
+        else: # Same domain, apply path restriction if enabled
+            if CRAWL_CONFIG.get('restrict_to_start_path', False) and \
+               self.start_path_prefix and self.start_path_prefix != "/":
+                # Normalize target path to ensure it starts with / for consistent comparison
+                target_path = parsed_url.path
+                if not target_path.startswith('/'):
+                    target_path = '/' + target_path
+
+                if not target_path.startswith(self.start_path_prefix):
+                    self.logger.debug(f"Skipping (path restriction): {url} - does not start with {self.start_path_prefix}")
+                    return False
         
         # Controlla le estensioni ignorate
         path = parsed_url.path.lower()

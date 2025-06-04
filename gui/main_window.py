@@ -1525,6 +1525,17 @@ class SettingsWindow:
         ctk.CTkCheckBox(scroll_frame, text="Rispetta robots.txt", variable=self.respect_robots_var, 
                         corner_radius=GC_CORNER_RADIUS['inputs'], font=checkbox_font, text_color=checkbox_text_color,
                         hover_color=GC_COLORS['hover_primary']).pack(anchor="w", padx=GC_PADDING['small'], pady=GC_PADDING['small'])
+
+        self.restrict_to_start_path_var = tk.BooleanVar(value=CRAWL_CONFIG.get('restrict_to_start_path', False))
+        ctk.CTkCheckBox(
+            scroll_frame,
+            text="Limita crawl al percorso iniziale (es. /it/, /en/)",
+            variable=self.restrict_to_start_path_var,
+            corner_radius=GC_CORNER_RADIUS['inputs'],
+            font=checkbox_font,
+            text_color=checkbox_text_color,
+            hover_color=GC_COLORS['hover_primary']
+        ).pack(anchor="w", padx=GC_PADDING['small'], pady=GC_PADDING['small'])
         
     def _create_seo_settings(self, parent):
         """Crea le impostazioni SEO"""
@@ -1629,6 +1640,7 @@ class SettingsWindow:
 
             CRAWL_CONFIG['follow_external'] = self.follow_external_var.get()
             CRAWL_CONFIG['respect_robots'] = self.respect_robots_var.get()
+            CRAWL_CONFIG['restrict_to_start_path'] = self.restrict_to_start_path_var.get()
 
             # SEO settings
             try:
