@@ -22,7 +22,7 @@ import numpy as np
 import io
 import base64
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple, Optional # Added Tuple and Optional
 import os
 
 from config import * # Assicurati che config.py sia accessibile e contenga i colori PDF_CONFIG['colors']
@@ -300,8 +300,11 @@ class PDFGenerator:
                     flowables.append(Paragraph(macro_display_name, self.styles['TableMacroCategoryStyle']))
                     # flowables.append(Spacer(1, 0.05 * inch)) # Small space after macro title
 
-                    specific_problems = weaknesses[macro_key]
-                    for problem_label, problem_instances in specific_problems.items():
+                    specific_problems_dict = weaknesses[macro_key] # This is now a dict of dicts
+                    for problem_label, problem_data in specific_problems_dict.items():
+                        technical_issue_type = problem_data['type']
+                        problem_instances = problem_data['instances']
+
                         flowables.append(Spacer(1, 0.15 * inch)) # Space BEFORE each specific problem table
 
                         table_data_specific = []
@@ -345,21 +348,9 @@ class PDFGenerator:
                             current_bg_color = bg_color_even_table if i % 2 == 0 else bg_color_odd_table
                             table_style_specific_cmds.append(('BACKGROUND', (0, i+1), (1, i+1), current_bg_color))
 
-                            # Add recommendation row for warnings and notices
-                            if macro_key in ['warnings', 'notices']:
-                                current_row_idx_for_table = len(table_data_specific) # Index for the new recommendation row
-                                issue_type_for_rec = instance.get('type', 'unknown_type')
-                                recommendation_text = PDF_ISSUE_RECOMMENDATIONS.get(issue_type_for_rec, PDF_ISSUE_RECOMMENDATIONS.get('generic_seo_tip', "Consultare le best practice SEO."))
+                            # Individual recommendation rows are REMOVED from here
 
-                                table_data_specific.append([Paragraph(recommendation_text, self.styles['TableRecommendationStyle'])])
-                                table_style_specific_cmds.extend([
-                                    ('SPAN', (0, current_row_idx_for_table), (1, current_row_idx_for_table)),
-                                    ('BACKGROUND', (0, current_row_idx_for_table), (1, current_row_idx_for_table), current_bg_color), # Same background as parent
-                                    ('LEFTPADDING', (0, current_row_idx_for_table), (1, current_row_idx_for_table), 10), # Indent recommendation
-                                    ('BOTTOMPADDING', (0, current_row_idx_for_table), (1, current_row_idx_for_table), 4),
-                                ])
-
-                        if table_data_specific:
+                        if table_data_specific: # Should always be true if problem_instances is not empty due to title row
                             page_width, _ = A4
                             available_width = page_width - self.doc.leftMargin - self.doc.rightMargin - (0.2 * inch) # Ensure it fits
                             col_widths_specific = [available_width * 0.5, available_width * 0.5]
@@ -368,7 +359,17 @@ class PDFGenerator:
                             specific_problem_table.setStyle(TableStyle(table_style_specific_cmds))
                             flowables.append(specific_problem_table)
 
-                    flowables.append(Spacer(1, 0.1 * inch)) # Space after all tables in a macro category
+                            # Add single recommendation paragraph after the table for this specific problem (for warnings/notices)
+                            if macro_key in ['warnings', 'notices']:
+                                recommendation_text = PDF_ISSUE_RECOMMENDATIONS.get(
+                                    technical_issue_type,
+                                    PDF_ISSUE_RECOMMENDATIONS.get('generic_seo_tip', "Consultare le best practice SEO.")
+                                )
+                                flowables.append(Spacer(1, 0.05 * inch)) # Small spacer before recommendation
+                                rec_paragraph_text = f"<b>Raccomandazione:</b> {recommendation_text}"
+                                flowables.append(Paragraph(rec_paragraph_text, self.styles['TableRecommendationStyle']))
+
+                    flowables.append(Spacer(1, 0.1 * inch)) # Space after a specific problem's content (table + recommendation)
 
         if not has_any_weakness_to_show:
             flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
@@ -385,12 +386,64 @@ class PDFGenerator:
         for category, score in categories.items():
             status_text = self._get_status_text(score)
             data.append([Paragraph(category, self.styles['BodyText']), Paragraph(f"{score}/100", self.styles['BodyText']), Paragraph(status_text, self.styles['BodyText'])])
-        table = Table(data, colWidths=[7*cm, 3*cm, 7*cm])
-        COLOR_TABLE_HEADER_BG = '#004080'; COLOR_TABLE_HEADER_TEXT = '#FFFFFF'; COLOR_TABLE_ROW_BG_ODD = '#F0F4F7'; COLOR_TABLE_ROW_BG_EVEN = '#FFFFFF'; COLOR_BORDER = '#CCCCCC'; FONT_FAMILY_TABLE_HEADER = 'Helvetica-Bold'; FONT_FAMILY_TABLE_BODY = 'Helvetica'; FONT_SIZE_TABLE_HEADER = 9; FONT_SIZE_TABLE_BODY = 9; COLOR_TEXT_PRIMARY_FOR_TABLE = '#222222'
-        score_table_style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)), ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_TEXT)), ('ALIGN', (0, 0), (-1, 0), 'CENTER'), ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER), ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER), ('BOTTOMPADDING', (0, 0), (-1, 0), 8), ('TOPPADDING', (0, 0), (-1, 0), 8), ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY), ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY), ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)), ('ALIGN', (0, 1), (-1, -1), 'LEFT'), ('ALIGN', (1, 1), (1, -1), 'CENTER'), ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'), ('BOTTOMPADDING', (0, 1), (-1, -1), 5), ('TOPPADDING', (0, 1), (-1, -1), 5), ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN))])
-        for i in range(1, len(data)):
-            if i % 2 != 0: score_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
-        score_table_style.add('GRID', (0, 0), (-1, -1), 0.5, HexColor(COLOR_BORDER)); score_table_style.add('BOX', (0, 0), (-1, -1), 1, HexColor(COLOR_BORDER))
+
+        # Calculate available width for full-width table
+        available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+        # Define relative column widths (e.g., 45% Categoria, 20% Punteggio, 35% Stato)
+        col_widths = [available_width * 0.45, available_width * 0.20, available_width * 0.35]
+        table = Table(data, colWidths=col_widths)
+
+        COLOR_TABLE_HEADER_BG = PDF_CONFIG['colors'].get('primary_dark', '#004080') # Use from PDF_CONFIG
+        COLOR_TABLE_ROW_BG_ODD = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # Use from PDF_CONFIG
+        COLOR_TABLE_ROW_BG_EVEN = PDF_CONFIG['colors'].get('white', '#FFFFFF') # Use from PDF_CONFIG
+        COLOR_BORDER = PDF_CONFIG['colors'].get('border', '#CCCCCC') # Use from PDF_CONFIG
+        FONT_FAMILY_TABLE_HEADER = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
+        FONT_FAMILY_TABLE_BODY = PDF_CONFIG.get('font_family', 'Helvetica')
+        FONT_SIZE_TABLE_HEADER = PDF_CONFIG['font_sizes'].get('small', 9)
+        FONT_SIZE_TABLE_BODY = PDF_CONFIG['font_sizes'].get('small', 9) # Consistent small size
+        COLOR_TEXT_PRIMARY_FOR_TABLE = PDF_CONFIG['colors'].get('text_primary', '#222222')
+        HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
+
+        score_table_style_cmds = [
+            # Header Styling
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor(COLOR_TABLE_HEADER_BG)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Black text for header
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
+            ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            # Individual BOX for each header cell for #FFCC00 outline
+            ('BOX', (0,0), (0,0), 1.5, HEADER_OUTLINE_COLOR),
+            ('BOX', (1,0), (1,0), 1.5, HEADER_OUTLINE_COLOR),
+            ('BOX', (2,0), (2,0), 1.5, HEADER_OUTLINE_COLOR),
+
+            # Data Rows Styling
+            ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY),
+            ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY),
+            ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)),
+            ('ALIGN', (0, 1), (-1, -1), 'LEFT'), # Categoria left aligned
+            ('ALIGN', (1, 1), (1, -1), 'CENTER'), # Punteggio center aligned
+            ('ALIGN', (2, 1), (2, -1), 'LEFT'), # Stato left aligned
+            ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6), # Adjusted padding for data rows
+            ('TOPPADDING', (0, 1), (-1, -1), 6),   # Adjusted padding for data rows
+            ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN)), # Default for even data rows
+        ]
+
+        score_table_style = TableStyle(score_table_style_cmds)
+
+        # Apply odd row striping
+        for i in range(1, len(data)): # Start from 1 to skip header
+            if i % 2 != 0: # Odd rows (1st, 3rd, 5th data row)
+                score_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
+
+        # General table grid (applied first, header BOXes will draw over it for header cells)
+        score_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(COLOR_BORDER))
+        # Overall table border (can be same as grid or slightly thicker)
+        score_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(COLOR_BORDER))
+
         table.setStyle(score_table_style)
         flowables.append(table)
         flowables.append(Spacer(1, 0.5 * inch))
@@ -569,10 +622,15 @@ class PDFGenerator:
                 Paragraph(detail_content, self.styles['SmallText'])
             ])
 
-        table = Table(data, colWidths=[6*cm, 5*cm, 6*cm])
+        # Calculate available width for full-width table
+        available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+        # Define relative column widths (e.g., 35% URL, 30% Tipo, 35% Dettaglio)
+        col_widths = [available_width * 0.35, available_width * 0.30, available_width * 0.35]
+        table = Table(data, colWidths=col_widths)
+
         # Define colors and fonts from PDF_CONFIG for clarity and consistency
         color_header_bg = PDF_CONFIG['colors'].get('primary_dark', '#004080')
-        color_header_text = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+        # color_header_text = PDF_CONFIG['colors'].get('white', '#FFFFFF') # Will be changed to black
         color_row_odd = PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5')
         color_row_even = PDF_CONFIG['colors'].get('white', '#FFFFFF')
         color_border = PDF_CONFIG['colors'].get('border_light', '#B0C4DE')
@@ -582,45 +640,97 @@ class PDFGenerator:
         fontsize_body = PDF_CONFIG['font_sizes'].get('extra_small', 8) # Matches SmallText style
         color_text_body = PDF_CONFIG['colors'].get('text_primary', '#222222')
 
-        issues_table_style = TableStyle([
-            # Header Row
+        HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
+
+        issues_table_style_cmds = [
+            # Header Row Styling
             ('BACKGROUND', (0, 0), (-1, 0), HexColor(color_header_bg)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor(color_header_text)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Black text for header
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), font_header),
             ('FONTSIZE', (0, 0), (-1, 0), fontsize_header),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
             ('TOPPADDING', (0, 0), (-1, 0), 8),
+            # Individual BOX for each header cell for #FFCC00 outline
+            ('BOX', (0,0), (0,0), 1.5, HEADER_OUTLINE_COLOR),
+            ('BOX', (1,0), (1,0), 1.5, HEADER_OUTLINE_COLOR),
+            ('BOX', (2,0), (2,0), 1.5, HEADER_OUTLINE_COLOR),
 
-            # Data Rows
+            # Data Rows Styling
             ('FONTNAME', (0, 1), (-1, -1), font_body),
             ('FONTSIZE', (0, 1), (-1, -1), fontsize_body),
             ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(color_text_body)),
             ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 1), (-1, -1), 'TOP'), # Ensure multi-line content is aligned to top
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6), # Adjusted padding for body
-            ('TOPPADDING', (0, 1), (-1, -1), 6),   # Adjusted padding for body
+            ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BACKGROUND', (0, 1), (-1, -1), HexColor(color_row_even)), # Default for even data rows
+        ]
 
-            # Default background for all data rows (even rows)
-            ('BACKGROUND', (0, 1), (-1, -1), HexColor(color_row_even)),
-
-            # Grid and Box
-            ('GRID', (0, 0), (-1, -1), 0.5, HexColor(color_border)),
-            ('BOX', (0, 0), (-1, -1), 1, HexColor(color_border)),
-        ])
+        issues_table_style = TableStyle(issues_table_style_cmds)
 
         # Apply odd row striping
-        for i in range(1, len(data)):
-            if i % 2 != 0: # Odd rows (1-indexed in loop, so 1st, 3rd, 5th data row)
+        for i in range(1, len(data)): # Start from 1 to skip header
+            if i % 2 != 0:
                 issues_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(color_row_odd))
+
+        # General table grid (applied first, header BOXes will draw over it for header cells)
+        issues_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(color_border))
+        # Overall table border (can be same as grid or slightly thicker)
+        issues_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(color_border))
 
         table.setStyle(issues_table_style)
         flowables.append(table)
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
+    def _create_summary_table_for_section(self, items: List[Tuple[str, str]], available_width: float) -> Table:
+        """
+        Creates a striped, full-width table for summary data of an analysis section.
+        items: List of (Metric Name, Metric Value) tuples.
+        available_width: The calculated available width for the table.
+        """
+        if not items:
+            return None
+
+        table_data = []
+        for name, value in items:
+            table_data.append([
+                Paragraph(name, self.styles['BodyText']), # Consider a specific style for Metric Name if needed
+                Paragraph(str(value), self.styles['BodyText'])
+            ])
+
+        # Define column widths (e.g., 60% for name, 40% for value)
+        col_widths = [available_width * 0.6, available_width * 0.4]
+
+        summary_table = Table(table_data, colWidths=col_widths)
+
+        # Define colors from PDF_CONFIG for striping
+        bg_color_even_hex = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+        bg_color_odd_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # A common light gray for odd rows
+
+        table_style_cmds = [
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 5),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))), # Subtle grid
+        ]
+
+        for i, _ in enumerate(table_data):
+            if i % 2 == 0: # Even rows
+                table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), colors.HexColor(bg_color_even_hex)))
+            else: # Odd rows
+                table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), colors.HexColor(bg_color_odd_hex)))
+
+        summary_table.setStyle(TableStyle(table_style_cmds))
+        return summary_table
+
     def _create_section_header_with_list_items(self, section_title_str: str, list_item_texts: List[str]) -> KeepTogether:
+        # This method will be phased out or significantly changed.
+        # For now, keeping it to avoid breaking existing calls until they are all refactored.
         flowables = [Paragraph(section_title_str, self.styles['SectionHeading'])]
         for item_text in list_item_texts:
             flowables.append(Paragraph(item_text, self.styles['ListItem']))
@@ -666,117 +776,241 @@ class PDFGenerator:
             if column_widths is None:
                 # Ensure total_width calculation is robust if page margins change
                 page_width, _ = A4 # Standard A4 size, could get from self.doc.width if available before build
-                effective_page_width = page_width - (self.doc.leftMargin + self.doc.rightMargin if self.doc else 4*cm) # Use current margins (2cm+2cm)
-                total_width = effective_page_width
+                # Ensure total_width calculation uses current document margins
+                page_width_a4, _ = A4
+                doc_margins = (self.doc.leftMargin + self.doc.rightMargin) if self.doc else (PDF_CONFIG['margin']['left'] + PDF_CONFIG['margin']['right']) * cm
+                effective_page_width = page_width_a4 - doc_margins
+
                 num_cols = len(headers)
                 if num_cols > 0:
-                    column_widths = [total_width / num_cols] * num_cols
+                    # Distribute width equally by default if specific column_widths not provided
+                    column_widths = [effective_page_width / num_cols] * num_cols
                 else:
                     column_widths = [] # Avoid division by zero
-            table = Table(table_data, colWidths=column_widths)
-            initial_style_commands = [
-                ('BACKGROUND', (0,0), (-1,0), HexColor(PDF_CONFIG['colors']['secondary'])),
-                ('TEXTCOLOR', (0,0), (-1,0), white),
+            table = Table(table_data, colWidths=column_widths) # Use dynamically calculated or passed column_widths
+
+            header_bg_color = PDF_CONFIG['colors'].get('secondary', '#005A9C') # Existing dark blue
+            header_outline_color = colors.HexColor('#FFCC00') # Amber/Yellow
+            font_header_name = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
+            font_header_size = PDF_CONFIG['font_sizes'].get('small', 9)
+
+            font_body_name = PDF_CONFIG.get('font_family', 'Helvetica')
+            font_body_size = PDF_CONFIG['font_sizes'].get('extra_small', 8.5)
+            text_color_body = colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#000000'))
+
+            bg_color_even = colors.white # Explicitly white for even rows
+            bg_color_odd = colors.HexColor(PDF_CONFIG['colors'].get('light_gray', '#F0F0F0')) # Standard light gray for odd
+            grid_color = colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))
+
+            style_cmds = [
+                # Header Styling
+                ('BACKGROUND', (0,0), (-1,0), HexColor(header_bg_color)),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.black), # Black text for header
                 ('ALIGN', (0,0), (-1,0), 'CENTER'),
-                ('FONTNAME', (0,0), (-1,0), PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')),
-                ('FONTSIZE', (0,0), (-1,0), PDF_CONFIG['font_sizes'].get('small',9)),
+                ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+                ('FONTNAME', (0,0), (-1,0), font_header_name),
+                ('FONTSIZE', (0,0), (-1,0), font_header_size),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), HexColor(PDF_CONFIG['colors']['light_gray'])), # Default background for all data rows
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors']['border'])),
-                ('BOX', (0,0), (-1,-1), 1, colors.HexColor(PDF_CONFIG['colors']['secondary_dark'])),
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('FONTNAME', (0,1), (-1,-1), PDF_CONFIG['font_family']),
-                ('FONTSIZE', (0,1), (-1,-1), PDF_CONFIG['font_sizes'].get('extra_small', 8.5)),
-                ('TEXTCOLOR', (0,1), (-1,-1), colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#000000'))),
-                ('ALIGN', (0,1), (-1,-1), 'LEFT')
             ]
+            # Add individual BOX for each header cell for #FFCC00 outline
+            for col_idx in range(len(headers)):
+                 style_cmds.append(('BOX', (col_idx,0), (col_idx,0), 1.5, header_outline_color))
 
-            # For alternating row colors:
-            # Get the commands from the initial style
-            new_style_commands = list(initial_style_commands) # Make a mutable copy
+            # Data Rows Styling
+            style_cmds.extend([
+                ('FONTNAME', (0,1), (-1,-1), font_body_name),
+                ('FONTSIZE', (0,1), (-1,-1), font_body_size),
+                ('TEXTCOLOR', (0,1), (-1,-1), text_color_body),
+                ('ALIGN', (0,1), (-1,-1), 'LEFT'),
+                ('VALIGN', (0,1), (-1,-1), 'TOP'),
+                ('GRID', (0,0), (-1,-1), 0.5, grid_color), # Grid for the whole table
+                ('BOX', (0,0), (-1,-1), 1, grid_color), # Overall table border
+            ])
 
-            for i_row in range(1, len(table_data)): # Start from 1 to skip header row
-                if i_row % 2 == 0: # Even rows (0-indexed i_row means 2nd data row, 4th, etc.)
-                    new_style_commands.append(('BACKGROUND', (0, i_row), (-1, i_row), white))
-                else: # Odd rows (1st data row, 3rd, etc.)
-                    # The default background set in initial_style_commands for (0,1),(-1,-1) will cover odd rows if it's light_gray
-                    # If we want a different color for odd rows explicitly, we add it here.
-                    # The current initial style already sets all data rows to light_gray, so we only need to override evens.
-                    # However, to match the original logic where light_gray was explicitly set for odd rows in the loop:
-                    new_style_commands.append(('BACKGROUND', (0, i_row), (-1, i_row), HexColor(PDF_CONFIG['colors']['light_gray'])))
+            # Apply striping
+            for i_row in range(1, len(table_data)): # Start from 1 (skip header)
+                current_bg_color = bg_color_odd if i_row % 2 != 0 else bg_color_even
+                style_cmds.append(('BACKGROUND', (0, i_row), (-1, i_row), current_bg_color))
 
-            table.setStyle(TableStyle(new_style_commands))
+            table.setStyle(TableStyle(style_cmds))
             flowables_subsection.append(table)
             flowables_subsection.append(Spacer(1, 0.3 * inch))
             self.story.append(KeepTogether(flowables_subsection))
 
+        # Calculate available_width once, assuming margins are set on self.doc
+        page_width_a4, _ = A4
+        doc_margins = (self.doc.leftMargin + self.doc.rightMargin) if self.doc else (PDF_CONFIG['margin']['left'] + PDF_CONFIG['margin']['right']) * cm
+        available_width = page_width_a4 - doc_margins
+
         title_analysis = self.analysis_results['title_analysis']
-        self.story.append(self._create_section_header_with_list_items("Title Tags", [f"• Pagine con Title: {title_analysis['pages_with_title']}/{title_analysis['total_pages']}", f"• Pagine senza Title: {len(detailed_issues.get('pages_without_title', []))}", f"• Title duplicati: {len(detailed_issues.get('duplicate_titles', []))} (istanze)", f"• Title troppo corti: {len(title_analysis.get('too_short_titles', []))}", f"• Title troppo lunghi: {len(title_analysis.get('too_long_titles', []))}", f"• Punteggio: {title_analysis['score']}/100"]))
-        add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
-        add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []), headers=['Title Duplicato', 'URL Pagina Coinvolta', 'Conteggio Totale Duplicati'], data_keys=['title', 'url', 'duplicate_count'], column_widths=[6*cm, 9*cm, 2*cm])
-        add_issue_table_subsection(f"Title Troppo Corti (< {SEO_CONFIG.get('title_min_length', 30)} caratteri)", title_analysis.get('too_short_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'], column_widths=[10*cm, 5*cm, 2*cm])
-        add_issue_table_subsection(f"Title Troppo Lunghi (> {SEO_CONFIG.get('title_max_length', 60)} caratteri)", title_analysis.get('too_long_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'], column_widths=[10*cm, 5*cm, 2*cm])
+        self.story.append(Paragraph("Title Tags", self.styles['SectionHeading']))
+        title_summary_items = [
+            ("Pagine con Title", f"{title_analysis.get('pages_with_title', 0)}/{title_analysis.get('total_pages', 0)}"),
+            ("Pagine senza Title", str(len(detailed_issues.get('pages_without_title', [])))),
+            ("Title duplicati (istanze)", str(len(detailed_issues.get('duplicate_titles', [])))),
+            ("Title troppo corti", str(len(title_analysis.get('too_short_titles', [])))),
+            ("Title troppo lunghi", str(len(title_analysis.get('too_long_titles', [])))),
+            ("Punteggio", f"{title_analysis.get('score', 'N/A')}/100")
+        ]
+        summary_table_title = self._create_summary_table_for_section(title_summary_items, available_width)
+        if summary_table_title: self.story.append(summary_table_title)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        # Note: column_widths are now handled by add_issue_table_subsection if None is passed
+        add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
+        add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []), headers=['Title Duplicato', 'URL Pagina Coinvolta', 'Conteggio'], data_keys=['title', 'url', 'duplicate_count'])
+        add_issue_table_subsection(f"Title Troppo Corti (< {SEO_CONFIG.get('title_min_length', 30)} caratteri)", title_analysis.get('too_short_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'])
+        add_issue_table_subsection(f"Title Troppo Lunghi (> {SEO_CONFIG.get('title_max_length', 60)} caratteri)", title_analysis.get('too_long_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'])
         self.story.append(PageBreak())
 
         meta_analysis = self.analysis_results['meta_description_analysis']
-        self.story.append(self._create_section_header_with_list_items("Meta Descriptions", [f"• Pagine con Meta Description: {meta_analysis['pages_with_meta']}/{meta_analysis['total_pages']}", f"• Pagine senza Meta Description: {len(detailed_issues.get('pages_without_meta', []))}", f"• Meta Description Duplicate: {len(detailed_issues.get('duplicate_meta_descriptions', []))} (istanze)", f"• Meta Description Troppo Corte: {len(meta_analysis.get('too_short_metas',[]))}", f"• Meta Description Troppo Lunghe: {len(meta_analysis.get('too_long_metas',[]))}", f"• Punteggio: {meta_analysis['score']}/100"]))
-        add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
-        add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []), headers=['Meta Description Duplicata', 'URL Pagina Coinvolta', 'Conteggio Totale Duplicati'], data_keys=['meta', 'url', 'duplicate_count'], column_widths=[6*cm, 9*cm, 2*cm])
-        add_issue_table_subsection(f"Meta Description Troppo Corte (< {SEO_CONFIG.get('meta_description_min_length', 50)} caratteri)", meta_analysis.get('too_short_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'], column_widths=[8*cm, 7*cm, 2*cm])
-        add_issue_table_subsection(f"Meta Description Troppo Lunghe (> {SEO_CONFIG.get('meta_description_max_length',160)} caratteri)", meta_analysis.get('too_long_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'], column_widths=[8*cm, 7*cm, 2*cm])
+        self.story.append(Paragraph("Meta Descriptions", self.styles['SectionHeading']))
+        meta_summary_items = [
+            ("Pagine con Meta Description", f"{meta_analysis.get('pages_with_meta',0)}/{meta_analysis.get('total_pages',0)}"),
+            ("Pagine senza Meta Description", str(len(detailed_issues.get('pages_without_meta', [])))),
+            ("Meta Description Duplicate (istanze)", str(len(detailed_issues.get('duplicate_meta_descriptions', [])))),
+            ("Meta Description Troppo Corte", str(len(meta_analysis.get('too_short_metas',[])))),
+            ("Meta Description Troppo Lunghe", str(len(meta_analysis.get('too_long_metas',[])))),
+            ("Punteggio", f"{meta_analysis.get('score','N/A')}/100")
+        ]
+        summary_table_meta = self._create_summary_table_for_section(meta_summary_items, available_width)
+        if summary_table_meta: self.story.append(summary_table_meta)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
+        add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []), headers=['Meta Description Duplicata', 'URL Pagina Coinvolta', 'Conteggio'], data_keys=['meta', 'url', 'duplicate_count'])
+        add_issue_table_subsection(f"Meta Description Troppo Corte (< {SEO_CONFIG.get('meta_description_min_length', 50)} caratteri)", meta_analysis.get('too_short_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'])
+        add_issue_table_subsection(f"Meta Description Troppo Lunghe (> {SEO_CONFIG.get('meta_description_max_length',160)} caratteri)", meta_analysis.get('too_long_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'])
         self.story.append(PageBreak())
 
         headings_analysis = self.analysis_results.get('headings_analysis', {})
-        self.story.append(self._create_section_header_with_list_items("Headings (H1, H2, H3)",[f"• Pagine senza H1: {len(detailed_issues.get('missing_h1_pages', []))}", f"• Pagine con H1 multipli: {len(detailed_issues.get('multiple_h1_pages', []))}", f"• Pagine senza H2: {len(detailed_issues.get('missing_h2_pages', []))}", f"• Pagine senza H3: {len(detailed_issues.get('missing_h3_pages', []))}", f"• Punteggio: {headings_analysis.get('score', 'N/A')}/100"]))
-        add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
-        add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
-        add_issue_table_subsection("Pagine senza H2", detailed_issues.get('missing_h2_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
-        add_issue_table_subsection("Pagine senza H3", detailed_issues.get('missing_h3_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'], column_widths=[13*cm, 4*cm])
+        self.story.append(Paragraph("Headings (H1, H2, H3)", self.styles['SectionHeading']))
+        headings_summary_items = [
+            ("Pagine senza H1", str(len(detailed_issues.get('missing_h1_pages', [])))),
+            ("Pagine con H1 multipli", str(len(detailed_issues.get('multiple_h1_pages', [])))),
+            ("Pagine senza H2", str(len(detailed_issues.get('missing_h2_pages', [])))),
+            ("Pagine senza H3", str(len(detailed_issues.get('missing_h3_pages', [])))),
+            ("Punteggio", f"{headings_analysis.get('score', 'N/A')}/100")
+        ]
+        summary_table_headings = self._create_summary_table_for_section(headings_summary_items, available_width)
+        if summary_table_headings: self.story.append(summary_table_headings)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
+        add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
+        add_issue_table_subsection("Pagine senza H2", detailed_issues.get('missing_h2_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
+        add_issue_table_subsection("Pagine senza H3", detailed_issues.get('missing_h3_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
         self.story.append(PageBreak())
 
         images_analysis = self.analysis_results['images_analysis']
-        self.story.append(self._create_section_header_with_list_items("Immagini", [f"• Totale immagini: {images_analysis['total_images']}", f"• Con ALT text (contenuto): {images_analysis['images_with_alt']}", f"• Senza attributo ALT HTML: {images_analysis.get('images_without_alt',0)} ({len(detailed_issues.get('images_without_alt',[]))} instanze)", f"• Con attributo ALT vuoto: {images_analysis.get('images_with_empty_alt',0)} ({len(detailed_issues.get('images_with_empty_alt',[]))} instanze)", f"• Con attributo Title (contenuto): {images_analysis.get('images_with_title_attr',0)}", f"• Senza attributo Title HTML: {images_analysis.get('images_without_title_attr',0)} ({len(detailed_issues.get('images_without_title_attr',[]))} instanze)", f"• Con attributo Title vuoto: {images_analysis.get('images_with_empty_title_attr',0)} ({len(detailed_issues.get('images_with_empty_title_attr',[]))} instanze)", f"• Immagini interrotte: {len(detailed_issues.get('broken_images', []))}", f"• Punteggio: {images_analysis['score']}/100"]))
-        img_headers = ['Pagina URL', 'URL Immagine', 'Problema']; img_data_keys = ['url', 'image_src', 'issue']; img_col_widths = [6*cm, 7*cm, 4*cm]
-        add_issue_table_subsection("Immagini senza Attributo ALT HTML", detailed_issues.get('images_without_alt', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
-        add_issue_table_subsection("Immagini con Attributo ALT Vuoto", detailed_issues.get('images_with_empty_alt', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
-        add_issue_table_subsection("Immagini senza Attributo Title HTML", detailed_issues.get('images_without_title_attr', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
-        add_issue_table_subsection("Immagini con Attributo Title Vuoto", detailed_issues.get('images_with_empty_title_attr', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths)
-        add_issue_table_subsection("Immagini Interrotte", detailed_issues.get('broken_images', []), headers=img_headers, data_keys=img_data_keys, column_widths=img_col_widths) 
+        self.story.append(Paragraph("Immagini", self.styles['SectionHeading']))
+        images_summary_items = [
+            ("Totale immagini analizzate", str(images_analysis.get('total_images',0))),
+            ("Con ALT text (contenuto)", str(images_analysis.get('images_with_alt',0))),
+            ("Senza attributo ALT HTML (istanze)", str(len(detailed_issues.get('images_without_alt',[])))),
+            ("Con attributo ALT vuoto (istanze)", str(len(detailed_issues.get('images_with_empty_alt',[])))),
+            ("Con attributo Title (contenuto)", str(images_analysis.get('images_with_title_attr',0))),
+            ("Senza attributo Title HTML (istanze)", str(len(detailed_issues.get('images_without_title_attr',[])))),
+            ("Con attributo Title vuoto (istanze)", str(len(detailed_issues.get('images_with_empty_title_attr',[])))),
+            ("Immagini interrotte", str(len(detailed_issues.get('broken_images', [])))),
+            ("Punteggio", f"{images_analysis.get('score','N/A')}/100")
+        ]
+        summary_table_images = self._create_summary_table_for_section(images_summary_items, available_width)
+        if summary_table_images: self.story.append(summary_table_images)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        img_headers = ['Pagina URL', 'URL Immagine', 'Problema']; img_data_keys = ['url', 'image_src', 'issue']
+        add_issue_table_subsection("Immagini senza Attributo ALT HTML", detailed_issues.get('images_without_alt', []), headers=img_headers, data_keys=img_data_keys)
+        add_issue_table_subsection("Immagini con Attributo ALT Vuoto", detailed_issues.get('images_with_empty_alt', []), headers=img_headers, data_keys=img_data_keys)
+        add_issue_table_subsection("Immagini senza Attributo Title HTML", detailed_issues.get('images_without_title_attr', []), headers=img_headers, data_keys=img_data_keys)
+        add_issue_table_subsection("Immagini con Attributo Title Vuoto", detailed_issues.get('images_with_empty_title_attr', []), headers=img_headers, data_keys=img_data_keys)
+        add_issue_table_subsection("Immagini Interrotte", detailed_issues.get('broken_images', []), headers=img_headers, data_keys=img_data_keys)
         self.story.append(PageBreak())
 
         content_analysis = self.analysis_results.get('content_analysis', {})
-        self.story.append(self._create_section_header_with_list_items("Contenuto", [f"• Pagine con conteggio parole basso: {len(detailed_issues.get('low_word_count_pages', []))}", f"• Punteggio: {content_analysis.get('score', 'N/A')}/100"]))
-        add_issue_table_subsection(f"Pagine con Conteggio Parole Basso (< {SEO_CONFIG.get('min_word_count',200)} parole)", detailed_issues.get('low_word_count_pages', []), headers=['URL Pagina', 'Conteggio Parole', 'Problema'], data_keys=['url', 'word_count', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
+        self.story.append(Paragraph("Contenuto", self.styles['SectionHeading']))
+        content_summary_items = [
+            ("Pagine con conteggio parole basso", str(len(detailed_issues.get('low_word_count_pages', [])))),
+            ("Punteggio", f"{content_analysis.get('score', 'N/A')}/100")
+        ]
+        summary_table_content = self._create_summary_table_for_section(content_summary_items, available_width)
+        if summary_table_content: self.story.append(summary_table_content)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        add_issue_table_subsection(f"Pagine con Conteggio Parole Basso (< {SEO_CONFIG.get('min_word_count',200)} parole)", detailed_issues.get('low_word_count_pages', []), headers=['URL Pagina', 'Conteggio Parole', 'Problema'], data_keys=['url', 'word_count', 'issue'])
         self.story.append(PageBreak())
 
         links_analysis = self.analysis_results.get('links_analysis', {})
-        self.story.append(self._create_section_header_with_list_items("Link", [f"• Punteggio: {links_analysis.get('score', 'N/A')}/100"]))
+        self.story.append(Paragraph("Link", self.styles['SectionHeading']))
+        links_summary_items = [ # Add more specific link metrics if available
+            ("Punteggio Link Analysis", f"{links_analysis.get('score', 'N/A')}/100")
+        ]
+        summary_table_links = self._create_summary_table_for_section(links_summary_items, available_width)
+        if summary_table_links: self.story.append(summary_table_links)
+        self.story.append(Spacer(1, 0.2 * inch))
+        # Add specific link issue tables here if any (e.g., broken internal/external links)
         self.story.append(PageBreak())
 
         perf_analysis = self.analysis_results['performance_analysis']
-        self.story.append(self._create_section_header_with_list_items("Performance", [f"• Pagine veloci: {perf_analysis['fast_pages']}", f"• Pagine lente: {perf_analysis['slow_pages']} (Instanze: {len(detailed_issues.get('slow_pages',[]))})", f"• Tempo medio: {perf_analysis['average_response_time']:.2f}s", f"• Dimensione media: {perf_analysis['average_page_size']/1024:.1f} KB", f"• Pagine con dimensioni HTML troppo grandi: {len(detailed_issues.get('large_html_pages', []))}", f"• Punteggio: {perf_analysis['score']}/100"]))
-        add_issue_table_subsection(f"Pagine con Dimensioni HTML Troppo Grandi (> {SEO_CONFIG.get('max_page_size_mb', 2)} MB)", detailed_issues.get('large_html_pages', []), headers=['URL Pagina', 'Dimensione (MB)', 'Problema'], data_keys=['url', 'size_mb', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
-        add_issue_table_subsection(f"Pagine con Velocità di Caricamento Bassa (> {PERFORMANCE_CONFIG.get('max_response_time',3)}s)", detailed_issues.get('slow_pages', []), headers=['URL Pagina', 'Tempo (s)', 'Problema'], data_keys=['url', 'response_time', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
+        self.story.append(Paragraph("Performance", self.styles['SectionHeading']))
+        perf_summary_items = [
+            ("Pagine considerate veloci", str(perf_analysis.get('fast_pages',0))),
+            ("Pagine considerate lente (istanze)", str(len(detailed_issues.get('slow_pages',[])))),
+            ("Tempo medio di risposta", f"{perf_analysis.get('average_response_time',0):.2f}s"),
+            ("Dimensione media pagina", f"{perf_analysis.get('average_page_size',0)/1024:.1f} KB"),
+            ("Pagine con HTML troppo grande", str(len(detailed_issues.get('large_html_pages', [])))),
+            ("Punteggio", f"{perf_analysis.get('score','N/A')}/100")
+        ]
+        summary_table_perf = self._create_summary_table_for_section(perf_summary_items, available_width)
+        if summary_table_perf: self.story.append(summary_table_perf)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        add_issue_table_subsection(f"Pagine con Dimensioni HTML Troppo Grandi (> {SEO_CONFIG.get('max_page_size_mb', 2)} MB)", detailed_issues.get('large_html_pages', []), headers=['URL Pagina', 'Dimensione (MB)', 'Problema'], data_keys=['url', 'size_mb', 'issue'])
+        add_issue_table_subsection(f"Pagine con Velocità di Caricamento Bassa (> {PERFORMANCE_CONFIG.get('max_response_time',3)}s)", detailed_issues.get('slow_pages', []), headers=['URL Pagina', 'Tempo (s)', 'Problema'], data_keys=['url', 'response_time', 'issue'])
         self.story.append(PageBreak())
 
         technical_analysis = self.analysis_results.get('technical_analysis', {})
-        tech_list_items_texts = []
-        tech_issues_to_report = {'status_4xx_pages': "Pagine con Errori Client (4xx)", 'status_5xx_pages': "Pagine con Errori Server (5xx)", 'pages_without_canonical': "Pagine senza URL Canonico", 'pages_without_lang': "Pagine senza Attributo Lingua", 'pages_without_schema': "Pagine senza Schema Markup"}
-        for key, text in tech_issues_to_report.items(): tech_list_items_texts.append(f"• {text}: {len(detailed_issues.get(key, []))}")
-        tech_list_items_texts.append(f"• Punteggio: {technical_analysis.get('score', 'N/A')}/100")
-        self.story.append(self._create_section_header_with_list_items("Aspetti Tecnici", tech_list_items_texts))
-        tech_headers = ['URL Pagina', 'Problema Rilevato']; tech_data_keys = ['url', 'issue']; tech_col_widths = [13*cm, 4*cm]
-        for key, text in tech_issues_to_report.items():
+        self.story.append(Paragraph("Aspetti Tecnici", self.styles['SectionHeading']))
+        tech_summary_items = []
+        tech_issues_to_report_map = {
+            'status_4xx_pages': "Pagine con Errori Client (4xx)",
+            'status_5xx_pages': "Pagine con Errori Server (5xx)",
+            'pages_without_canonical': "Pagine senza URL Canonico",
+            'pages_without_lang': "Pagine senza Attributo Lingua",
+            'pages_without_schema': "Pagine senza Schema Markup"
+        }
+        for key, text_label in tech_issues_to_report_map.items():
+            tech_summary_items.append((text_label, str(len(detailed_issues.get(key, [])))))
+        tech_summary_items.append(("Punteggio", f"{technical_analysis.get('score', 'N/A')}/100"))
+        summary_table_tech = self._create_summary_table_for_section(tech_summary_items, available_width)
+        if summary_table_tech: self.story.append(summary_table_tech)
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        tech_headers_default = ['URL Pagina', 'Problema Rilevato']; tech_data_keys_default = ['url', 'issue']
+        for key, text_label in tech_issues_to_report_map.items():
             data_to_pass = detailed_issues.get(key, [])
-            if key == 'status_4xx_pages' or key == 'status_5xx_pages': add_issue_table_subsection(text, data_to_pass, headers=['URL Pagina', 'Status Code', 'Problema'], data_keys=['url', 'status_code', 'issue'], column_widths=[10*cm, 3*cm, 4*cm])
-            else: add_issue_table_subsection(text, data_to_pass, headers=tech_headers, data_keys=tech_data_keys, column_widths=tech_col_widths)
+            if key == 'status_4xx_pages' or key == 'status_5xx_pages':
+                add_issue_table_subsection(text_label, data_to_pass, headers=['URL Pagina', 'Status Code', 'Problema'], data_keys=['url', 'status_code', 'issue'])
+            else:
+                add_issue_table_subsection(text_label, data_to_pass, headers=tech_headers_default, data_keys=tech_data_keys_default)
         self.story.append(PageBreak())
 
         ssl_analysis = self.analysis_results.get('ssl_analysis', {})
-        ssl_list_items_texts = [f"• Certificato SSL presente: {'Sì' if ssl_analysis.get('has_ssl') else 'No'}", f"• Certificato SSL valido: {'Sì' if ssl_analysis.get('ssl_valid') else 'No'}"]
-        if ssl_analysis.get('ssl_expires'): ssl_list_items_texts.append(f"• Scadenza Certificato SSL: {ssl_analysis.get('ssl_expires')}")
-        self.story.append(self._create_section_header_with_list_items("SSL / Sicurezza", ssl_list_items_texts))
+        self.story.append(Paragraph("SSL / Sicurezza", self.styles['SectionHeading']))
+        ssl_summary_items = [
+            ("Certificato SSL presente", 'Sì' if ssl_analysis.get('has_ssl') else 'No'),
+            ("Certificato SSL valido", 'Sì' if ssl_analysis.get('ssl_valid') else 'No')
+        ]
+        if ssl_analysis.get('ssl_expires'):
+            ssl_summary_items.append(("Scadenza Certificato SSL", str(ssl_analysis.get('ssl_expires'))))
+        # Add Punteggio for SSL if available
+        if 'score' in ssl_analysis:
+             ssl_summary_items.append(("Punteggio", f"{ssl_analysis.get('score','N/A')}/100"))
+        summary_table_ssl = self._create_summary_table_for_section(ssl_summary_items, available_width)
+        if summary_table_ssl: self.story.append(summary_table_ssl)
+        self.story.append(Spacer(1, 0.2 * inch))
+        # Add specific SSL issue tables here if any are generated by analyzer
         self.story.append(PageBreak())
 
     def _add_recommendations_section(self):
@@ -945,11 +1179,21 @@ class PDFGenerator:
                 }
 
                 if user_friendly_label not in weaknesses_structured[macro_key]:
-                    weaknesses_structured[macro_key][user_friendly_label] = []
-                weaknesses_structured[macro_key][user_friendly_label].append(issue_entry)
+                    weaknesses_structured[macro_key][user_friendly_label] = {
+                        'type': specific_type_key, # Store the technical type for the group
+                        'instances': []
+                    }
+                weaknesses_structured[macro_key][user_friendly_label]['instances'].append(issue_entry)
 
         # Remove macro categories if they are empty
-        weaknesses_structured = {k: v for k, v in weaknesses_structured.items() if v}
+        weaknesses_structured = {key: val for key, val in weaknesses_structured.items() if val}
+        # Further filter out specific problem groups if they somehow ended up with no instances
+        for macro_key in list(weaknesses_structured.keys()):
+            for problem_label in list(weaknesses_structured[macro_key].keys()):
+                if not weaknesses_structured[macro_key][problem_label]['instances']:
+                    del weaknesses_structured[macro_key][problem_label]
+            if not weaknesses_structured[macro_key]: # If macro category became empty
+                del weaknesses_structured[macro_key]
 
         return strengths, weaknesses_structured
         
