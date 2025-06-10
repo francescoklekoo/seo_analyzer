@@ -25,8 +25,14 @@ from datetime import datetime
 from typing import Dict, List, Any, Tuple, Optional # Added Tuple and Optional
 import os
 
-from config import * # Assicurati che config.py sia accessibile e contenga i colori PDF_CONFIG['colors']
-from config import PDF_ISSUE_TYPE_LABELS # Import the new labels
+from config import (
+    PDF_CONFIG, SEO_CONFIG, PERFORMANCE_CONFIG, # Existing partial imports
+    CATEGORY_OCM, CATEGORY_SEO_AUDIT, AUDIT_CHECKS_CONFIG, PDF_ISSUE_DESCRIPTIONS,
+    # PDF_ISSUE_TYPE_LABELS # This is now replaced by AUDIT_CHECKS_CONFIG and PDF_ISSUE_DESCRIPTIONS
+)
+# Make sure other necessary constants from config like FONT_FAMILY etc. are implicitly covered or explicitly imported if needed.
+# For now, assuming PDF_CONFIG covers nested color/font needs.
+
 
 class PDFGenerator:
     """
@@ -114,6 +120,28 @@ class PDFGenerator:
         style_name = 'ScoreCritical'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, parent=score_parent_style, textColor=HexColor(COLOR_ERROR), fontName=FONT_FAMILY_BOLD))
+
+        # Styles for new Executive Summary
+        style_name = 'OCMSectionHeading'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['SectionHeading'], spaceBefore=12, textColor=HexColor(PDF_CONFIG['colors'].get('primary', '#336699'))))
+        style_name = 'SEOAuditSectionHeading'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['SectionHeading'], spaceBefore=12, textColor=HexColor(PDF_CONFIG['colors'].get('secondary_dark', '#556677')))) # Example different color
+
+        style_name = 'ErrorSubHeading'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=11, leading=11 * 1.2, spaceBefore=8, spaceAfter=4, textColor=HexColor(COLOR_ERROR)))
+        style_name = 'WarningSubHeading'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=11, leading=11 * 1.2, spaceBefore=8, spaceAfter=4, textColor=HexColor(COLOR_WARNING))) # Ensure COLOR_WARNING is defined
+        style_name = 'NoticeSubHeading'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, fontName=FONT_FAMILY_BOLD, fontSize=11, leading=11 * 1.2, spaceBefore=8, spaceAfter=4, textColor=HexColor(COLOR_TEXT_SECONDARY))) # Example color for Notice
+
+        style_name = 'IssueDescriptionText'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], leftIndent=10, spaceBefore=2, spaceAfter=4, fontSize=FONT_SIZE_SMALL, textColor=HexColor(COLOR_TEXT_SECONDARY)))
         
     def _add_header(self):
         self.story.append(Paragraph("Site Audit Report", self.styles['CustomTitle'])) # First line
@@ -230,16 +258,75 @@ class PDFGenerator:
                                                  # And another spacer after the summary_paragraph (now this one)
                                                  # before Strengths/Weaknesses.
                                                  # Let's keep a spacer here for now.
-        flowables.append(Spacer(1, 0.2 * inch))
+        flowables.append(Spacer(1, 0.2 * inch)) # Spacer after summary text
 
+        # --- New Executive Summary Content ---
+        categorized_issues = self.analysis_results.get('categorized_issues', {})
 
-        strengths, weaknesses = self._identify_strengths_weaknesses()
+        # OCM Section
+        flowables.append(Paragraph(CATEGORY_OCM, self.styles['OCMSectionHeading']))
+        for severity in ['ERROR', 'WARNING', 'NOTICE']:
+            issues_list = categorized_issues.get(CATEGORY_OCM, {}).get(severity, [])
+            severity_style_name = f"{severity.capitalize()}SubHeading" # ErrorSubHeading, WarningSubHeading, etc.
+            if severity_style_name not in self.styles: # Fallback if style not defined
+                severity_style_name = 'SectionSubHeadingStyle'
 
-        table_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+            flowables.append(Paragraph(f"{severity.capitalize()}S", self.styles.get(severity_style_name, self.styles['BodyText'])))
 
-        # Define colors for striping from PDF_CONFIG or use defaults
-        bg_color_even_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7')
-        bg_color_odd_hex = PDF_CONFIG['colors'].get('white', '#FFFFFF')
+            if issues_list:
+                for issue in issues_list:
+                    check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
+                    description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
+
+                    flowables.append(Paragraph(f"<b>{issue['label']}</b>", self.styles['BodyText']))
+                    if issue.get('url') and issue.get('url') != self.domain : # Show URL if page-specific
+                        flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
+                    flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
+                    flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
+                    flowables.append(Spacer(1, 0.1 * inch))
+            else:
+                flowables.append(Paragraph("Nessun problema rilevato in questa categoria di severità.", self.styles['BodyText']))
+            flowables.append(Spacer(1, 0.1 * inch))
+
+        # SEO Audit Section
+        flowables.append(Paragraph(CATEGORY_SEO_AUDIT, self.styles['SEOAuditSectionHeading']))
+        for severity in ['ERROR', 'WARNING', 'NOTICE']:
+            issues_list = categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get(severity, [])
+            severity_style_name = f"{severity.capitalize()}SubHeading"
+            if severity_style_name not in self.styles:
+                severity_style_name = 'SectionSubHeadingStyle'
+
+            flowables.append(Paragraph(f"{severity.capitalize()}S", self.styles.get(severity_style_name, self.styles['BodyText'])))
+
+            if issues_list:
+                for issue in issues_list:
+                    check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
+                    description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
+
+                    flowables.append(Paragraph(f"<b>{issue['label']}</b>", self.styles['BodyText']))
+                    if issue.get('url') and issue.get('url') != self.domain: # Show URL if page-specific
+                        flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
+                    flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
+                    flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
+                    flowables.append(Spacer(1, 0.1 * inch))
+            else:
+                flowables.append(Paragraph("Nessun problema rilevato in questa categoria di severità.", self.styles['BodyText']))
+            flowables.append(Spacer(1, 0.1 * inch))
+
+        # Simplified Strengths
+        if overall_score >= 80: # Example threshold for "good score"
+            flowables.append(Paragraph("Punti di Forza Generali:", self.styles['SectionSubHeadingStyle']))
+            flowables.append(Paragraph(f"Il punteggio generale di {overall_score}/100 indica una buona performance complessiva.", self.styles['BodyText']))
+
+        # --- End of New Executive Summary Content ---
+
+        # Old strengths/weaknesses table logic is removed.
+        # strengths, weaknesses = self._identify_strengths_weaknesses()
+        # table_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+
+        # Define colors for striping from PDF_CONFIG or use defaults (Commented out as old tables are removed)
+        # bg_color_even_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7')
+        # bg_color_odd_hex = PDF_CONFIG['colors'].get('white', '#FFFFFF')
         bg_color_even = colors.HexColor(bg_color_even_hex)
         bg_color_odd = colors.HexColor(bg_color_odd_hex)
 
@@ -387,21 +474,26 @@ class PDFGenerator:
         flowables = []
         flowables.append(Paragraph("Panoramica Punteggi", self.styles['SectionHeading']))
         flowables.append(Spacer(1, 0.2 * inch))
-        data = [[Paragraph(h, self.styles['BodyText']) for h in ['Categoria', 'Punteggio', 'Stato']]]
-        categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Headings': self.analysis_results['headings_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score']}
-        for category, score in categories.items():
-            status_text = self._get_status_text(score)
-            data.append([Paragraph(category, self.styles['BodyText']), Paragraph(f"{score}/100", self.styles['BodyText']), Paragraph(status_text, self.styles['BodyText'])])
 
-        # Calculate available width for full-width table
-        available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        # Define relative column widths (e.g., 45% Categoria, 20% Punteggio, 35% Stato)
-        col_widths = [available_width * 0.45, available_width * 0.20, available_width * 0.35]
-        table = Table(data, colWidths=col_widths)
+        overall_score = self.analysis_results.get('overall_score', 'N/A')
+        score_text = f"Punteggio SEO Complessivo: {overall_score}/100"
+        flowables.append(Paragraph(score_text, self.styles['BodyText']))
 
-        COLOR_TABLE_HEADER_BG = PDF_CONFIG['colors'].get('primary_dark', '#004080') # Use from PDF_CONFIG
-        COLOR_TABLE_ROW_BG_ODD = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # Use from PDF_CONFIG
-        COLOR_TABLE_ROW_BG_EVEN = PDF_CONFIG['colors'].get('white', '#FFFFFF') # Use from PDF_CONFIG
+        # data = [[Paragraph(h, self.styles['BodyText']) for h in ['Categoria', 'Punteggio', 'Stato']]]
+        # categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Headings': self.analysis_results['headings_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score']}
+        # for category, score in categories.items():
+        #     status_text = self._get_status_text(score)
+        #     data.append([Paragraph(category, self.styles['BodyText']), Paragraph(f"{score}/100", self.styles['BodyText']), Paragraph(status_text, self.styles['BodyText'])])
+
+        # # Calculate available width for full-width table
+        # available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
+        # # Define relative column widths (e.g., 45% Categoria, 20% Punteggio, 35% Stato)
+        # col_widths = [available_width * 0.45, available_width * 0.20, available_width * 0.35]
+        # table = Table(data, colWidths=col_widths)
+
+        # COLOR_TABLE_HEADER_BG = PDF_CONFIG['colors'].get('primary_dark', '#004080') # Use from PDF_CONFIG
+        # COLOR_TABLE_ROW_BG_ODD = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # Use from PDF_CONFIG
+        # COLOR_TABLE_ROW_BG_EVEN = PDF_CONFIG['colors'].get('white', '#FFFFFF') # Use from PDF_CONFIG
         COLOR_BORDER = PDF_CONFIG['colors'].get('border', '#CCCCCC') # Use from PDF_CONFIG
         FONT_FAMILY_TABLE_HEADER = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
         FONT_FAMILY_TABLE_BODY = PDF_CONFIG.get('font_family', 'Helvetica')
@@ -449,10 +541,10 @@ class PDFGenerator:
         # General table grid (applied first, header BOXes will draw over it for header cells)
         score_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(COLOR_BORDER))
         # Overall table border (can be same as grid or slightly thicker)
-        score_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(COLOR_BORDER))
+        # score_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(COLOR_BORDER))
 
-        table.setStyle(score_table_style)
-        flowables.append(table)
+        # table.setStyle(score_table_style)
+        # flowables.append(table)
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
@@ -549,90 +641,47 @@ class PDFGenerator:
 
     def _add_issues_table_section(self):
         flowables = []
-        flowables.append(Paragraph("Tabella Riepilogativa dei Problemi", self.styles['SectionHeading']))
+        flowables.append(Paragraph("Tabella Riepilogativa dei Problemi (Nuova Struttura)", self.styles['SectionHeading']))
         flowables.append(Spacer(1, 0.2 * inch))
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
-        all_issues_list = []
-        issue_categories_to_process = ['errors', 'warnings', 'notices']
-        for category_key in issue_categories_to_process:
-            issues_in_category = detailed_issues.get(category_key, [])
-            if isinstance(issues_in_category, list):
-                for issue in issues_in_category:
-                    # 'type' from these lists is the technical key
-                    all_issues_list.append({'url': issue.get('url', 'N/A'),
-                                            'type': issue.get('type', 'unknown_type'),
-                                            'details': issue.get('image', issue.get('details', 'N/A')) }) # Prioritize 'image' for details if it exists
 
-        # Fallback for other lists in detailed_issues (e.g., 'pages_without_title')
-        # This part assumes that the 'issue_type' (key of the list, e.g. 'pages_without_title')
-        # IS the technical key for the label.
-        # And 'details' needs to be constructed or extracted.
-        if not all_issues_list: # Only if the primary categories were empty or not found
-            for issue_group_key, lst_issues in detailed_issues.items():
-                if issue_group_key not in issue_categories_to_process and isinstance(lst_issues, list): # Avoid reprocessing
-                    for item in lst_issues:
-                        if isinstance(item, dict):
-                            url = item.get('url', 'N/A')
-                            # Determine detail: prioritize specific keys, then 'issue' field, then 'N/A'
-                            detail_keys_order = ['src', 'image_src', 'image', 'tag', 'title', 'meta', 'issue']
-                            detail_text = 'N/A'
-                            for d_key in detail_keys_order:
-                                if item.get(d_key):
-                                    detail_text = item.get(d_key)
-                                    break
+        categorized_issues = self.analysis_results.get('categorized_issues', {})
+        all_issues_flat = []
+        for category_name, severities in categorized_issues.items():
+            for severity_level, issues_list in severities.items():
+                for issue in issues_list:
+                    all_issues_flat.append({
+                        'category_main': category_name,
+                        'severity': severity_level,
+                        'label': issue.get('label', 'N/A'),
+                        'url_details': f"{issue.get('url', self.domain)} - {issue.get('details', 'N/A')}"
+                    })
 
-                            all_issues_list.append({
-                                'url': url,
-                                'type': item.get('type', issue_group_key), # Use item's 'type' if present, else group key
-                                'details': detail_text
-                            })
-
-        if not all_issues_list:
-            flowables.append(Paragraph("Nessun problema specifico identificato.", self.styles['BodyText']))
+        if not all_issues_flat:
+            flowables.append(Paragraph("Nessun problema specifico identificato nella nuova struttura.", self.styles['BodyText']))
             flowables.append(Spacer(1, 0.5 * inch))
             self.story.append(KeepTogether(flowables))
             return
 
         header_row = [
-            Paragraph("Pagina URL", self.styles['SmallText']),
-            Paragraph("Tipo di Problema", self.styles['SmallText']),
-            Paragraph("Dettaglio/Elemento Coinvolto", self.styles['SmallText'])
+            Paragraph("Categoria", self.styles['SmallText']),
+            Paragraph("Gravità", self.styles['SmallText']),
+            Paragraph("Problema", self.styles['SmallText']),
+            Paragraph("URL/Dettagli", self.styles['SmallText'])
         ]
         data = [header_row]
 
-        for issue_item_dict in all_issues_list:
-            technical_type = str(issue_item_dict.get('type', 'unknown_type'))
-            user_friendly_label_template = PDF_ISSUE_TYPE_LABELS.get(technical_type, technical_type.replace('_', ' ').capitalize())
-
-            specific_url = str(issue_item_dict.get('url', 'N/A'))
-            specific_details = str(issue_item_dict.get('details', ''))
-
-            # Placeholder substitution
-            user_friendly_label = user_friendly_label_template.replace("{{url}}", specific_url)
-            user_friendly_label = user_friendly_label.replace("{{pagina}}", specific_url) # Retrocompatibility
-            user_friendly_label = user_friendly_label.replace("{{details}}", specific_details)
-            user_friendly_label = user_friendly_label.replace("{{elemento}}", specific_details) # Retrocompatibility
-
-            detail_content = str(issue_item_dict.get('details', 'N/A'))
-            # Truncate if detail_content is a long URL (common for image src)
-            # Also, ensure it's not the same as what might be in the label already if {{details}} was used.
-            # For now, we just truncate as before.
-            if "http" in detail_content and len(detail_content) > 70: # Simple heuristic
-                detail_content = detail_content[:67] + "..."
-            elif len(detail_content) > 100: # General truncation for very long details
-                 detail_content = detail_content[:97] + "..."
-
-
+        for issue_item in all_issues_flat:
             data.append([
-                Paragraph(specific_url, self.styles['SmallText']), # Use specific_url directly for the URL column
-                Paragraph(user_friendly_label, self.styles['SmallText']), # Formatted label
-                Paragraph(detail_content, self.styles['SmallText'])
+                Paragraph(issue_item['category_main'], self.styles['SmallText']),
+                Paragraph(issue_item['severity'], self.styles['SmallText']),
+                Paragraph(issue_item['label'], self.styles['SmallText']),
+                Paragraph(issue_item['url_details'], self.styles['SmallText'])
             ])
 
         # Calculate available width for full-width table
         available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        # Define relative column widths (e.g., 35% URL, 30% Tipo, 35% Dettaglio)
-        col_widths = [available_width * 0.35, available_width * 0.30, available_width * 0.35]
+        # Define relative column widths
+        col_widths = [available_width * 0.25, available_width * 0.15, available_width * 0.30, available_width * 0.30]
         table = Table(data, colWidths=col_widths)
 
         # Define colors and fonts from PDF_CONFIG for clarity and consistency
@@ -768,409 +817,32 @@ class PDFGenerator:
         return KeepTogether(flowables)
 
     def _add_detailed_analysis_section(self):
-        self.story.append(Paragraph("Analisi Dettagliata", self.styles['SectionHeading']))
+        self.story.append(Paragraph("Analisi Dettagliata per Categoria", self.styles['SectionHeading']))
         self.story.append(Spacer(1, 0.2 * inch))
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
-
-        def add_issue_table_subsection(section_title_text: str, issues: List[Dict], headers: List[str], data_keys: List[str], column_widths: List = None):
-            if not issues: return
-            flowables_subsection = [Paragraph(section_title_text, self.styles['BodyText']), Spacer(1, 0.1 * inch)]
-            # Use SmallText for headers to match cell content style if not overridden by TableStyle FONTSIZE
-            table_data = [[Paragraph(h, self.styles['SmallText']) for h in headers]]
-            for issue_item in issues:
-                row = []
-                for key in data_keys:
-                    full_url = str(issue_item.get(key, 'N/A')) # Full URL for href
-                    display_text = full_url
-
-                    # Truncate display_text if it's a long URL or very long string
-                    if ("http" in display_text or "www" in display_text) and len(display_text) > 70: # Increased limit slightly for URLs
-                        display_text = display_text[:67] + "..."
-                    elif len(display_text) > 100: # General very long string truncation
-                        display_text = display_text[:97] + "..."
-
-                    cell_paragraph_style = self.styles['SmallText'] # Default style for cells
-
-                    if key in ['url', 'image_src', 'href', 'link', 'src']: # Check if the key suggests it's a URL
-                        # Ensure full_url is not 'N/A' before creating a link
-                        if full_url != 'N/A' and "http" in full_url: # Basic check for a valid URL
-                            link_color = PDF_CONFIG['colors'].get('link', 'blue') # Get link color from config or default to blue
-                            cell_content = f'<a href="{full_url}" color="{link_color}">{display_text}</a>'
-                        else:
-                            cell_content = display_text # Non-linkable 'N/A' or invalid URL
-                    else:
-                        cell_content = display_text
-
-                    row.append(Paragraph(cell_content, cell_paragraph_style))
-                table_data.append(row)
-            if column_widths is None:
-                # Ensure total_width calculation is robust if page margins change
-                page_width, _ = A4 # Standard A4 size, could get from self.doc.width if available before build
-                # Ensure total_width calculation uses current document margins
-                page_width_a4, _ = A4
-                doc_margins = (self.doc.leftMargin + self.doc.rightMargin) if self.doc else (PDF_CONFIG['margin']['left'] + PDF_CONFIG['margin']['right']) * cm
-                effective_page_width = page_width_a4 - doc_margins
-
-                num_cols = len(headers)
-                if num_cols > 0:
-                    # Distribute width equally by default if specific column_widths not provided
-                    column_widths = [effective_page_width / num_cols] * num_cols
-                else:
-                    column_widths = [] # Avoid division by zero
-            table = Table(table_data, colWidths=column_widths) # Use dynamically calculated or passed column_widths
-
-            # header_bg_color = PDF_CONFIG['colors'].get('secondary', '#005A9C') # Existing dark blue - replaced
-            new_header_bg_color = colors.HexColor('#f5f5f5') # New light gray background
-            header_outline_color = colors.HexColor('#FFCC00') # Amber/Yellow
-            font_header_name = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
-            font_header_size = PDF_CONFIG['font_sizes'].get('small', 9)
-
-            font_body_name = PDF_CONFIG.get('font_family', 'Helvetica')
-            font_body_size = PDF_CONFIG['font_sizes'].get('extra_small', 8.5)
-            text_color_body = colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#000000'))
-
-            bg_color_even = colors.white # Explicitly white for even rows
-            bg_color_odd = colors.HexColor(PDF_CONFIG['colors'].get('light_gray', '#F0F0F0')) # Standard light gray for odd
-            grid_color = colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))
-
-            style_cmds = [
-                # Header Styling
-                ('BACKGROUND', (0,0), (-1,0), new_header_bg_color), # New light gray background
-                ('TEXTCOLOR', (0,0), (-1,0), colors.black), # Ensure black text
-                ('ALIGN', (0,0), (-1,0), 'CENTER'),
-                ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
-                ('FONTNAME', (0,0), (-1,0), font_header_name),
-                ('FONTSIZE', (0,0), (-1,0), font_header_size),
-                ('BOTTOMPADDING', (0,0), (-1,0), 6),
-                ('TOPPADDING', (0,0), (-1,0), 6),
-            ]
-            # Add individual BOX for each header cell for #FFCC00 outline
-            for col_idx in range(len(headers)):
-                 style_cmds.append(('BOX', (col_idx,0), (col_idx,0), 1.5, header_outline_color))
-
-            # Data Rows Styling
-            style_cmds.extend([
-                ('FONTNAME', (0,1), (-1,-1), font_body_name),
-                ('FONTSIZE', (0,1), (-1,-1), font_body_size),
-                ('TEXTCOLOR', (0,1), (-1,-1), text_color_body),
-                ('ALIGN', (0,1), (-1,-1), 'LEFT'),
-                ('VALIGN', (0,1), (-1,-1), 'TOP'),
-                ('GRID', (0,0), (-1,-1), 0.5, grid_color), # Grid for the whole table
-                ('BOX', (0,0), (-1,-1), 1, grid_color), # Overall table border
-            ])
-
-            # Apply striping
-            for i_row in range(1, len(table_data)): # Start from 1 (skip header)
-                current_bg_color = bg_color_odd if i_row % 2 != 0 else bg_color_even
-                style_cmds.append(('BACKGROUND', (0, i_row), (-1, i_row), current_bg_color))
-
-            table.setStyle(TableStyle(style_cmds))
-            flowables_subsection.append(table)
-            # Reduced spacer height after each detailed issue table
-            flowables_subsection.append(Spacer(1, 0.15 * inch))
-            self.story.append(KeepTogether(flowables_subsection))
-
-        # Calculate available_width once, assuming margins are set on self.doc
-        page_width_a4, _ = A4
-        doc_margins = (self.doc.leftMargin + self.doc.rightMargin) if self.doc else (PDF_CONFIG['margin']['left'] + PDF_CONFIG['margin']['right']) * cm
-        available_width = page_width_a4 - doc_margins
-
-        title_analysis = self.analysis_results['title_analysis']
-
-        title_category_flowables = []
-        title_category_flowables.append(Paragraph("Title Tags", self.styles['SectionHeading']))
-        title_category_flowables.append(Spacer(1, 0.1*inch)) # Reduced spacer
-        title_summary_items = [
-            ("Pagine con Title", f"{title_analysis.get('pages_with_title', 0)}/{title_analysis.get('total_pages', 0)}"),
-            ("Pagine senza Title", str(len(detailed_issues.get('pages_without_title', [])))),
-            ("Title duplicati (istanze)", str(len(detailed_issues.get('duplicate_titles', [])))),
-            ("Title troppo corti", str(len(title_analysis.get('too_short_titles', [])))),
-            ("Title troppo lunghi", str(len(title_analysis.get('too_long_titles', [])))),
-            ("Punteggio", f"{title_analysis.get('score', 'N/A')}/100")
-        ]
-        summary_table_title = self._create_summary_table_for_section(title_summary_items, available_width)
-        if summary_table_title: title_category_flowables.append(summary_table_title)
-        # Spacer after summary table before first detailed table is now handled by the spacer
-        # at the start of add_issue_table_subsection or the one at its end.
-        # self.story.append(Spacer(1, 0.2 * inch)) # Removed this explicit spacer
-        self.story.append(KeepTogether(title_category_flowables))
-
-        # Note: column_widths are now handled by add_issue_table_subsection if None is passed
-        # The add_issue_table_subsection itself uses KeepTogether for its content.
-        add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
-        add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []), headers=['Title Duplicato', 'URL Pagina Coinvolta', 'Conteggio'], data_keys=['title', 'url', 'duplicate_count'])
-        add_issue_table_subsection(f"Title Troppo Corti (< {SEO_CONFIG.get('title_min_length', 30)} caratteri)", title_analysis.get('too_short_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'])
-        add_issue_table_subsection(f"Title Troppo Lunghi (> {SEO_CONFIG.get('title_max_length', 60)} caratteri)", title_analysis.get('too_long_titles', []), headers=['URL Pagina', 'Title', 'Lunghezza'], data_keys=['url', 'title', 'length'])
-        self.story.append(PageBreak())
-
-        meta_analysis = self.analysis_results['meta_description_analysis']
-        meta_category_flowables = []
-        meta_category_flowables.append(Paragraph("Meta Descriptions", self.styles['SectionHeading']))
-        meta_category_flowables.append(Spacer(1, 0.1*inch))
-        meta_summary_items = [
-            ("Pagine con Meta Description", f"{meta_analysis.get('pages_with_meta',0)}/{meta_analysis.get('total_pages',0)}"),
-            ("Pagine senza Meta Description", str(len(detailed_issues.get('pages_without_meta', [])))),
-            ("Meta Description Duplicate (istanze)", str(len(detailed_issues.get('duplicate_meta_descriptions', [])))),
-            ("Meta Description Troppo Corte", str(len(meta_analysis.get('too_short_metas',[])))),
-            ("Meta Description Troppo Lunghe", str(len(meta_analysis.get('too_long_metas',[])))),
-            ("Punteggio", f"{meta_analysis.get('score','N/A')}/100")
-        ]
-        summary_table_meta = self._create_summary_table_for_section(meta_summary_items, available_width)
-        if summary_table_meta: meta_category_flowables.append(summary_table_meta)
-        self.story.append(KeepTogether(meta_category_flowables))
-
-        add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
-        add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []), headers=['Meta Description Duplicata', 'URL Pagina Coinvolta', 'Conteggio'], data_keys=['meta', 'url', 'duplicate_count'])
-        add_issue_table_subsection(f"Meta Description Troppo Corte (< {SEO_CONFIG.get('meta_description_min_length', 50)} caratteri)", meta_analysis.get('too_short_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'])
-        add_issue_table_subsection(f"Meta Description Troppo Lunghe (> {SEO_CONFIG.get('meta_description_max_length',160)} caratteri)", meta_analysis.get('too_long_metas',[]), headers=['URL Pagina', 'Meta Description', 'Lunghezza'], data_keys=['url', 'meta', 'length'])
-        self.story.append(PageBreak())
-
-        headings_analysis = self.analysis_results.get('headings_analysis', {})
-        headings_category_flowables = []
-        headings_category_flowables.append(Paragraph("Headings (H1, H2, H3)", self.styles['SectionHeading']))
-        headings_category_flowables.append(Spacer(1, 0.1*inch))
-        headings_summary_items = [
-            ("Pagine senza H1", str(len(detailed_issues.get('missing_h1_pages', [])))),
-            ("Pagine con H1 multipli", str(len(detailed_issues.get('multiple_h1_pages', [])))),
-            ("Pagine senza H2", str(len(detailed_issues.get('missing_h2_pages', [])))),
-            ("Pagine senza H3", str(len(detailed_issues.get('missing_h3_pages', [])))),
-            ("Punteggio", f"{headings_analysis.get('score', 'N/A')}/100")
-        ]
-        summary_table_headings = self._create_summary_table_for_section(headings_summary_items, available_width)
-        if summary_table_headings: headings_category_flowables.append(summary_table_headings)
-        self.story.append(KeepTogether(headings_category_flowables))
-
-        add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
-        add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
-        add_issue_table_subsection("Pagine senza H2", detailed_issues.get('missing_h2_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
-        add_issue_table_subsection("Pagine senza H3", detailed_issues.get('missing_h3_pages', []), headers=['URL Pagina', 'Problema Rilevato'], data_keys=['url', 'issue'])
-        self.story.append(PageBreak())
-
-        images_analysis = self.analysis_results['images_analysis']
-        images_category_flowables = []
-        images_category_flowables.append(Paragraph("Immagini", self.styles['SectionHeading']))
-        images_category_flowables.append(Spacer(1, 0.1*inch))
-        images_summary_items = [
-            ("Totale immagini analizzate", str(images_analysis.get('total_images',0))),
-            ("Con ALT text (contenuto)", str(images_analysis.get('images_with_alt',0))),
-            ("Senza attributo ALT HTML (istanze)", str(len(detailed_issues.get('images_without_alt',[])))),
-            ("Con attributo ALT vuoto (istanze)", str(len(detailed_issues.get('images_with_empty_alt',[])))),
-            ("Con attributo Title (contenuto)", str(images_analysis.get('images_with_title_attr',0))),
-            ("Senza attributo Title HTML (istanze)", str(len(detailed_issues.get('images_without_title_attr',[])))),
-            ("Con attributo Title vuoto (istanze)", str(len(detailed_issues.get('images_with_empty_title_attr',[])))),
-            ("Immagini interrotte", str(len(detailed_issues.get('broken_images', [])))),
-            ("Punteggio", f"{images_analysis.get('score','N/A')}/100")
-        ]
-        summary_table_images = self._create_summary_table_for_section(images_summary_items, available_width)
-        if summary_table_images: images_category_flowables.append(summary_table_images)
-        self.story.append(KeepTogether(images_category_flowables))
-
-        img_headers = ['Pagina URL', 'URL Immagine', 'Problema']; img_data_keys = ['url', 'image_src', 'issue']
-        add_issue_table_subsection("Immagini senza Attributo ALT HTML", detailed_issues.get('images_without_alt', []), headers=img_headers, data_keys=img_data_keys)
-        add_issue_table_subsection("Immagini con Attributo ALT Vuoto", detailed_issues.get('images_with_empty_alt', []), headers=img_headers, data_keys=img_data_keys)
-        add_issue_table_subsection("Immagini senza Attributo Title HTML", detailed_issues.get('images_without_title_attr', []), headers=img_headers, data_keys=img_data_keys)
-        add_issue_table_subsection("Immagini con Attributo Title Vuoto", detailed_issues.get('images_with_empty_title_attr', []), headers=img_headers, data_keys=img_data_keys)
-        add_issue_table_subsection("Immagini Interrotte", detailed_issues.get('broken_images', []), headers=img_headers, data_keys=img_data_keys)
-        self.story.append(PageBreak())
-
-        content_analysis = self.analysis_results.get('content_analysis', {})
-        content_category_flowables = []
-        content_category_flowables.append(Paragraph("Contenuto", self.styles['SectionHeading']))
-        content_category_flowables.append(Spacer(1, 0.1*inch))
-        content_summary_items = [
-            ("Pagine con conteggio parole basso", str(len(detailed_issues.get('low_word_count_pages', [])))),
-            ("Punteggio", f"{content_analysis.get('score', 'N/A')}/100")
-        ]
-        summary_table_content = self._create_summary_table_for_section(content_summary_items, available_width)
-        if summary_table_content: content_category_flowables.append(summary_table_content)
-        self.story.append(KeepTogether(content_category_flowables))
-
-        add_issue_table_subsection(f"Pagine con Conteggio Parole Basso (< {SEO_CONFIG.get('min_word_count',200)} parole)", detailed_issues.get('low_word_count_pages', []), headers=['URL Pagina', 'Conteggio Parole', 'Problema'], data_keys=['url', 'word_count', 'issue'])
-        self.story.append(PageBreak())
-
-        links_analysis = self.analysis_results.get('links_analysis', {})
-        links_category_flowables = []
-        links_category_flowables.append(Paragraph("Link", self.styles['SectionHeading']))
-        links_category_flowables.append(Spacer(1, 0.1*inch))
-        links_summary_items = [ # Add more specific link metrics if available
-            ("Punteggio Link Analysis", f"{links_analysis.get('score', 'N/A')}/100")
-        ]
-        summary_table_links = self._create_summary_table_for_section(links_summary_items, available_width)
-        if summary_table_links: links_category_flowables.append(summary_table_links)
-        self.story.append(KeepTogether(links_category_flowables))
-        # Add specific link issue tables here if any (e.g., broken internal/external links)
-        self.story.append(PageBreak())
-
-        perf_analysis = self.analysis_results['performance_analysis']
-        perf_category_flowables = []
-        perf_category_flowables.append(Paragraph("Performance", self.styles['SectionHeading']))
-        perf_category_flowables.append(Spacer(1, 0.1*inch))
-        perf_summary_items = [
-            ("Pagine considerate veloci", str(perf_analysis.get('fast_pages',0))),
-            ("Pagine considerate lente (istanze)", str(len(detailed_issues.get('slow_pages',[])))),
-            ("Tempo medio di risposta", f"{perf_analysis.get('average_response_time',0):.2f}s"),
-            ("Dimensione media pagina", f"{perf_analysis.get('average_page_size',0)/1024:.1f} KB"),
-            ("Pagine con HTML troppo grande", str(len(detailed_issues.get('large_html_pages', [])))),
-            ("Punteggio", f"{perf_analysis.get('score','N/A')}/100")
-        ]
-        summary_table_perf = self._create_summary_table_for_section(perf_summary_items, available_width)
-        if summary_table_perf: perf_category_flowables.append(summary_table_perf)
-        self.story.append(KeepTogether(perf_category_flowables))
-
-        add_issue_table_subsection(f"Pagine con Dimensioni HTML Troppo Grandi (> {SEO_CONFIG.get('max_page_size_mb', 2)} MB)", detailed_issues.get('large_html_pages', []), headers=['URL Pagina', 'Dimensione (MB)', 'Problema'], data_keys=['url', 'size_mb', 'issue'])
-        add_issue_table_subsection(f"Pagine con Velocità di Caricamento Bassa (> {PERFORMANCE_CONFIG.get('max_response_time',3)}s)", detailed_issues.get('slow_pages', []), headers=['URL Pagina', 'Tempo (s)', 'Problema'], data_keys=['url', 'response_time', 'issue'])
-        self.story.append(PageBreak())
-
-        technical_analysis = self.analysis_results.get('technical_analysis', {})
-        tech_category_flowables = []
-        tech_category_flowables.append(Paragraph("Aspetti Tecnici", self.styles['SectionHeading']))
-        tech_category_flowables.append(Spacer(1, 0.1*inch))
-        tech_summary_items = []
-        tech_issues_to_report_map = {
-            'status_4xx_pages': "Pagine con Errori Client (4xx)",
-            'status_5xx_pages': "Pagine con Errori Server (5xx)",
-            'pages_without_canonical': "Pagine senza URL Canonico",
-            'pages_without_lang': "Pagine senza Attributo Lingua",
-            'pages_without_schema': "Pagine senza Schema Markup"
-        }
-        for key, text_label in tech_issues_to_report_map.items():
-            tech_summary_items.append((text_label, str(len(detailed_issues.get(key, [])))))
-        tech_summary_items.append(("Punteggio", f"{technical_analysis.get('score', 'N/A')}/100"))
-        summary_table_tech = self._create_summary_table_for_section(tech_summary_items, available_width)
-        if summary_table_tech: tech_category_flowables.append(summary_table_tech)
-        self.story.append(KeepTogether(tech_category_flowables))
-
-        tech_headers_default = ['URL Pagina', 'Problema Rilevato']; tech_data_keys_default = ['url', 'issue']
-        for key, text_label in tech_issues_to_report_map.items():
-            data_to_pass = detailed_issues.get(key, [])
-            if key == 'status_4xx_pages' or key == 'status_5xx_pages':
-                add_issue_table_subsection(text_label, data_to_pass, headers=['URL Pagina', 'Status Code', 'Problema'], data_keys=['url', 'status_code', 'issue'])
-            else:
-                add_issue_table_subsection(text_label, data_to_pass, headers=tech_headers_default, data_keys=tech_data_keys_default)
-        self.story.append(PageBreak())
-
-        ssl_analysis = self.analysis_results.get('ssl_analysis', {})
-        ssl_category_flowables = []
-        ssl_category_flowables.append(Paragraph("SSL / Sicurezza", self.styles['SectionHeading']))
-        ssl_category_flowables.append(Spacer(1, 0.1*inch))
-        ssl_summary_items = [
-            ("Certificato SSL presente", 'Sì' if ssl_analysis.get('has_ssl') else 'No'),
-            ("Certificato SSL valido", 'Sì' if ssl_analysis.get('ssl_valid') else 'No')
-        ]
-        if ssl_analysis.get('ssl_expires'):
-            ssl_summary_items.append(("Scadenza Certificato SSL", str(ssl_analysis.get('ssl_expires'))))
-        # Add Punteggio for SSL if available
-        if 'score' in ssl_analysis:
-             ssl_summary_items.append(("Punteggio", f"{ssl_analysis.get('score','N/A')}/100"))
-        summary_table_ssl = self._create_summary_table_for_section(ssl_summary_items, available_width)
-        if summary_table_ssl: ssl_category_flowables.append(summary_table_ssl)
-        self.story.append(KeepTogether(ssl_category_flowables))
-        # Add specific SSL issue tables here if any are generated by analyzer
-        self.story.append(PageBreak())
+        self.story.append(Paragraph("Analisi dettagliata per categoria in fase di revisione.", self.styles['BodyText']))
+        self.story.append(Spacer(1, 0.5 * inch))
+        # Comment out the previous content generation for this section
+        # detailed_issues = self.analysis_results.get('detailed_issues', {})
+        # ... (rest of the original method content commented out) ...
+        # self.story.append(PageBreak())
 
     def _add_recommendations_section(self):
-        main_title_flowables = [Paragraph("Raccomandazioni", self.styles['SectionHeading']), Spacer(1, 0.2 * inch)]
-        recommendations = self.analysis_results['recommendations']
-        if not recommendations:
-            main_title_flowables.append(Paragraph("🎉 ECCELLENTE! Nessuna raccomandazione specifica identificata. Il sito presenta un'ottima ottimizzazione SEO.", self.styles['BodyText']))
-            self.story.append(KeepTogether(main_title_flowables))
-            return
-        self.story.append(KeepTogether(main_title_flowables))
-
-        def add_recommendation_table_subsection(title_text: str, recs: List[Dict]):
-            if not recs: return
-            flowables_subsection = [Paragraph(title_text, self.styles['BodyText']), Spacer(1, 0.1 * inch)]
-            data = [[Paragraph(h, self.styles['BodyText']) for h in ['Categoria', 'Problema', 'Raccomandazione']]]
-            for rec in recs: data.append([Paragraph(rec.get('category', 'N/A'), self.styles['BodyText']), Paragraph(rec.get('issue', 'N/A'), self.styles['BodyText']), Paragraph(rec.get('recommendation', 'N/A'), self.styles['BodyText'])])
-            table = Table(data, colWidths=[4*cm, 6*cm, 7*cm])
-            COLOR_TABLE_HEADER_BG = '#004080'; COLOR_TABLE_HEADER_TEXT = '#FFFFFF'; COLOR_TABLE_ROW_BG_ODD = '#F0F4F7'; COLOR_TABLE_ROW_BG_EVEN = '#FFFFFF'; COLOR_BORDER = '#CCCCCC'; FONT_FAMILY_TABLE_HEADER = 'Helvetica-Bold'; FONT_FAMILY_TABLE_BODY = 'Helvetica'; FONT_SIZE_TABLE_HEADER = 9; FONT_SIZE_TABLE_BODY = 9; COLOR_TEXT_PRIMARY_FOR_TABLE = '#222222'
-            rec_table_style = TableStyle([('BACKGROUND', (0,0), (-1,0), HexColor(COLOR_TABLE_HEADER_BG)), ('TEXTCOLOR', (0,0), (-1,0), HexColor(COLOR_TABLE_HEADER_TEXT)), ('ALIGN', (0,0), (-1,0), 'CENTER'), ('FONTNAME', (0,0), (-1,0), FONT_FAMILY_TABLE_HEADER), ('FONTSIZE', (0,0), (-1,0), FONT_SIZE_TABLE_HEADER), ('BOTTOMPADDING', (0,0), (-1,0), 8), ('TOPPADDING', (0,0), (-1,0), 8), ('FONTNAME', (0,1), (-1,-1), FONT_FAMILY_TABLE_BODY), ('FONTSIZE', (0,1), (-1,-1), FONT_SIZE_TABLE_BODY), ('TEXTCOLOR', (0,1), (-1,-1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)), ('ALIGN', (0,1), (-1,-1), 'LEFT'), ('VALIGN', (0,1), (-1,-1), 'TOP'), ('BOTTOMPADDING', (0,1), (-1,-1), 5), ('TOPPADDING', (0,1), (-1,-1), 5), ('BACKGROUND', (0,1), (-1,-1), HexColor(COLOR_TABLE_ROW_BG_EVEN))])
-            for i in range(1, len(data)):
-                if i % 2 != 0: rec_table_style.add('BACKGROUND', (0,i), (-1,i), HexColor(COLOR_TABLE_ROW_BG_ODD))
-            rec_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(COLOR_BORDER)); rec_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(COLOR_BORDER))
-            table.setStyle(rec_table_style)
-            flowables_subsection.append(table)
-            flowables_subsection.append(Spacer(1, 0.3 * inch))
-            self.story.append(KeepTogether(flowables_subsection))
-
-        high_priority = [r for r in recommendations if r['priority'] == 'Alto']
-        medium_priority = [r for r in recommendations if r['priority'] == 'Medio']
-        low_priority = [r for r in recommendations if r['priority'] == 'Basso']
-        add_recommendation_table_subsection("Priorità Alta", high_priority)
-        add_recommendation_table_subsection("Priorità Media", medium_priority)
-        add_recommendation_table_subsection("Priorità Bassa", low_priority)
-        self.story.append(PageBreak())
+        self.story.append(Paragraph("Raccomandazioni", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+        self.story.append(Paragraph("Sezione raccomandazioni in fase di revisione. Le raccomandazioni principali sono ora integrate nel Riassunto Esecutivo.", self.styles['BodyText']))
+        self.story.append(Spacer(1, 0.5 * inch))
+        # Comment out the previous content generation for this section
+        # recommendations = self.analysis_results['recommendations']
+        # ... (rest of the original method content commented out) ...
+        # self.story.append(PageBreak())
 
     def _add_issue_details_appendix(self):
-        main_title_flowables = [Paragraph("Descrizione Dettagliata dei Problemi Comuni", self.styles['SectionHeading']), Spacer(1, 0.2 * inch)]
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
-        unique_issue_types = set()
-        issue_categories_to_process = ['errors', 'warnings', 'notices']
-        for category_key in issue_categories_to_process:
-            issues_in_category = detailed_issues.get(category_key, [])
-            if isinstance(issues_in_category, list):
-                for issue in issues_in_category:
-                    if isinstance(issue, dict) and 'type' in issue: unique_issue_types.add(issue['type'])
-        if not unique_issue_types: # Check if still empty after primary categories
-            for issue_group_key, lst_issues in detailed_issues.items():
-                if issue_group_key not in issue_categories_to_process and isinstance(lst_issues, list):
-                    for item in lst_issues:
-                        if isinstance(item, dict):
-                             # Use item's 'type' field if it exists, otherwise the group key
-                             unique_issue_types.add(item.get('type', issue_group_key))
-        
-        if not unique_issue_types:
-            main_title_flowables.append(Paragraph("Nessun tipo di problema specifico da dettagliare.", self.styles['BodyText']))
-            main_title_flowables.append(Spacer(1, 0.5 * inch))
-            self.story.append(KeepTogether(main_title_flowables))
-            return
-        
-        self.story.append(KeepTogether(main_title_flowables))
-
-        issue_explanations = {'missing_title': "Ogni pagina dovrebbe avere un tag title univoco che ne descriva accuratamente il contenuto. È cruciale per la SEO.", 'duplicate_title': "Titoli duplicati confondono i motori di ricerca e possono danneggiare il ranking. Ogni pagina necessita di un titolo unico.", 'short_title': "Un titolo troppo corto potrebbe non fornire abbastanza informazioni ai motori di ricerca e agli utenti.", 'long_title': "Un titolo troppo lungo verrà troncato nei risultati di ricerca, riducendone l'efficacia.", 'missing_meta_description': "La meta description fornisce un riassunto della pagina nei risultati di ricerca. Anche se non è un fattore di ranking diretto, influenza il CTR.", 'duplicate_meta_description': "Meta description duplicate possono ridurre la specificità delle pagine agli occhi dei motori di ricerca.", 'short_meta_description': "Una meta description troppo corta potrebbe non essere abbastanza persuasiva per gli utenti.", 'long_meta_description': "Una meta description troppo lunga verrà troncata nei risultati di ricerca.", 'missing_h1': "Il tag H1 è il titolo principale della pagina e aiuta i motori di ricerca a comprenderne il contenuto. Ogni pagina dovrebbe avere un unico H1.", 'multiple_h1_tags': "Più tag H1 su una singola pagina possono confondere i motori di ricerca riguardo al focus principale del contenuto.", 'missing_h2': "I tag H2 aiutano a strutturare il contenuto e a definirne le sezioni principali. La loro assenza può rendere il contenuto meno leggibile per utenti e crawler.", 'missing_alt_attribute': "L'attributo ALT delle immagini è fondamentale per l'accessibilità (screen reader) e per la SEO (descrive l'immagine ai motori di ricerca).", 'empty_alt_attribute': "Un attributo ALT vuoto è tecnicamente presente ma non fornisce alcuna informazione, mancando i benefici per accessibilità e SEO.", 'broken_image': "Immagini interrotte danneggiano l'esperienza utente e possono indicare problemi di manutenzione del sito.", 'low_word_count': "Pagine con poco contenuto testuale (thin content) potrebbero essere considerate di bassa qualità dai motori di ricerca.", 'slow_page_load': "Pagine lente frustrano gli utenti e impattano negativamente il ranking sui motori di ricerca.", 'large_html_size': "Dimensioni HTML eccessive possono contribuire a tempi di caricamento lenti.", 'http_status_4xx': "Errori client (4xx, es. 404 Pagina Non Trovata) indicano problemi di accessibilità a risorse o pagine.", 'http_status_5xx': "Errori server (5xx) indicano problemi critici con il server che impediscono il caricamento della pagina.", 'no_canonical_tag': "Il tag canonical aiuta a prevenire problemi di contenuto duplicato specificando la versione preferita di una pagina.", 'missing_lang_attribute': "L'attributo 'lang' sull'elemento <html> aiuta i motori di ricerca e i browser a comprendere la lingua della pagina.", 'no_schema_markup': "Schema markup (dati strutturati) aiuta i motori di ricerca a comprendere meglio il contenuto e può abilitare rich snippet nei risultati di ricerca.", 'generic_issue': "Questo è un problema generico. Controllare i dettagli specifici forniti nella tabella dei problemi."}
-
-        for issue_technical_key in sorted(list(unique_issue_types)):
-            issue_display_name = PDF_ISSUE_TYPE_LABELS.get(issue_technical_key, issue_technical_key.replace('_', ' ').capitalize())
-            explanation = issue_explanations.get(issue_technical_key, "Nessuna descrizione specifica disponibile per questo tipo di problema. Si prega di fare riferimento ai dettagli forniti e alle best practice SEO generali.")
-            item_flowables = [Paragraph(f"<b>{issue_display_name}</b>", self.styles['BodyText']), Paragraph(explanation, self.styles['ListItem']), Spacer(1, 0.15 * inch)]
-            self.story.append(KeepTogether(item_flowables))
-        self.story.append(Spacer(1, 0.3 * inch))
-
-    # _add_appendix method and its content are removed.
-    # The _add_issue_details_appendix method and its content are removed.
-
-    def _get_evaluation_text(self, score):
-        methodology_text = """Questo report è stato generato utilizzando SEO Analyzer Pro, che esegue un'analisi completa del sito web basata sulle migliori pratiche SEO. L'analisi include:<ul><li>Crawling automatico del sito web</li><li>Verifica dei tag HTML principali (title, meta, headings)</li><li>Analisi delle immagini e degli alt text</li><li>Valutazione della qualità del contenuto</li><li>Test delle performance di caricamento</li><li>Controllo degli aspetti tecnici (SSL, canonical, etc.)</li></ul>Il punteggio finale è calcolato come media ponderata di tutti i fattori analizzati."""
-        methodology_flowables.append(Paragraph(methodology_text, self.styles['BodyText']))
-        methodology_flowables.append(Spacer(1, 0.2 * inch))
-        self.story.append(KeepTogether(methodology_flowables))
-        glossary_flowables = [Paragraph("Glossario", self.styles['BodyText']), Spacer(1, 0.1 * inch)]
-        styled_glossary_data = [[Paragraph(h, self.styles['BodyText']) for h in ['Termine', 'Definizione']]]
-        raw_glossary_entries = [
-             ['Title Tag', 'Tag HTML che definisce il titolo della pagina mostrato nei risultati di ricerca'],
-             ['Meta Description', 'Breve descrizione della pagina mostrata nei risultati di ricerca'],
-             ['Alt Text', 'Testo alternativo per le immagini, importante per accessibilità e SEO'],
-             ['Canonical URL', 'URL preferito per pagine con contenuto duplicato'],
-             ['Schema Markup', 'Codice strutturato che aiuta i motori di ricerca a comprendere il contenuto'],
-             ['Robots.txt', 'File che indica ai crawler quali parti del sito non devono essere indicizzate'],
-             ['Sitemap.xml', 'File che elenca tutte le pagine importanti di un sito per i motori di ricerca'],
-             ['Hreflang', 'Attributo HTML che specifica la lingua e la regione geografica di una pagina'],
-             ['Mixed Content', 'Quando una pagina HTTPS carica risorse (immagini, script) tramite HTTP'],
-             ['Viewport', 'Meta tag che controlla la larghezza della viewport su dispositivi mobili'],
-             ['Core Web Vitals', 'Metriche di Google per valutare l\'esperienza utente di una pagina web (LCP, FID, CLS)'],
-        ]
-        for term, definition in raw_glossary_entries:
-            styled_glossary_data.append([Paragraph(term, self.styles['BodyText']), Paragraph(definition, self.styles['BodyText'])])
-        glossary_table = Table(styled_glossary_data, colWidths=[4*cm, 13*cm])
-        COLOR_TABLE_HEADER_BG = '#004080'; COLOR_TABLE_HEADER_TEXT = '#FFFFFF'; COLOR_TABLE_ROW_BG_ODD = '#F0F4F7'; COLOR_TABLE_ROW_BG_EVEN = '#FFFFFF'; COLOR_BORDER = '#CCCCCC'; FONT_FAMILY_TABLE_HEADER = 'Helvetica-Bold'; FONT_FAMILY_TABLE_BODY = 'Helvetica'; FONT_SIZE_TABLE_HEADER = 9; FONT_SIZE_TABLE_BODY = 9; COLOR_TEXT_PRIMARY_FOR_TABLE = '#222222'
-        glossary_style = TableStyle([('BACKGROUND', (0,0), (-1,0), HexColor(COLOR_TABLE_HEADER_BG)), ('TEXTCOLOR', (0,0), (-1,0), HexColor(COLOR_TABLE_HEADER_TEXT)), ('ALIGN', (0,0), (-1,0), 'CENTER'), ('FONTNAME', (0,0), (-1,0), FONT_FAMILY_TABLE_HEADER), ('FONTSIZE', (0,0), (-1,0), FONT_SIZE_TABLE_HEADER), ('BOTTOMPADDING', (0,0), (-1,0), 8), ('TOPPADDING', (0,0), (-1,0), 8), ('FONTNAME', (0,1), (-1,-1), FONT_FAMILY_TABLE_BODY), ('FONTSIZE', (0,1), (-1,-1), FONT_SIZE_TABLE_BODY), ('TEXTCOLOR', (0,1), (-1,-1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)), ('ALIGN', (0,1), (-1,-1), 'LEFT'), ('VALIGN', (0,1), (-1,-1), 'TOP'), ('BOTTOMPADDING', (0,1), (-1,-1), 5), ('TOPPADDING', (0,1), (-1,-1), 5), ('BACKGROUND', (0,1), (-1,-1), HexColor(COLOR_TABLE_ROW_BG_EVEN))])
-        for i in range(1, len(styled_glossary_data)):
-            if i % 2 != 0: glossary_style.add('BACKGROUND', (0,i), (-1,i), HexColor(COLOR_TABLE_ROW_BG_ODD))
-        glossary_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(COLOR_BORDER)); glossary_style.add('BOX', (0,0), (-1,-1), 1, HexColor(COLOR_BORDER))
-        glossary_table.setStyle(glossary_style)
-        glossary_flowables.append(glossary_table)
-        glossary_flowables.append(Spacer(1, 0.5*inch))
-        self.story.append(KeepTogether(glossary_flowables))
+        # This method might be removed or significantly changed later.
+        # For now, let's add a placeholder similar to other sections.
+        self.story.append(Paragraph("Descrizione Dettagliata dei Problemi Comuni", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+        self.story.append(Paragraph("Sezione appendice descrizioni problemi in fase di revisione.", self.styles['BodyText']))
+        self.story.append(Spacer(1, 0.5 * inch))
 
     def _get_evaluation_text(self, score):
         if score >= 90: return "Eccellente"
