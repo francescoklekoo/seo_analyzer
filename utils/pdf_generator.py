@@ -226,248 +226,82 @@ class PDFGenerator:
         flowables.append(Paragraph("Riassunto Esecutivo", self.styles['SectionHeading']))
         flowables.append(Spacer(1, 0.2 * inch))
 
-        # chart_image = self._get_site_health_chart_flowable() # REMOVED
-
-        overall_score = self.analysis_results['overall_score']
+        overall_score = self.analysis_results.get('overall_score', 0)
         evaluation = self._get_evaluation_text(overall_score)
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
-        num_errors = len(detailed_issues.get('errors', []))
-        num_warnings = len(detailed_issues.get('warnings', []))
-        num_notices = len(detailed_issues.get('notices', []))
+
+        categorized_issues_data = self.analysis_results.get('categorized_issues', {})
+        num_errors = sum(len(lst) for cat in categorized_issues_data.values() for sev, lst in cat.items() if sev == 'ERROR')
+        num_warnings = sum(len(lst) for cat in categorized_issues_data.values() for sev, lst in cat.items() if sev == 'WARNING')
+        num_notices = sum(len(lst) for cat in categorized_issues_data.values() for sev, lst in cat.items() if sev == 'NOTICE')
+
         issue_parts = []
         if num_errors > 0: issue_parts.append(f"<b>{num_errors}</b> Errori")
         if num_warnings > 0: issue_parts.append(f"<b>{num_warnings}</b> Avvertimenti")
         if num_notices > 0: issue_parts.append(f"<b>{num_notices}</b> Avvisi")
+
         issues_string = ""
         if not issue_parts:
-            issues_string = "non rilevando problemi significativi" if self.analysis_results['summary']['total_issues'] == 0 else f"identificando <b>{self.analysis_results['summary']['total_issues']}</b> problemi complessivi"
-        elif len(issue_parts) == 1: issues_string = f"identificando {issue_parts[0]}"
-        elif len(issue_parts) == 2: issues_string = f"identificando {issue_parts[0]} e {issue_parts[1]}"
-        else: issues_string = f"identificando {issue_parts[0]}, {issue_parts[1]} e {issue_parts[2]}"
-        summary_text = f"""L'analisi SEO del sito <b>{self.domain}</b> ha rivelato un punteggio complessivo di <font color="{self._get_score_color_hex(overall_score)}"><b>{overall_score}/100</b></font>. Valutazione: <b>{evaluation}</b>. Sono state analizzate <b>{self.analysis_results['summary']['total_pages_analyzed']}</b> pagine, {issues_string} e generando <b>{self.analysis_results['summary']['total_recommendations']}</b> raccomandazioni per il miglioramento."""
+            issues_string = "non rilevando problemi significativi"
+        elif len(issue_parts) == 1:
+            issues_string = f"identificando {issue_parts[0]}"
+        elif len(issue_parts) == 2:
+            issues_string = f"identificando {issue_parts[0]} e {issue_parts[1]}"
+        else:
+            issues_string = f"identificando {issue_parts[0]}, {issue_parts[1]} e {issue_parts[2]}"
+
+        total_pages_analyzed = self.analysis_results.get('summary', {}).get('total_pages_analyzed', len(self.analysis_results.get('pages_data', [])))
+
+        summary_text = f"""L'analisi SEO del sito <b>{self.domain}</b> ha rivelato un punteggio complessivo di <font color="{self._get_score_color_hex(overall_score)}"><b>{overall_score}/100</b></font>. Valutazione: <b>{evaluation}</b>. Sono state analizzate <b>{total_pages_analyzed}</b> pagine, {issues_string}."""
+
         summary_paragraph = Paragraph(summary_text, self.styles['BodyText'])
+        flowables.append(summary_paragraph)
+        flowables.append(Spacer(1, 0.2 * inch))
 
-        # chart_image and chart_summary_table logic REMOVED
-        # issue_counts_table and related logic REMOVED
-        flowables.append(summary_paragraph) # Appending the main summary text directly.
-                                            # The chart and counts are in _add_chart_and_counts_section
-
-        # Spacing after summary_paragraph if needed, or rely on paragraph's spaceAfter
-        # flowables.append(Spacer(1, 0.2 * inch)) # This was the original spacer after summary text.
-                                                 # The new structure has a spacer after the chart/counts section.
-                                                 # And another spacer after the summary_paragraph (now this one)
-                                                 # before Strengths/Weaknesses.
-                                                 # Let's keep a spacer here for now.
-        flowables.append(Spacer(1, 0.2 * inch)) # Spacer after summary text
-
-        # --- New Executive Summary Content ---
         categorized_issues = self.analysis_results.get('categorized_issues', {})
 
-        # OCM Section
-        flowables.append(Paragraph(CATEGORY_OCM, self.styles['OCMSectionHeading']))
-        for severity in ['ERROR', 'WARNING', 'NOTICE']:
-            issues_list = categorized_issues.get(CATEGORY_OCM, {}).get(severity, [])
-            severity_style_name = f"{severity.capitalize()}SubHeading" # ErrorSubHeading, WarningSubHeading, etc.
-            if severity_style_name not in self.styles: # Fallback if style not defined
-                severity_style_name = 'SectionSubHeadingStyle'
+        if CATEGORY_OCM in categorized_issues:
+            flowables.append(Paragraph(CATEGORY_OCM, self.styles['OCMSectionHeading']))
+            for severity in ['ERROR', 'WARNING', 'NOTICE']:
+                issues_list = categorized_issues.get(CATEGORY_OCM, {}).get(severity, [])
+                if issues_list:
+                    severity_style_name = f"{severity.capitalize()}SubHeading"
+                    flowables.append(Paragraph(f"{severity.capitalize()}S ({len(issues_list)})", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
+                    for issue in issues_list:
+                        check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
+                        description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
 
-            flowables.append(Paragraph(f"{severity.capitalize()}S", self.styles.get(severity_style_name, self.styles['BodyText'])))
-
-            if issues_list:
-                for issue in issues_list:
-                    check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
-                    description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
-
-                    flowables.append(Paragraph(f"<b>{issue['label']}</b>", self.styles['BodyText']))
-                    if issue.get('url') and issue.get('url') != self.domain : # Show URL if page-specific
-                        flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
-                    flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
-                    flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
-                    flowables.append(Spacer(1, 0.1 * inch))
-            else:
-                flowables.append(Paragraph("Nessun problema rilevato in questa categoria di severità.", self.styles['BodyText']))
+                        flowables.append(Paragraph(f"<b>{issue.get('label', 'N/A')}</b>", self.styles['BodyText']))
+                        if issue.get('url') and issue.get('url') != self.domain :
+                            flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
+                        flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
+                        flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
+                        flowables.append(Spacer(1, 0.1 * inch))
             flowables.append(Spacer(1, 0.1 * inch))
 
-        # SEO Audit Section
-        flowables.append(Paragraph(CATEGORY_SEO_AUDIT, self.styles['SEOAuditSectionHeading']))
-        for severity in ['ERROR', 'WARNING', 'NOTICE']:
-            issues_list = categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get(severity, [])
-            severity_style_name = f"{severity.capitalize()}SubHeading"
-            if severity_style_name not in self.styles:
-                severity_style_name = 'SectionSubHeadingStyle'
+        if CATEGORY_SEO_AUDIT in categorized_issues:
+            flowables.append(Paragraph(CATEGORY_SEO_AUDIT, self.styles['SEOAuditSectionHeading']))
+            for severity in ['ERROR', 'WARNING', 'NOTICE']:
+                issues_list = categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get(severity, [])
+                if issues_list:
+                    severity_style_name = f"{severity.capitalize()}SubHeading"
+                    flowables.append(Paragraph(f"{severity.capitalize()}S ({len(issues_list)})", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
+                    for issue in issues_list:
+                        check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
+                        description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
 
-            flowables.append(Paragraph(f"{severity.capitalize()}S", self.styles.get(severity_style_name, self.styles['BodyText'])))
-
-            if issues_list:
-                for issue in issues_list:
-                    check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
-                    description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
-
-                    flowables.append(Paragraph(f"<b>{issue['label']}</b>", self.styles['BodyText']))
-                    if issue.get('url') and issue.get('url') != self.domain: # Show URL if page-specific
-                        flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
-                    flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
-                    flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
-                    flowables.append(Spacer(1, 0.1 * inch))
-            else:
-                flowables.append(Paragraph("Nessun problema rilevato in questa categoria di severità.", self.styles['BodyText']))
+                        flowables.append(Paragraph(f"<b>{issue.get('label', 'N/A')}</b>", self.styles['BodyText']))
+                        if issue.get('url') and issue.get('url') != self.domain:
+                            flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
+                        flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
+                        flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
+                        flowables.append(Spacer(1, 0.1 * inch))
             flowables.append(Spacer(1, 0.1 * inch))
 
-        # Simplified Strengths
-        if overall_score >= 80: # Example threshold for "good score"
+        if overall_score >= 80:
             flowables.append(Paragraph("Punti di Forza Generali:", self.styles['SectionSubHeadingStyle']))
             flowables.append(Paragraph(f"Il punteggio generale di {overall_score}/100 indica una buona performance complessiva.", self.styles['BodyText']))
 
-        # --- End of New Executive Summary Content ---
-
-        # Old strengths/weaknesses table logic is removed.
-        # strengths, weaknesses = self._identify_strengths_weaknesses()
-        # table_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-
-        # Define colors for striping from PDF_CONFIG or use defaults (Commented out as old tables are removed)
-        # bg_color_even_hex = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7')
-        # bg_color_odd_hex = PDF_CONFIG['colors'].get('white', '#FFFFFF')
-        bg_color_even = colors.HexColor(bg_color_even_hex)
-        bg_color_odd = colors.HexColor(bg_color_odd_hex)
-
-        base_table_style_cmds = [
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 10),
-            ('RIGHTPADDING', (0,0), (-1,-1), 10),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ]
-
-        # Strengths Section
-        flowables.append(Paragraph("Punti di Forza:", self.styles['SectionSubHeadingStyle']))
-        if strengths:
-            strengths_data = [[Paragraph(s, self.styles['BodyText'])] for s in strengths]
-            strengths_table = Table(strengths_data, colWidths=[table_width])
-
-            current_strengths_style_cmds = list(base_table_style_cmds) # Copy base
-            for i, _ in enumerate(strengths):
-                color = bg_color_even if i % 2 == 0 else bg_color_odd
-                current_strengths_style_cmds.append(('BACKGROUND', (0,i), (0,i), color))
-            strengths_table.setStyle(TableStyle(current_strengths_style_cmds))
-            flowables.append(strengths_table)
-        else:
-            flowables.append(Paragraph("Nessun punto di forza specifico identificato.", self.styles['ListItem']))
-
-        flowables.append(Spacer(1, 0.1 * inch))
-
-        # Weaknesses Section - New structure with multiple small tables
-        flowables.append(Paragraph("Aree di Miglioramento:", self.styles['SectionSubHeadingStyle']))
-        flowables.append(Spacer(1, 0.1 * inch)) # Space after main title
-
-        has_any_weakness_to_show = False
-
-        if weaknesses and isinstance(weaknesses, dict):
-            macro_order_map = {
-                'errors': 'Errori Critici',
-                'warnings': 'Avvertimenti Importanti',
-                'notices': 'Avvisi e Ottimizzazioni Minori'
-            }
-
-            # Define colors for striping from PDF_CONFIG or use defaults for table
-            bg_color_even_hex_table = PDF_CONFIG['colors'].get('light_gray', '#F0F0F0')
-            bg_color_odd_hex_table = PDF_CONFIG['colors'].get('white', '#FFFFFF')
-            bg_color_even_table = colors.HexColor(bg_color_even_hex_table)
-            bg_color_odd_table = colors.HexColor(bg_color_odd_hex_table)
-
-            # Specific problem title background
-            specific_problem_title_bg_hex = PDF_CONFIG['colors'].get('secondary_light', '#E4EAF1') # A light neutral color
-            specific_problem_title_bg = colors.HexColor(specific_problem_title_bg_hex)
-
-            for macro_key, macro_display_name in macro_order_map.items():
-                if macro_key in weaknesses and weaknesses[macro_key]:
-                    if not has_any_weakness_to_show: # First time we find a macro category with issues
-                        has_any_weakness_to_show = True
-
-                    # Add Macro Category Title as a standalone Paragraph
-                    flowables.append(Paragraph(macro_display_name, self.styles['TableMacroCategoryStyle']))
-                    # flowables.append(Spacer(1, 0.05 * inch)) # Small space after macro title
-
-                    specific_problems_dict = weaknesses[macro_key] # This is now a dict of dicts
-                    for problem_label, problem_data in specific_problems_dict.items():
-                        technical_issue_type = problem_data['type']
-                        problem_instances = problem_data['instances']
-
-                        flowables.append(Spacer(1, 0.15 * inch)) # Space BEFORE each specific problem table
-
-                        table_data_specific = []
-                        table_style_specific_cmds = [
-                            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                            ('LEFTPADDING', (0,0), (-1,-1), 3),
-                            ('RIGHTPADDING', (0,0), (-1,-1), 3),
-                            ('TOPPADDING', (0,0), (-1,-1), 3),
-                            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-                            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor(PDF_CONFIG['colors'].get('border', '#CCCCCC'))),
-                        ]
-
-                        # Specific Problem Title Row
-                        table_data_specific.append([Paragraph(problem_label, self.styles['TableSpecificProblemStyle'])])
-                        table_style_specific_cmds.extend([
-                            ('SPAN', (0,0), (1,0)), # Span title row
-                            ('BACKGROUND', (0,0), (1,0), specific_problem_title_bg),
-                            ('TEXTCOLOR', (0,0), (1,0), colors.black),
-                            ('TOPPADDING', (0,0), (1,0), 5),
-                            ('BOTTOMPADDING', (0,0), (1,0), 5),
-                        ])
-
-                        # Issue Detail Rows
-                        for i, instance in enumerate(problem_instances):
-                            details_display = instance['details']
-                            if len(details_display) > 120: # Truncate for cell
-                                details_display = details_display[:117] + "..."
-
-                            url_text = instance['url']
-                            if len(url_text) > 80: # Truncate for cell
-                                url_text = url_text[:77] + "..."
-
-                            row_items = [Paragraph(url_text, self.styles['TableDetailURLStyle'])]
-                            if details_display != 'N/A' and details_display != instance['url']:
-                                row_items.append(Paragraph(details_display, self.styles['TableDetailStyle']))
-                            else:
-                                row_items.append(Paragraph('-', self.styles['TableDetailStyle']))
-                            table_data_specific.append(row_items)
-
-                            # Striping for detail rows (i+1 because title is row 0)
-                            current_bg_color = bg_color_even_table if i % 2 == 0 else bg_color_odd_table
-                            table_style_specific_cmds.append(('BACKGROUND', (0, i+1), (1, i+1), current_bg_color))
-
-                            # Individual recommendation rows are REMOVED from here
-
-                        if table_data_specific: # Should always be true if problem_instances is not empty due to title row
-                            page_width, _ = A4
-                            available_width = page_width - self.doc.leftMargin - self.doc.rightMargin - (0.2 * inch) # Ensure it fits
-                            col_widths_specific = [available_width * 0.5, available_width * 0.5]
-
-                            specific_problem_table = Table(table_data_specific, colWidths=col_widths_specific)
-                            specific_problem_table.setStyle(TableStyle(table_style_specific_cmds))
-                            flowables.append(specific_problem_table)
-
-                            # Add single recommendation paragraph after the table for this specific problem (for warnings/notices)
-                            if macro_key in ['warnings', 'notices']:
-                                recommendation_text = PDF_ISSUE_RECOMMENDATIONS.get(
-                                    technical_issue_type,
-                                    PDF_ISSUE_RECOMMENDATIONS.get('generic_seo_tip', "Consultare le best practice SEO.")
-                                )
-                                specific_content_flowables = [specific_problem_table]
-                                specific_content_flowables.append(Spacer(1, 0.05 * inch)) # Small spacer before recommendation
-                                rec_paragraph_text = f"<b>Raccomandazione:</b> {recommendation_text}"
-                                specific_content_flowables.append(Paragraph(rec_paragraph_text, self.styles['TableRecommendationStyle']))
-                                specific_content_flowables.append(Spacer(1, 0.05 * inch)) # Small spacer after recommendation
-                                flowables.append(KeepTogether(specific_content_flowables))
-                            else: # If not warning/notice, just add the table
-                                flowables.append(specific_problem_table)
-
-                    # Removed the Spacer(1, 0.1 * inch) that was here to avoid double spacing
-                    # as spacers are now inside the KeepTogether or around it.
-
-        if not has_any_weakness_to_show:
-            flowables.append(Paragraph("Nessuna area di miglioramento critica identificata.", self.styles['ListItem']))
-
-        flowables.append(Spacer(1, 0.5 * inch)) # Final spacer for the section
+        flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
     def _add_score_overview(self):
@@ -492,54 +326,54 @@ class PDFGenerator:
         # table = Table(data, colWidths=col_widths)
 
         # COLOR_TABLE_HEADER_BG = PDF_CONFIG['colors'].get('primary_dark', '#004080') # Use from PDF_CONFIG
-        # COLOR_TABLE_ROW_BG_ODD = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # Use from PDF_CONFIG
+        # COLOR_TABLE_ROW_ODD = PDF_CONFIG['colors'].get('light_gray_alt', '#F0F4F7') # Use from PDF_CONFIG
         # COLOR_TABLE_ROW_BG_EVEN = PDF_CONFIG['colors'].get('white', '#FFFFFF') # Use from PDF_CONFIG
-        COLOR_BORDER = PDF_CONFIG['colors'].get('border', '#CCCCCC') # Use from PDF_CONFIG
-        FONT_FAMILY_TABLE_HEADER = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
-        FONT_FAMILY_TABLE_BODY = PDF_CONFIG.get('font_family', 'Helvetica')
-        FONT_SIZE_TABLE_HEADER = PDF_CONFIG['font_sizes'].get('small', 9)
-        FONT_SIZE_TABLE_BODY = PDF_CONFIG['font_sizes'].get('small', 9) # Consistent small size
-        COLOR_TEXT_PRIMARY_FOR_TABLE = PDF_CONFIG['colors'].get('text_primary', '#222222')
-        HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
-        NEW_HEADER_BG_COLOR = colors.HexColor('#f5f5f5')
+        # COLOR_BORDER = PDF_CONFIG['colors'].get('border', '#CCCCCC') # Use from PDF_CONFIG
+        # FONT_FAMILY_TABLE_HEADER = PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')
+        # FONT_FAMILY_TABLE_BODY = PDF_CONFIG.get('font_family', 'Helvetica')
+        # FONT_SIZE_TABLE_HEADER = PDF_CONFIG['font_sizes'].get('small', 9)
+        # FONT_SIZE_TABLE_BODY = PDF_CONFIG['font_sizes'].get('small', 9) # Consistent small size
+        # COLOR_TEXT_PRIMARY_FOR_TABLE = PDF_CONFIG['colors'].get('text_primary', '#222222')
+        # HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
+        # NEW_HEADER_BG_COLOR = colors.HexColor('#f5f5f5')
 
-        score_table_style_cmds = [
+        # score_table_style_cmds = [
             # Header Styling
-            ('BACKGROUND', (0, 0), (-1, 0), NEW_HEADER_BG_COLOR), # New light gray background
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Ensure black text
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
-            ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            # ('BACKGROUND', (0, 0), (-1, 0), NEW_HEADER_BG_COLOR), # New light gray background
+            # ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Ensure black text
+            # ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            # ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+            # ('FONTNAME', (0, 0), (-1, 0), FONT_FAMILY_TABLE_HEADER),
+            # ('FONTSIZE', (0, 0), (-1, 0), FONT_SIZE_TABLE_HEADER),
+            # ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            # ('TOPPADDING', (0, 0), (-1, 0), 8),
             # Individual BOX for each header cell for #FFCC00 outline
-            ('BOX', (0,0), (0,0), 1.5, HEADER_OUTLINE_COLOR),
-            ('BOX', (1,0), (1,0), 1.5, HEADER_OUTLINE_COLOR),
-            ('BOX', (2,0), (2,0), 1.5, HEADER_OUTLINE_COLOR),
+            # ('BOX', (0,0), (0,0), 1.5, HEADER_OUTLINE_COLOR),
+            # ('BOX', (1,0), (1,0), 1.5, HEADER_OUTLINE_COLOR),
+            # ('BOX', (2,0), (2,0), 1.5, HEADER_OUTLINE_COLOR),
 
             # Data Rows Styling
-            ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY),
-            ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY),
-            ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)),
-            ('ALIGN', (0, 1), (-1, -1), 'LEFT'), # Categoria left aligned
-            ('ALIGN', (1, 1), (1, -1), 'CENTER'), # Punteggio center aligned
-            ('ALIGN', (2, 1), (2, -1), 'LEFT'), # Stato left aligned
-            ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6), # Adjusted padding for data rows
-            ('TOPPADDING', (0, 1), (-1, -1), 6),   # Adjusted padding for data rows
-            ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN)), # Default for even data rows
-        ]
+            # ('FONTNAME', (0, 1), (-1, -1), FONT_FAMILY_TABLE_BODY),
+            # ('FONTSIZE', (0, 1), (-1, -1), FONT_SIZE_TABLE_BODY),
+            # ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(COLOR_TEXT_PRIMARY_FOR_TABLE)),
+            # ('ALIGN', (0, 1), (-1, -1), 'LEFT'), # Categoria left aligned
+            # ('ALIGN', (1, 1), (1, -1), 'CENTER'), # Punteggio center aligned
+            # ('ALIGN', (2, 1), (2, -1), 'LEFT'), # Stato left aligned
+            # ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+            # ('BOTTOMPADDING', (0, 1), (-1, -1), 6), # Adjusted padding for data rows
+            # ('TOPPADDING', (0, 1), (-1, -1), 6),   # Adjusted padding for data rows
+            # ('BACKGROUND', (0, 1), (-1, -1), HexColor(COLOR_TABLE_ROW_BG_EVEN)), # Default for even data rows
+        # ]
 
-        score_table_style = TableStyle(score_table_style_cmds)
+        # score_table_style = TableStyle(score_table_style_cmds)
 
         # Apply odd row striping
-        for i in range(1, len(data)): # Start from 1 to skip header
-            if i % 2 != 0: # Odd rows (1st, 3rd, 5th data row)
-                score_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
+        # for i in range(1, len(data)): # Start from 1 to skip header
+            # if i % 2 != 0: # Odd rows (1st, 3rd, 5th data row)
+                # score_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(COLOR_TABLE_ROW_BG_ODD))
 
         # General table grid (applied first, header BOXes will draw over it for header cells)
-        score_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(COLOR_BORDER))
+        # score_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(COLOR_BORDER))
         # Overall table border (can be same as grid or slightly thicker)
         # score_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(COLOR_BORDER))
 
@@ -865,63 +699,90 @@ class PDFGenerator:
     def _identify_strengths_weaknesses(self):
         strengths = []
         # Strengths identification remains the same
-        categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score']}
-        for category, score in categories.items():
-            if score >= 80: strengths.append(f"{category} ottimizzato correttamente (punteggio: {score}/100)")
-            # Weaknesses based on scores are not included here anymore, as per new structure focusing on detailed_issues
+        # categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score']}
+        # Simplified list of categories for strengths, based on available analysis results keys
+        # This avoids KeyError if some analyses were not run or 'score' is missing.
+        strength_candidate_categories = [
+            'title_analysis', 'meta_description_analysis', 'images_analysis',
+            'content_analysis', 'performance_analysis', 'ssl_analysis',
+            'links_analysis', 'technical_analysis'
+        ]
+        for cat_key in strength_candidate_categories:
+            category_analysis = self.analysis_results.get(cat_key)
+            if category_analysis and isinstance(category_analysis, dict):
+                score = category_analysis.get('score')
+                # Use a more descriptive name for the category if available, otherwise use the key
+                category_name = cat_key.replace('_analysis', '').replace('_', ' ').capitalize()
+                if score is not None and score >= 80: # Assuming 80 is the threshold for a strength
+                    strengths.append(f"{category_name} ottimizzato correttamente (punteggio: {score}/100)")
 
         weaknesses_structured = {
             'errors': {},
             'warnings': {},
             'notices': {}
         }
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
+        # Ensure detailed_issues and its sub-keys exist and are lists
+        detailed_issues_data = self.analysis_results.get('detailed_issues', {})
+        if not isinstance(detailed_issues_data, dict):
+            detailed_issues_data = {} # Fallback to empty dict if not a dict
 
         macro_map = {
-            'errors': 'errors',
+            'errors': 'errors', # Key in weaknesses_structured : key in detailed_issues_data
             'warnings': 'warnings',
             'notices': 'notices'
         }
 
         for macro_key, detailed_issue_list_key in macro_map.items():
-            issues_list = detailed_issues.get(detailed_issue_list_key, [])
-            if not isinstance(issues_list, list):
+            issues_list = detailed_issues_data.get(detailed_issue_list_key, [])
+            if not isinstance(issues_list, list): # Ensure it's a list
                 continue
 
             for issue in issues_list:
-                if not isinstance(issue, dict):
+                if not isinstance(issue, dict): # Ensure each issue is a dict
                     continue
 
                 specific_type_key = issue.get('type', 'unknown_type')
-                # Get user-friendly label or create a fallback
-                user_friendly_label = PDF_ISSUE_TYPE_LABELS.get(specific_type_key, specific_type_key.replace('_', ' ').capitalize())
+                # Attempt to get label from PDF_ISSUE_TYPE_LABELS; if missing, create a fallback.
+                # This part is tricky because PDF_ISSUE_TYPE_LABELS was removed/restructured.
+                # The new structure AUDIT_CHECKS_CONFIG maps a technical key to a dict with 'label'.
+                # This old weaknesses logic might not map directly anymore.
+                # For now, let's try to find a label from AUDIT_CHECKS_CONFIG if possible, or fallback.
 
-                # Prepare issue details for presentation
-                # Prioritize 'image' for details if it exists, then 'details', then 'issue' field or 'N/A'
+                # Fallback label generation if direct mapping is not found
+                user_friendly_label = specific_type_key.replace('_', ' ').capitalize()
+                found_in_new_config = False
+                for check_key_new, check_data_new in AUDIT_CHECKS_CONFIG.items():
+                    # This is an imperfect match, as old 'type' might not be new 'key'
+                    if specific_type_key == check_key_new or specific_type_key == check_data_new.get('label','').lower().replace(' ','_'):
+                        user_friendly_label = check_data_new.get('label', user_friendly_label)
+                        found_in_new_config = True
+                        break
+                if not found_in_new_config and 'PDF_ISSUE_TYPE_LABELS' in globals(): # Check if old global exists (it shouldn't)
+                     user_friendly_label = PDF_ISSUE_TYPE_LABELS.get(specific_type_key, user_friendly_label)
+
+
                 details_text = issue.get('image', issue.get('details', issue.get('issue', 'N/A')))
-
                 issue_entry = {
                     'url': issue.get('url', 'N/A'),
                     'details': details_text,
-                    'type': specific_type_key  # Ensure original type is passed
+                    'type': specific_type_key
                 }
 
                 if user_friendly_label not in weaknesses_structured[macro_key]:
                     weaknesses_structured[macro_key][user_friendly_label] = {
-                        'type': specific_type_key, # Store the technical type for the group
+                        'type': specific_type_key,
                         'instances': []
                     }
                 weaknesses_structured[macro_key][user_friendly_label]['instances'].append(issue_entry)
 
-        # Remove macro categories if they are empty
-        weaknesses_structured = {key: val for key, val in weaknesses_structured.items() if val}
-        # Further filter out specific problem groups if they somehow ended up with no instances
-        for macro_key in list(weaknesses_structured.keys()):
-            for problem_label in list(weaknesses_structured[macro_key].keys()):
-                if not weaknesses_structured[macro_key][problem_label]['instances']:
-                    del weaknesses_structured[macro_key][problem_label]
-            if not weaknesses_structured[macro_key]: # If macro category became empty
-                del weaknesses_structured[macro_key]
+        # Clean up empty categories/labels as before
+        weaknesses_structured = {k: v for k, v in weaknesses_structured.items() if v}
+        for mk in list(weaknesses_structured.keys()):
+            for pl_key in list(weaknesses_structured[mk].keys()):
+                if not weaknesses_structured[mk][pl_key]['instances']:
+                    del weaknesses_structured[mk][pl_key]
+            if not weaknesses_structured[mk]:
+                del weaknesses_structured[mk]
 
         return strengths, weaknesses_structured
         

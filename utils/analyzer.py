@@ -23,9 +23,10 @@ class SEOAnalyzer:
     Classe principale per l'analisi SEO dei dati crawlati
     """
     
-    def __init__(self, pages_data: List[Dict], domain: str):
+    def __init__(self, pages_data: List[Dict], domain: str, site_wide_data: Dict = None):
         self.pages_data = pages_data
         self.domain = domain
+        self.site_wide_data = site_wide_data if site_wide_data is not None else {}
         self.analysis_results = {
             'categorized_issues': {
                 CATEGORY_OCM: {'ERROR': [], 'WARNING': [], 'NOTICE': []},
@@ -971,12 +972,8 @@ class SEOAnalyzer:
         # Chiamiamo la vecchia logica per popolare detailed_issues per ora
         # self.analysis_results['detailed_issues'] = self._populate_legacy_detailed_issues()
 
-        # --- TEMPORARY TEST MOCKS START ---
-        # These are hardcoded for testing site-wide checks. Remove in production.
-        site_uses_cdn_test_mock = False # For ocm_no_cdn_global_error
-        eeat_signals_present_test_mock = False # For seo_no_eeat_signals_error
-        has_structured_data_errors_test_mock = True # For ocm_structured_data_errors_warning
-        # --- TEMPORARY TEST MOCKS END ---
+        # Access site_wide_data from instance variable
+        # self.site_wide_data is populated during __init__
 
         for check_key, check_config in AUDIT_CHECKS_CONFIG.items():
             category = check_config['category']
@@ -1024,15 +1021,17 @@ class SEOAnalyzer:
             # Esempio: SEO - Missing E-E-A-T (Placeholder - Site-wide)
             # Note: Key in AUDIT_CHECKS_CONFIG is 'seo_no_eeat_signals_error'
             elif check_key == 'seo_no_eeat_signals_error':
-                # Using test mock: eeat_signals_present_test_mock
-                if not eeat_signals_present_test_mock and severity == 'ERROR': # check severity from config
+                # Using self.site_wide_data
+                eeat_signals_overall = self.site_wide_data.get('e_e_a_t_signals_overall', {})
+                # Example: Check if 'expert_authors' is False or missing
+                if not eeat_signals_overall.get('expert_authors', False) and severity == 'ERROR':
                     self.analysis_results['categorized_issues'][CATEGORY_SEO_AUDIT]['ERROR'].append({
                         'key': check_key,
                         'label': check_config['label'],
                         'url': self.domain, # Problema a livello di sito
-                        'details': 'Nessun segnale E-E-A-T chiaro identificato sul sito (mock test).',
+                        'details': 'Segnali E-E-A-T (es. autori esperti) non chiaramente identificati (basato su site_wide_data).',
                         'description_key': check_config['description_key'],
-                        'severity': 'ERROR' # Use actual severity
+                        'severity': 'ERROR'
                     })
 
             # Esempio: OCM - Meta Description Missing (Notice)
@@ -1052,12 +1051,14 @@ class SEOAnalyzer:
 
             # Implementazione dei 25 OCM ERROR CHECKS
 
-            elif check_key == 'ocm_no_cdn_global_error': # Example of using a mock for a site-wide check
-                # Using test mock: site_uses_cdn_test_mock
-                if not site_uses_cdn_test_mock and severity == 'ERROR':
+            elif check_key == 'ocm_no_cdn_global_error':
+                # Using self.site_wide_data
+                is_global_site = self.site_wide_data.get('is_global_site', False)
+                uses_cdn_globally = self.site_wide_data.get('uses_cdn_globally', False)
+                if is_global_site and not uses_cdn_globally and severity == 'ERROR':
                     self.analysis_results['categorized_issues'][CATEGORY_OCM]['ERROR'].append({
                         'key': check_key, 'label': check_config['label'], 'url': self.domain,
-                        'details': "Assenza CDN per siti globali (mock test).",
+                        'details': "Assenza CDN rilevata per un sito identificato come globale (basato su site_wide_data).",
                         'description_key': check_config['description_key'], 'severity': 'ERROR'
                     })
 
@@ -1328,26 +1329,45 @@ class SEOAnalyzer:
 
             # Implementazione dei 16 OCM WARNING CHECKS
             elif check_key == 'ocm_structured_data_errors_warning':
-                # Using test mock: has_structured_data_errors_test_mock
-                if has_structured_data_errors_test_mock and severity == 'WARNING':
-                    self.analysis_results['categorized_issues'][CATEGORY_OCM]['WARNING'].append({
+                # Using self.site_wide_data (or could be page-specific if errors are per page)
+                # Assuming 'structured_data_site_wide_errors_present' is a boolean in site_wide_data
+                site_has_sd_errors = self.site_wide_data.get('structured_data_site_wide_errors_present', False)
+                # Placeholder: In run_analyzer_pdf_test.py, site_wide_data has:
+                # "sitemap_errors_found": False, # For ocm_sitemap_errors_warning
+                # Let's use a more direct mock from site_wide_data for this if available, or check pages
+                # For now, let's assume page-level check or a site-wide aggregate
+                pages_with_sd_errors = []
+                for page in self.pages_data:
+                    if page.get('has_structured_data', False) and page.get('structured_data_errors'): # Check for non-empty list of errors
+                        pages_with_sd_errors.append(page.get('url'))
+                        if len(pages_with_sd_errors) >=3: break
+
+                if pages_with_sd_errors and severity == 'WARNING':
+                     self.analysis_results['categorized_issues'][CATEGORY_OCM]['WARNING'].append({
                         'key': check_key, 'label': check_config['label'], 'url': self.domain,
-                        'details': "Rilevati errori (non critici) nei dati strutturati (mock test).",
+                        'details': f"Rilevati errori nei dati strutturati su alcune pagine (es: {', '.join(pages_with_sd_errors)}).",
                         'description_key': check_config['description_key'], 'severity': 'WARNING'
                     })
 
             elif check_key == 'ocm_redirect_chains_warning':
                 # TODO: Implement redirect chain detection; crawler should provide this data.
-                # Example: page.get('redirect_chain_hops', 0)
+                # Using self.site_wide_data.get('redirect_chains_found', {})
+                # Format: {'original_url1': ['hop1', 'hop2', 'final_url'], ...}
+                redirect_chains_found = self.site_wide_data.get('redirect_chains_found', {})
                 max_hops_allowed = 3
-                for page in self.pages_data:
-                    hops = page.get('redirect_chain_hops', 0) # Placeholder, assume crawler provides this
-                    if hops > max_hops_allowed and severity == 'WARNING':
-                         self.analysis_results['categorized_issues'][CATEGORY_OCM]['WARNING'].append({
-                            'key': check_key, 'label': check_config['label'], 'url': page.get('original_url', page.get('url')), # original_url if available
-                            'details': f"Rilevata catena di redirect con {hops} hop (soglia: >{max_hops_allowed}).",
-                            'description_key': check_config['description_key'], 'severity': 'WARNING'
-                        })
+                long_redirect_chains_examples = []
+
+                for origin_url, hops_list in redirect_chains_found.items():
+                    if len(hops_list) > max_hops_allowed:
+                        long_redirect_chains_examples.append(f"{origin_url} ({len(hops_list)} hops)")
+                        if len(long_redirect_chains_examples) >= 3: break
+
+                if long_redirect_chains_examples and severity == 'WARNING':
+                    self.analysis_results['categorized_issues'][CATEGORY_OCM]['WARNING'].append({
+                        'key': check_key, 'label': check_config['label'], 'url': self.domain,
+                        'details': f"Rilevate catene di redirect > {max_hops_allowed} hop. Esempi: {'; '.join(long_redirect_chains_examples)} (basato su site_wide_data).",
+                        'description_key': check_config['description_key'], 'severity': 'WARNING'
+                    })
 
             elif check_key == 'ocm_unnecessary_redirects_warning':
                 # TODO: Implement detection of unnecessary redirects (e.g. http -> https for an internal link already https)
@@ -1370,12 +1390,12 @@ class SEOAnalyzer:
                     })
 
             elif check_key == 'ocm_hsts_missing_warning':
-                # TODO: Check for HSTS header in server responses
-                hsts_enabled = False # Placeholder
-                if not hsts_enabled and severity == 'WARNING':
+                # Using self.site_wide_data
+                hsts_implemented = self.site_wide_data.get('http_strict_transport_security_hsts_implemented', True) # Assume True if not specified
+                if not hsts_implemented and severity == 'WARNING':
                     self.analysis_results['categorized_issues'][CATEGORY_OCM]['WARNING'].append({
                         'key': check_key, 'label': check_config['label'], 'url': self.domain,
-                        'details': "Mancata implementazione di HSTS (HTTP Strict Transport Security) (placeholder).",
+                        'details': "Mancata implementazione di HSTS (HTTP Strict Transport Security) (basato su site_wide_data).",
                         'description_key': check_config['description_key'], 'severity': 'WARNING'
                     })
 
@@ -1508,12 +1528,16 @@ class SEOAnalyzer:
                     })
 
             elif check_key == 'ocm_ga_gsc_not_configured_warning':
-                # TODO: This requires external verification (e.g. checking for GA/GSC tags in HTML, or API integration if permissions allow)
-                ga_gsc_not_configured = False # Placeholder
-                if ga_gsc_not_configured and severity == 'WARNING':
+                # Using self.site_wide_data - e.g. site_wide_data.get('ga_configured', False)
+                ga_configured = self.site_wide_data.get('google_analytics_configured', True) # Assume true
+                gsc_configured = self.site_wide_data.get('google_search_console_configured', True) # Assume true
+                if (not ga_configured or not gsc_configured) and severity == 'WARNING':
+                    details_msg = []
+                    if not ga_configured: details_msg.append("Google Analytics non sembra configurato")
+                    if not gsc_configured: details_msg.append("Google Search Console non sembra configurata")
                     self.analysis_results['categorized_issues'][CATEGORY_OCM]['WARNING'].append({
                         'key': check_key, 'label': check_config['label'], 'url': self.domain,
-                        'details': "Google Analytics o Google Search Console non sembrano configurati o collegati (placeholder).",
+                        'details': f"{'; '.join(details_msg)} (basato su site_wide_data).",
                         'description_key': check_config['description_key'], 'severity': 'WARNING'
                     })
 

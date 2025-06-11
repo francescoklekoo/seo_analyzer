@@ -19,6 +19,7 @@ python-whois
 reportlab
 weasyprint
 jinja2
+matplotlib
 
 # Data Processing
 pandas
