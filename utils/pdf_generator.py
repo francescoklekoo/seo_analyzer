@@ -144,10 +144,11 @@ class PDFGenerator:
             self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], leftIndent=10, spaceBefore=2, spaceAfter=4, fontSize=FONT_SIZE_SMALL, textColor=HexColor(COLOR_TEXT_SECONDARY)))
         
     def _add_header(self):
-        self.story.append(Paragraph("Site Audit Report", self.styles['CustomTitle'])) # First line
+        self.story.append(Paragraph("Report di Audit del Sito", self.styles['CustomTitle'])) # First line
         self.story.append(Paragraph(self.domain, self.styles['CustomSubtitle']))      # Second line (domain name)
         self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph(f"Generato in data: {self.analysis_results['summary']['analysis_date']}", self.styles['SmallText']))
+        current_datetime = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        self.story.append(Paragraph(f"Generato il: {current_datetime}", self.styles['SmallText']))
         self.story.append(Spacer(1, 0.5 * inch))
 
     def _add_chart_and_counts_section(self):
@@ -157,73 +158,104 @@ class PDFGenerator:
         chart_image = self._get_site_health_chart_flowable()
         if chart_image:
             section_flowables.append(chart_image)
-            section_flowables.append(Spacer(1, 0.3 * inch))
+            section_flowables.append(Spacer(1, 0.1 * inch)) # Reduced spacer after chart
 
-        # Issue Counts Logic
-        # Ensure analysis_results and detailed_issues are available, or pass them if needed.
-        # Assuming they are available via self.analysis_results as in _add_executive_summary
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
-        num_errors = len(detailed_issues.get('errors', []))
-        num_warnings = len(detailed_issues.get('warnings', []))
-        num_notices = len(detailed_issues.get('notices', []))
+        # --- New Categorized Summary Boxes ---
+        categorized_issues = self.analysis_results.get('categorized_issues', {})
+        ocm_errors_count = len(categorized_issues.get(CATEGORY_OCM, {}).get('ERROR', []))
+        ocm_warnings_count = len(categorized_issues.get(CATEGORY_OCM, {}).get('WARNING', []))
+        ocm_notices_count = len(categorized_issues.get(CATEGORY_OCM, {}).get('NOTICE', []))
 
-        color_error_hex = PDF_CONFIG['colors'].get('error', '#DC3545')
-        color_warning_hex = PDF_CONFIG['colors'].get('warning', '#FFC107')
-        color_notice_hex = PDF_CONFIG['colors'].get('info', PDF_CONFIG['colors'].get('secondary', '#17A2B8'))
+        seo_errors_count = len(categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get('ERROR', []))
+        seo_warnings_count = len(categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get('WARNING', []))
+        seo_notices_count = len(categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get('NOTICE', []))
 
-        # Use self.styles.get to safely access 'Normal' or fallback to 'BodyText'
-        parent_style = self.styles.get('Normal', self.styles['BodyText'])
-        count_box_base_style = ParagraphStyle(
-            name='CountBoxBaseStyle',
-            parent=parent_style,
+        # Define colors for boxes
+        COLOR_RED_BOX = colors.HexColor(PDF_CONFIG['colors'].get('error', '#DC3545'))
+        COLOR_ORANGE_BOX = colors.HexColor(PDF_CONFIG['colors'].get('warning', '#FFC107'))
+        COLOR_BLUE_BOX = colors.HexColor(PDF_CONFIG['colors'].get('info', '#17A2B8')) # Using info from PDF_CONFIG or a default
+
+        # Styles for text in boxes
+        count_style = ParagraphStyle(
+            name='BoxCountStyle',
+            fontSize=20, # Increased font size for count
+            fontName='Helvetica-Bold',
+            textColor=colors.white,
             alignment=TA_CENTER,
-            leading=14
+            leading=22
         )
-        error_text_style = ParagraphStyle(
-            name='ErrorCountBoxStyle', parent=count_box_base_style,
-            textColor=colors.HexColor(color_error_hex)
-        )
-        warning_text_style = ParagraphStyle(
-            name='WarningCountBoxStyle', parent=count_box_base_style,
-            textColor=colors.HexColor(color_warning_hex)
-        )
-        notice_text_style = ParagraphStyle(
-            name='NoticeCountBoxStyle', parent=count_box_base_style,
-            textColor=colors.HexColor(color_notice_hex)
+        label_style = ParagraphStyle(
+            name='BoxLabelStyle',
+            fontSize=9, # Standard label size
+            fontName='Helvetica',
+            textColor=colors.white,
+            alignment=TA_CENTER,
+            leading=10,
+            spaceBefore=4 # Add a bit of space between count and label
         )
 
-        error_p = Paragraph(f"<font size='16'><b>{num_errors}</b></font><br/><font size='10'>Errori</font>", error_text_style)
-        warning_p = Paragraph(f"<font size='16'><b>{num_warnings}</b></font><br/><font size='10'>Avvertimenti</font>", warning_text_style)
-        notice_p = Paragraph(f"<font size='16'><b>{num_notices}</b></font><br/><font size='10'>Avvisi</font>", notice_text_style)
+        # Content for OCM boxes
+        ocm_error_content = [Paragraph(f"{ocm_errors_count}", count_style), Paragraph("Errori OCM", label_style)]
+        ocm_warning_content = [Paragraph(f"{ocm_warnings_count}", count_style), Paragraph("Avvert. OCM", label_style)] # Abbreviated for space
+        ocm_notice_content = [Paragraph(f"{ocm_notices_count}", count_style), Paragraph("Avvisi OCM", label_style)]
 
-        box_data = [[error_p, warning_p, notice_p]]
+        # Content for SEO Audit boxes
+        seo_error_content = [Paragraph(f"{seo_errors_count}", count_style), Paragraph("Errori SEO", label_style)]
+        seo_warning_content = [Paragraph(f"{seo_warnings_count}", count_style), Paragraph("Avvert. SEO", label_style)] # Abbreviated for space
+        seo_notice_content = [Paragraph(f"{seo_notices_count}", count_style), Paragraph("Avvisi SEO", label_style)]
 
-        # Ensure self.doc is available for margins, or use fixed values if called before self.doc init
-        # This method is called from generate_pdf after self.doc is initialized.
+        # Calculate column width for 3 boxes per row
         page_content_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        col_width = (page_content_width - 2 * 0.1*inch) / 3 # Allowing 0.1 inch gap on each side of middle box
+        box_col_width = (page_content_width - 2 * (0.1 * inch)) / 3 # Small gap (0.1 inch) on each side of the middle box, effectively spacing between boxes
 
-        issue_counts_table = Table(box_data, colWidths=[col_width, col_width, col_width], rowHeights=[0.8*inch])
-
-        counts_table_style = TableStyle([
-            ('BOX', (0,0), (0,0), 1.5, colors.HexColor(color_error_hex)),
-            ('BOX', (1,0), (1,0), 1.5, colors.HexColor(color_warning_hex)),
-            ('BOX', (2,0), (2,0), 1.5, colors.HexColor(color_notice_hex)),
+        # OCM Row Table
+        row1_data = [ocm_error_content, ocm_warning_content, ocm_notice_content]
+        table_row1 = Table([row1_data], colWidths=[box_col_width, box_col_width, box_col_width], rowHeights=[0.8*inch]) # Adjusted height
+        table_row1.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (0,0), COLOR_RED_BOX),
+            ('BACKGROUND', (1,0), (1,0), COLOR_ORANGE_BOX),
+            ('BACKGROUND', (2,0), (2,0), COLOR_BLUE_BOX),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('TOPPADDING', (0,0), (-1,-1), 10),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
-        ])
-        issue_counts_table.setStyle(counts_table_style)
-        section_flowables.append(issue_counts_table)
+            ('TOPPADDING', (0,0), (-1,-1), 10), # Increased padding
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10), # Increased padding
+            # ('BOX', (0,0), (-1,-1), 0.5, colors.darkgrey), # Optional: border around all boxes in the row
+            # ('INNERGRID', (0,0), (-1,-1), 0.25, colors.lightgrey) # Optional: inner lines
+        ]))
+        section_flowables.append(table_row1)
+        section_flowables.append(Spacer(1, 0.15 * inch)) # Space between the two rows of boxes
+
+        # SEO Audit Row Table
+        row2_data = [seo_error_content, seo_warning_content, seo_notice_content]
+        table_row2 = Table([row2_data], colWidths=[box_col_width, box_col_width, box_col_width], rowHeights=[0.8*inch]) # Adjusted height
+        table_row2.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (0,0), COLOR_RED_BOX),
+            ('BACKGROUND', (1,0), (1,0), COLOR_ORANGE_BOX),
+            ('BACKGROUND', (2,0), (2,0), COLOR_BLUE_BOX),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('TOPPADDING', (0,0), (-1,-1), 10), # Increased padding
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10), # Increased padding
+        ]))
+        section_flowables.append(table_row2)
+        # --- End of New Categorized Summary Boxes ---
+
+
+        # The old summary box code is removed as per plan.
+        # old_color_error_hex = PDF_CONFIG['colors'].get('error', '#DC3545')
+        # old_color_warning_hex = PDF_CONFIG['colors'].get('warning', '#FFC107')
+        # old_color_notice_hex = PDF_CONFIG['colors'].get('info', PDF_CONFIG['colors'].get('secondary', '#17A2B8'))
+        # ... (rest of old code was here) ...
+        # issue_counts_table.setStyle(counts_table_style)
+        # section_flowables.append(issue_counts_table)
 
         if section_flowables:
             self.story.append(KeepTogether(section_flowables))
-            self.story.append(Spacer(1, 0.3 * inch)) # Spacer after the whole section
+            self.story.append(Spacer(1, 0.3 * inch)) # Spacer after the whole section (chart + boxes)
 
     def _add_executive_summary(self):
         flowables = []
-        flowables.append(Paragraph("Riassunto Esecutivo", self.styles['SectionHeading']))
+        flowables.append(Paragraph("Riassunto Esecutivo", self.styles['SectionHeading'])) # Already Italian
         flowables.append(Spacer(1, 0.2 * inch))
 
         overall_score = self.analysis_results.get('overall_score', 0)
@@ -235,23 +267,23 @@ class PDFGenerator:
         num_notices = sum(len(lst) for cat in categorized_issues_data.values() for sev, lst in cat.items() if sev == 'NOTICE')
 
         issue_parts = []
-        if num_errors > 0: issue_parts.append(f"<b>{num_errors}</b> Errori")
-        if num_warnings > 0: issue_parts.append(f"<b>{num_warnings}</b> Avvertimenti")
-        if num_notices > 0: issue_parts.append(f"<b>{num_notices}</b> Avvisi")
+        if num_errors > 0: issue_parts.append(f"<b>{num_errors}</b> Errori") # Already Italian
+        if num_warnings > 0: issue_parts.append(f"<b>{num_warnings}</b> Avvertimenti") # Already Italian
+        if num_notices > 0: issue_parts.append(f"<b>{num_notices}</b> Avvisi") # Already Italian
 
         issues_string = ""
         if not issue_parts:
-            issues_string = "non rilevando problemi significativi"
+            issues_string = "non rilevando problemi significativi" # Already Italian
         elif len(issue_parts) == 1:
-            issues_string = f"identificando {issue_parts[0]}"
+            issues_string = f"identificando {issue_parts[0]}" # Already Italian
         elif len(issue_parts) == 2:
-            issues_string = f"identificando {issue_parts[0]} e {issue_parts[1]}"
+            issues_string = f"identificando {issue_parts[0]} e {issue_parts[1]}" # Already Italian
         else:
-            issues_string = f"identificando {issue_parts[0]}, {issue_parts[1]} e {issue_parts[2]}"
+            issues_string = f"identificando {issue_parts[0]}, {issue_parts[1]} e {issue_parts[2]}" # Already Italian
 
         total_pages_analyzed = self.analysis_results.get('summary', {}).get('total_pages_analyzed', len(self.analysis_results.get('pages_data', [])))
 
-        summary_text = f"""L'analisi SEO del sito <b>{self.domain}</b> ha rivelato un punteggio complessivo di <font color="{self._get_score_color_hex(overall_score)}"><b>{overall_score}/100</b></font>. Valutazione: <b>{evaluation}</b>. Sono state analizzate <b>{total_pages_analyzed}</b> pagine, {issues_string}."""
+        summary_text = f"""L'analisi SEO del sito <b>{self.domain}</b> ha rivelato un punteggio complessivo di <font color="{self._get_score_color_hex(overall_score)}"><b>{overall_score}/100</b></font>. Valutazione: <b>{evaluation}</b>. Sono state analizzate <b>{total_pages_analyzed}</b> pagine, {issues_string}.""" # Already Italian
 
         summary_paragraph = Paragraph(summary_text, self.styles['BodyText'])
         flowables.append(summary_paragraph)
@@ -261,60 +293,79 @@ class PDFGenerator:
 
         if CATEGORY_OCM in categorized_issues:
             flowables.append(Paragraph(CATEGORY_OCM, self.styles['OCMSectionHeading']))
-            for severity in ['ERROR', 'WARNING', 'NOTICE']:
+            for severity in ['ERROR', 'WARNING', 'NOTICE']: # ERROR, WARNING, NOTICE will be translated to Errori, Avvertimenti, Avvisi
                 issues_list = categorized_issues.get(CATEGORY_OCM, {}).get(severity, [])
                 if issues_list:
                     severity_style_name = f"{severity.capitalize()}SubHeading"
-                    flowables.append(Paragraph(f"{severity.capitalize()}S ({len(issues_list)})", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
+                    # Translate severity names for display
+                    severity_display_name = {
+                        'ERROR': 'Errori', 'WARNING': 'Avvertimenti', 'NOTICE': 'Avvisi'
+                    }.get(severity, severity.capitalize())
+                    flowables.append(Paragraph(f"{severity_display_name} ({len(issues_list)})", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
                     for issue in issues_list:
                         check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
-                        description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
+                        description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/D") # N/A to N/D
 
-                        flowables.append(Paragraph(f"<b>{issue.get('label', 'N/A')}</b>", self.styles['BodyText']))
+                        flowables.append(Paragraph(f"<b>{issue.get('label', 'N/D')}</b>", self.styles['BodyText'])) # N/A to N/D
                         if issue.get('url') and issue.get('url') != self.domain :
                             flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
-                        flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
-                        flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
+                        flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/D')}", self.styles['SmallText'])) # N/A to N/D
+                        flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText'])) # Already Italian
                         flowables.append(Spacer(1, 0.1 * inch))
             flowables.append(Spacer(1, 0.1 * inch))
 
         if CATEGORY_SEO_AUDIT in categorized_issues:
-            flowables.append(Paragraph(CATEGORY_SEO_AUDIT, self.styles['SEOAuditSectionHeading']))
-            for severity in ['ERROR', 'WARNING', 'NOTICE']:
+            flowables.append(Paragraph(CATEGORY_SEO_AUDIT, self.styles['SEOAuditSectionHeading'])) # Already Italian
+            for severity in ['ERROR', 'WARNING', 'NOTICE']: # ERROR, WARNING, NOTICE will be translated
                 issues_list = categorized_issues.get(CATEGORY_SEO_AUDIT, {}).get(severity, [])
                 if issues_list:
                     severity_style_name = f"{severity.capitalize()}SubHeading"
-                    flowables.append(Paragraph(f"{severity.capitalize()}S ({len(issues_list)})", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
+                    severity_display_name = {
+                        'ERROR': 'Errori', 'WARNING': 'Avvertimenti', 'NOTICE': 'Avvisi'
+                    }.get(severity, severity.capitalize())
+                    flowables.append(Paragraph(f"{severity_display_name} ({len(issues_list)})", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
                     for issue in issues_list:
                         check_config = AUDIT_CHECKS_CONFIG.get(issue['key'], {})
-                        description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/A")
+                        description = PDF_ISSUE_DESCRIPTIONS.get(check_config.get('description_key'), "N/D") # N/A to N/D
 
-                        flowables.append(Paragraph(f"<b>{issue.get('label', 'N/A')}</b>", self.styles['BodyText']))
+                        flowables.append(Paragraph(f"<b>{issue.get('label', 'N/D')}</b>", self.styles['BodyText'])) # N/A to N/D
                         if issue.get('url') and issue.get('url') != self.domain:
                             flowables.append(Paragraph(f"URL: {issue['url']}", self.styles['SmallText']))
-                        flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/A')}", self.styles['SmallText']))
-                        flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText']))
+                        flowables.append(Paragraph(f"Dettagli: {issue.get('details', 'N/D')}", self.styles['SmallText'])) # N/A to N/D
+                        flowables.append(Paragraph(f"Impatto SEO: {description}", self.styles['IssueDescriptionText'])) # Already Italian
                         flowables.append(Spacer(1, 0.1 * inch))
             flowables.append(Spacer(1, 0.1 * inch))
 
         if overall_score >= 80:
-            flowables.append(Paragraph("Punti di Forza Generali:", self.styles['SectionSubHeadingStyle']))
-            flowables.append(Paragraph(f"Il punteggio generale di {overall_score}/100 indica una buona performance complessiva.", self.styles['BodyText']))
+            flowables.append(Paragraph("Punti di Forza Generali:", self.styles['SectionSubHeadingStyle'])) # Already Italian
+            flowables.append(Paragraph(f"Il punteggio generale di {overall_score}/100 indica una buona performance complessiva.", self.styles['BodyText'])) # Already Italian
 
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
 
     def _add_score_overview(self):
         flowables = []
-        flowables.append(Paragraph("Panoramica Punteggi", self.styles['SectionHeading']))
+        flowables.append(Paragraph("Panoramica dei Punteggi", self.styles['SectionHeading'])) # "Panoramica Punteggi" to "Panoramica dei Punteggi"
         flowables.append(Spacer(1, 0.2 * inch))
 
-        overall_score = self.analysis_results.get('overall_score', 'N/A')
-        score_text = f"Punteggio SEO Complessivo: {overall_score}/100"
+        overall_score = self.analysis_results.get('overall_score', 'N/D') # N/A to N/D
+        score_text = f"Punteggio SEO Complessivo: {overall_score}/100" # Already Italian
         flowables.append(Paragraph(score_text, self.styles['BodyText']))
 
-        # data = [[Paragraph(h, self.styles['BodyText']) for h in ['Categoria', 'Punteggio', 'Stato']]]
+        # data = [[Paragraph(h, self.styles['BodyText']) for h in ['Categoria', 'Punteggio', 'Stato']]] # Already Italian
         # categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Headings': self.analysis_results['headings_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score']}
+        # The category names 'Title Tags', 'Meta Descriptions' etc. should be translated if this section is uncommented and used.
+        # For now, this part is commented out in the original code.
+        # Example translations if needed:
+        # 'Title Tags': 'Tag Title',
+        # 'Meta Descriptions': 'Meta Description',
+        # 'Headings': 'Intestazioni',
+        # 'Immagini': 'Immagini', # Already Italian
+        # 'Contenuto': 'Contenuto', # Already Italian
+        # 'Link Interni': 'Link Interni', # Already Italian
+        # 'Performance': 'Prestazioni',
+        # 'Aspetti Tecnici': 'Aspetti Tecnici', # Already Italian
+        # 'SSL': 'SSL' # Already Italian
         # for category, score in categories.items():
         #     status_text = self._get_status_text(score)
         #     data.append([Paragraph(category, self.styles['BodyText']), Paragraph(f"{score}/100", self.styles['BodyText']), Paragraph(status_text, self.styles['BodyText'])])
@@ -384,194 +435,347 @@ class PDFGenerator:
 
     def _get_site_health_chart_flowable(self):
         """
-        Crea un grafico a ciambella (donut chart) che mostra la percentuale di salute del sito
-        con un cerchio di completamento esterno e la percentuale al centro.
+        Crea un grafico a ciambella (donut chart) che mostra la percentuale di salute del sito,
+         suddivisa in Sano, Avvertimenti, e Problemi, con legenda in basso.
         Restituisce l'oggetto Image di ReportLab.
         """
         try:
-            # Ottieni il punteggio complessivo
-            try:
-                overall_score = self.analysis_results['overall_score']
-            except KeyError:
-                # Consider logging this warning instead of printing directly if a logging system is in place
-                print("WARNING: 'overall_score' not found in analysis_results for chart generation.")
-                return None
+            # Ensure overall_score is float and defaults to 0 if not found or None
+            raw_overall_score = self.analysis_results.get('overall_score')
+            if raw_overall_score is None:
+                print("WARNING: 'overall_score' not found in analysis_results for chart generation. Defaulting to 0.")
+                overall_score = 0.0
+            else:
+                overall_score = float(raw_overall_score)
 
-            health_percentage = overall_score
-            problem_percentage = 100 - overall_score
+            detailed_issues = self.analysis_results.get('detailed_issues', {})
+            num_errors = len(detailed_issues.get('errors', []))
+            num_warnings = len(detailed_issues.get('warnings', []))
 
-            # Colori e stili
-            COLOR_SUCCESS_CHART = '#28A745' # Renamed to avoid conflict if other COLOR_SUCCESS exists
-            COLOR_ERROR_CHART = '#DC3545'   # Renamed for clarity
-            FONT_FAMILY_CHART = 'Arial'     # Renamed for clarity
+            sano_percentage = overall_score
 
-            fig, ax = plt.subplots(figsize=(4.5, 4.5), facecolor='white') # Changed from (5,5)
+            # Calculate the portion that is NOT healthy
+            non_sano_percentage = 100.0 - sano_percentage
+
+            # Initialize problemi and avvertimenti percentages
+            problemi_percentage = 0.0
+            avvertimenti_percentage = 0.0
+
+            total_critical_issues = num_errors + num_warnings
+
+            if non_sano_percentage > 0:
+                if total_critical_issues > 0:
+                    problemi_percentage = (num_errors / total_critical_issues) * non_sano_percentage
+                    avvertimenti_percentage = (num_warnings / total_critical_issues) * non_sano_percentage
+                else:
+                    # If overall_score < 100 but no errors/warnings, attribute the non_sano part to "Problemi" by default.
+                    problemi_percentage = non_sano_percentage
+            else:
+                # if sano_percentage is 100 (or more, though score should be capped at 100),
+                # then non_sano is 0 or negative, so problemi and avvertimenti are 0.
+                pass
+
+            # Normalize percentages to ensure they sum to 100 due to potential float precision issues
+            # and ensure segments are not negative.
+            sano_percentage = max(0.0, sano_percentage)
+            problemi_percentage = max(0.0, problemi_percentage)
+            avvertimenti_percentage = max(0.0, avvertimenti_percentage)
+
+            # Recalculate total based on potentially capped values
+            # This step is crucial if sano_percentage could be > 100 initially or if any part becomes < 0
+            # For example, if overall_score was > 100, non_sano_percentage would be < 0.
+            # The max(0, ...) calls handle this by clamping.
+            # Now, ensure the sum is 100.
+
+            # If overall_score was > 100, sano_percentage is capped at 100 (or whatever it was if <100).
+            # If overall_score was < 0, sano_percentage is capped at 0.
+            # The sum of the three should ideally be 100.
+            # If sano_percentage alone is already > 100 (e.g. score was 105), it should be capped at 100
+            # and other percentages should be 0.
+            if sano_percentage >= 100.0:
+                sano_percentage = 100.0
+                problemi_percentage = 0.0
+                avvertimenti_percentage = 0.0
+            else: # sano_percentage is < 100.0
+                  # problemi_percentage and avvertimenti_percentage were derived from (100 - sano_percentage)
+                  # The sum should naturally be 100 unless non_sano_percentage was <=0 initially.
+                  # If non_sano_percentage was <=0 (i.e. score >=100), problemi and avvertimenti are already 0.
+                  # The main adjustment needed is if the sum is slightly off due to floating point arithmetic.
+                  current_total = sano_percentage + problemi_percentage + avvertimenti_percentage
+                  if abs(current_total - 100.0) > 0.01 and current_total > 0: # Check if adjustment is needed
+                      # Simple scaling adjustment
+                      scale_factor = 100.0 / current_total
+                      sano_percentage *= scale_factor
+                      problemi_percentage *= scale_factor
+                      avvertimenti_percentage *= scale_factor
+                      # Re-cap largest to ensure sum is exactly 100 after scaling, preventing over/undershoot
+                      # This is a bit redundant if scaling worked perfectly, but good as a final guard.
+                      final_total = sano_percentage + problemi_percentage + avvertimenti_percentage
+                      if abs(final_total - 100.0) > 0.001: # Small tolerance for float comparison
+                          diff = 100.0 - final_total
+                          # Add difference to the largest segment, or sano if all are similar
+                          if sano_percentage >= problemi_percentage and sano_percentage >= avvertimenti_percentage:
+                              sano_percentage += diff
+                          elif problemi_percentage >= sano_percentage and problemi_percentage >= avvertimenti_percentage:
+                              problemi_percentage += diff
+                          else:
+                              avvertimenti_percentage += diff
+
+            # Final clamp to ensure no negative percentages after adjustments
+            sano_percentage = max(0.0, round(sano_percentage, 1)) # Round to 1 decimal place for neater values
+            problemi_percentage = max(0.0, round(problemi_percentage, 1))
+            avvertimenti_percentage = max(0.0, round(avvertimenti_percentage, 1))
+
+            # Due to rounding, sum might be slightly off 100. Adjust largest to compensate.
+            rounded_sum = sano_percentage + problemi_percentage + avvertimenti_percentage
+            if abs(rounded_sum - 100.0) > 0.01 and rounded_sum > 0: # if sum is like 99.9 or 100.1
+                diff = 100.0 - rounded_sum
+                if sano_percentage >= problemi_percentage and sano_percentage >= avvertimenti_percentage:
+                    sano_percentage += diff
+                elif problemi_percentage >= sano_percentage and problemi_percentage >= avvertimenti_percentage:
+                    problemi_percentage += diff
+                else: # avvertimenti_percentage is largest or they are equal
+                    avvertimenti_percentage += diff
+                # Re-round and re-clamp after this final adjustment
+                sano_percentage = max(0.0, round(sano_percentage, 1))
+                problemi_percentage = max(0.0, round(problemi_percentage, 1))
+                avvertimenti_percentage = max(0.0, round(avvertimenti_percentage, 1))
+
+
+            # Define colors and font (ensure these are loaded from PDF_CONFIG as intended)
+            COLOR_GREEN = PDF_CONFIG['colors'].get('success', '#28A745')
+            COLOR_ORANGE = PDF_CONFIG['colors'].get('warning', '#FFC107')
+            COLOR_RED = PDF_CONFIG['colors'].get('error', '#DC3545')
+            FONT_FAMILY_CHART = PDF_CONFIG.get('font_family', 'Arial')
+
+            chart_segments_data = []
+            chart_segments_colors = []
+            legend_elements = []
+
+            # Order: Green, Orange, Red for legend consistency
+            if sano_percentage > 0.1:
+                chart_segments_data.append(sano_percentage)
+                chart_segments_colors.append(COLOR_GREEN)
+                legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_GREEN, markersize=10, label=f'Sano ({sano_percentage:.0f}%)'))
+
+            if avvertimenti_percentage > 0.1: # Orange for Warnings
+                chart_segments_data.append(avvertimenti_percentage)
+                chart_segments_colors.append(COLOR_ORANGE)
+                legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_ORANGE, markersize=10, label=f'Avvertimenti ({avvertimenti_percentage:.0f}%)'))
+
+            if problemi_percentage > 0.1: # Red for Problems
+                chart_segments_data.append(problemi_percentage)
+                chart_segments_colors.append(COLOR_RED)
+                legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_RED, markersize=10, label=f'Problemi ({problemi_percentage:.0f}%)'))
+
+            # Fallback if all percentages are effectively zero
+            if not chart_segments_data:
+                # This case implies overall_score was 0 or very close, and no specific errors/warnings pushed other segments above 0.1
+                # Display 100% Problemi for a score of 0.
+                chart_segments_data = [100.0]
+                chart_segments_colors = [COLOR_RED] # Red for "Problemi"
+                legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_RED, markersize=10, label=f'Problemi (100%)'))
+                # Display 0% in the center if we defaulted to 100% problemi chart.
+                # This ensures consistency if overall_score was, for example, 0.01 but all segments ended up <0.1.
+                # However, the main text displays the original overall_score.
+                # For the purpose of the chart's central text, if it's all red, it should show the score that led to this (likely 0).
+                # The original overall_score (raw_overall_score or the float version) is used for the center text.
+                # The `int(overall_score)` in ax.text will use the potentially adjusted overall_score from the top of the function.
+                # Let's ensure the displayed score in center text is the original `overall_score` before any normalization logic specific to chart segments.
+                # No, `overall_score` at the top is already the one to use.
+                # If `overall_score` was >0 but chart is 100% red due to tiny segments, this is fine.
+                pass
+
+
+            fig, ax = plt.subplots(figsize=(4.5, 4.5), facecolor='white')
             ax.set_facecolor('white')
 
-            sizes = [health_percentage, problem_percentage]
-            chart_colors = [COLOR_SUCCESS_CHART, COLOR_ERROR_CHART] # Use renamed variables
+            # Create the pie chart (donut style)
+            wedges, _ = ax.pie(chart_segments_data, colors=chart_segments_colors, startangle=90,
+                               counterclock=False, wedgeprops=dict(width=0.35))
 
-            wedges, texts = ax.pie(sizes, colors=chart_colors, startangle=90,
-                                counterclock=False, wedgeprops=dict(width=0.3))
-
-            for text_obj in texts: # Renamed variable to avoid conflict
-                text_obj.set_visible(False)
-
-            circle_outer = plt.Circle((0, 0), 0.85, fill=False, linewidth=8,
-                                    color=COLOR_SUCCESS_CHART, alpha=0.3)
-            ax.add_patch(circle_outer)
-
-            theta1 = 90
-            theta2 = 90 - (health_percentage * 360 / 100)
-
-            angles = np.linspace(np.radians(theta1), np.radians(theta2), 100)
-            x_outer = 0.85 * np.cos(angles)
-            y_outer = 0.85 * np.sin(angles)
-
-            ax.plot(x_outer, y_outer, linewidth=8, color=COLOR_SUCCESS_CHART, solid_capstyle='round')
-
-            ax.text(0, 0.1, f'{int(health_percentage)}%',
+            # Centered text for overall score and title
+            # Use the initial overall_score (after float conversion and None check) for the center text.
+            display_score_in_center = int(round(overall_score)) # Round to nearest int for display
+            ax.text(0, 0.1, f'{display_score_in_center}%',
                     horizontalalignment='center', verticalalignment='center',
-                    fontsize=36, fontweight='bold', color='#005A9C', fontfamily=FONT_FAMILY_CHART)
-
-            ax.text(0, -0.15, 'Site Health',
+                    fontsize=36, fontweight='bold', color=PDF_CONFIG['colors'].get('primary', '#005A9C'),
+                    fontfamily=FONT_FAMILY_CHART)
+            ax.text(0, -0.15, 'Salute del Sito',
                     horizontalalignment='center', verticalalignment='center',
-                    fontsize=14, color='#222222', fontfamily=FONT_FAMILY_CHART)
+                    fontsize=14, color=PDF_CONFIG['colors'].get('text_primary', '#222222'),
+                    fontfamily=FONT_FAMILY_CHART)
 
-            legend_elements = [
-                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_SUCCESS_CHART,
-                        markersize=12, label=f'Sano ({health_percentage:.0f}%)'),
-                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=COLOR_ERROR_CHART,
-                        markersize=12, label=f'Problemi ({problem_percentage:.0f}%)')
-            ]
+            if legend_elements:
+                fig.legend(handles=legend_elements, loc='lower center', ncol=len(legend_elements),
+                           fontsize=9, frameon=False, bbox_to_anchor=(0.5, 0.08))
 
-            ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.3, 1),
-                    fontsize=10, frameon=False)
-
-            ax.set_xlim(-1.2, 1.2)
-            ax.set_ylim(-1.2, 1.2)
             ax.set_aspect('equal')
             ax.axis('off')
 
-            plt.tight_layout()
+            # Adjust subplot to make space for legend
+            plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.20 if legend_elements else 0.05) # Keep bottom padding for legend
 
             img_buffer = io.BytesIO()
-            plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight',
-                        facecolor='white', edgecolor='none')
+            plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
             img_buffer.seek(0)
 
-            # RLImage is already imported as Image, so just use Image
-            chart_image = RLImage(img_buffer, width=2.5*inch, height=2.5*inch) # Removed keepAspectRatio
+            chart_image = RLImage(img_buffer, width=3*inch, height=3*inch)
 
-            plt.close(fig) # Assicura che la figura sia chiusa
+            plt.close(fig)
             return chart_image
         except Exception as e:
-            # Consider logging this error instead of printing directly if a logging system is in place
             print(f"ERROR in _get_site_health_chart_flowable: Errore durante la generazione del grafico Site Health: {e}")
             import traceback
-            traceback.print_exc() # This is useful for debugging but might be removed for production
+            traceback.print_exc()
             return None
 
 
     def _add_issues_table_section(self):
         flowables = []
-        flowables.append(Paragraph("Tabella Riepilogativa dei Problemi (Nuova Struttura)", self.styles['SectionHeading']))
+        flowables.append(Paragraph("Tabelle Dati Dettagliate", self.styles['SectionHeading'])) # Updated Title
         flowables.append(Spacer(1, 0.2 * inch))
 
+        # Define severity styles locally for colored text
+        # Base style for severity text - ensure SmallText is defined in _setup_custom_styles
+        base_severity_style = self.styles.get('SmallText', ParagraphStyle(name='DefaultSmallText', fontSize=8, fontName='Helvetica'))
+
+        # It's better to define these colors once if they are used in multiple places, e.g., in __init__ or _setup_custom_styles
+        # For now, defining them here for clarity of this method's scope.
+        color_error = HexColor(PDF_CONFIG['colors'].get('error', '#DC3545'))
+        color_warning = HexColor(PDF_CONFIG['colors'].get('warning', '#FFC107'))
+        color_notice = HexColor(PDF_CONFIG['colors'].get('info', '#17A2B8')) # Matches COLOR_BLUE_BOX
+
+        severity_error_style = ParagraphStyle(name='SeverityError', parent=base_severity_style, textColor=color_error, alignment=TA_LEFT)
+        severity_warning_style = ParagraphStyle(name='SeverityWarning', parent=base_severity_style, textColor=color_warning, alignment=TA_LEFT)
+        severity_notice_style = ParagraphStyle(name='SeverityNotice', parent=base_severity_style, textColor=color_notice, alignment=TA_LEFT)
+
+        severity_text_map = {'ERROR': "ERRORE", 'WARNING': "AVVERTIMENTO", 'NOTICE': "AVVISO"}
+        severity_style_map = {
+            'ERROR': severity_error_style,
+            'WARNING': severity_warning_style,
+            'NOTICE': severity_notice_style
+        }
+
         categorized_issues = self.analysis_results.get('categorized_issues', {})
-        all_issues_flat = []
-        for category_name, severities in categorized_issues.items():
-            for severity_level, issues_list in severities.items():
+        all_issues_for_table = []
+
+        for category_key, severities in categorized_issues.items():
+            # Assuming category_key is something like CATEGORY_OCM or CATEGORY_SEO_AUDIT which are already Italian
+            categoria_text = category_key
+            for severity_level_key, issues_list in severities.items():
+                gravita_text_key = severity_level_key # 'ERROR', 'WARNING', 'NOTICE'
+
                 for issue in issues_list:
-                    all_issues_flat.append({
-                        'category_main': category_name,
-                        'severity': severity_level,
-                        'label': issue.get('label', 'N/A'),
-                        'url_details': f"{issue.get('url', self.domain)} - {issue.get('details', 'N/A')}"
+                    tipo_problema_text = issue.get('label', 'N/D')
+
+                    url_text = issue.get('url', '')
+                    details_text = issue.get('details', 'N/D')
+                    url_dettagli_text = ""
+                    if url_text and url_text != self.domain: # Only show URL if it's specific and not the main domain
+                        url_dettagli_text += f"URL: {url_text}\n"
+                    url_dettagli_text += f"Dettagli: {details_text}"
+                    url_dettagli_text = url_dettagli_text.strip()
+                    if not url_dettagli_text: # Fallback if both were empty
+                        url_dettagli_text = "N/D"
+
+
+                    valore_misurato_text = issue.get('value', issue.get('measured_value', 'N/D'))
+
+                    all_issues_for_table.append({
+                        'categoria': categoria_text,
+                        'gravita_key': gravita_text_key,
+                        'tipo_problema': tipo_problema_text,
+                        'url_dettagli': url_dettagli_text,
+                        'valore_misurato': valore_misurato_text
                     })
 
-        if not all_issues_flat:
-            flowables.append(Paragraph("Nessun problema specifico identificato nella nuova struttura.", self.styles['BodyText']))
+        if not all_issues_for_table:
+            flowables.append(Paragraph("Nessun problema specifico identificato.", self.styles['BodyText']))
             flowables.append(Spacer(1, 0.5 * inch))
             self.story.append(KeepTogether(flowables))
             return
 
-        header_row = [
-            Paragraph("Categoria", self.styles['SmallText']),
-            Paragraph("Gravità", self.styles['SmallText']),
-            Paragraph("Problema", self.styles['SmallText']),
-            Paragraph("URL/Dettagli", self.styles['SmallText'])
-        ]
-        data = [header_row]
+        header_style = self.styles.get('SmallText', ParagraphStyle(name='TableHeaderSmall', fontSize=9, fontName=PDF_CONFIG['font_family_bold'], alignment=TA_CENTER))
+        header_row_text = ["Categoria", "Gravità", "Tipo di Problema", "URL/Dettagli Specifici", "Valore Misurato"]
+        header_row = [Paragraph(text, header_style) for text in header_row_text]
 
-        for issue_item in all_issues_flat:
-            data.append([
-                Paragraph(issue_item['category_main'], self.styles['SmallText']),
-                Paragraph(issue_item['severity'], self.styles['SmallText']),
-                Paragraph(issue_item['label'], self.styles['SmallText']),
-                Paragraph(issue_item['url_details'], self.styles['SmallText'])
-            ])
+        data_rows = [header_row]
 
-        # Calculate available width for full-width table
+        # Use a smaller font for data cells to fit more content
+        data_cell_style = self.styles.get('SmallText', ParagraphStyle(name='DataCellSmall', fontSize=8, fontName=PDF_CONFIG['font_family'], alignment=TA_LEFT))
+        data_cell_style_center = ParagraphStyle(name='DataCellSmallCenter', parent=data_cell_style, alignment=TA_CENTER)
+
+
+        for item in all_issues_for_table:
+            row = [
+                Paragraph(item['categoria'], data_cell_style),
+                Paragraph(severity_text_map.get(item['gravita_key'], item['gravita_key']), severity_style_map.get(item['gravita_key'], data_cell_style)),
+                Paragraph(item['tipo_problema'], data_cell_style),
+                Paragraph(item['url_dettagli'].replace("\n", "<br/>"), data_cell_style), # Allow line breaks
+                Paragraph(str(item['valore_misurato']), data_cell_style_center) # Ensure value is string
+            ]
+            data_rows.append(row)
+
         available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        # Define relative column widths
-        col_widths = [available_width * 0.25, available_width * 0.15, available_width * 0.30, available_width * 0.30]
-        table = Table(data, colWidths=col_widths)
-
-        # Define colors and fonts from PDF_CONFIG for clarity and consistency
-        color_header_bg = PDF_CONFIG['colors'].get('primary_dark', '#004080')
-        # color_header_text = PDF_CONFIG['colors'].get('white', '#FFFFFF') # Will be changed to black
-        color_row_odd = PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5')
-        color_row_even = PDF_CONFIG['colors'].get('white', '#FFFFFF')
-        color_border = PDF_CONFIG['colors'].get('border_light', '#B0C4DE')
-        font_header = PDF_CONFIG['font_family_bold']
-        font_body = PDF_CONFIG['font_family']
-        fontsize_header = PDF_CONFIG['font_sizes'].get('small', 9)
-        fontsize_body = PDF_CONFIG['font_sizes'].get('extra_small', 8) # Matches SmallText style
-        color_text_body = PDF_CONFIG['colors'].get('text_primary', '#222222')
-
-        HEADER_OUTLINE_COLOR = colors.HexColor('#FFCC00') # Amber/Yellow
-        NEW_HEADER_BG_COLOR = colors.HexColor('#f5f5f5')
-
-        issues_table_style_cmds = [
-            # Header Row Styling
-            ('BACKGROUND', (0, 0), (-1, 0), NEW_HEADER_BG_COLOR), # New light gray background
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Ensure black text
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (-1, 0), font_header),
-            ('FONTSIZE', (0, 0), (-1, 0), fontsize_header),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('TOPPADDING', (0, 0), (-1, 0), 8),
-            # Individual BOX for each header cell for #FFCC00 outline
-            ('BOX', (0,0), (0,0), 1.5, HEADER_OUTLINE_COLOR),
-            ('BOX', (1,0), (1,0), 1.5, HEADER_OUTLINE_COLOR),
-            ('BOX', (2,0), (2,0), 1.5, HEADER_OUTLINE_COLOR),
-
-            # Data Rows Styling
-            ('FONTNAME', (0, 1), (-1, -1), font_body),
-            ('FONTSIZE', (0, 1), (-1, -1), fontsize_body),
-            ('TEXTCOLOR', (0, 1), (-1, -1), HexColor(color_text_body)),
-            ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 1), (-1, -1), 'TOP'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('BACKGROUND', (0, 1), (-1, -1), HexColor(color_row_even)), # Default for even data rows
+        col_widths = [
+            available_width * 0.15, # Categoria
+            available_width * 0.15, # Gravità
+            available_width * 0.25, # Tipo di Problema
+            available_width * 0.35, # URL/Dettagli Specifici
+            available_width * 0.10  # Valore Misurato
         ]
 
-        issues_table_style = TableStyle(issues_table_style_cmds)
+        table = Table(data_rows, colWidths=col_widths)
 
-        # Apply odd row striping
-        for i in range(1, len(data)): # Start from 1 to skip header
-            if i % 2 != 0:
-                issues_table_style.add('BACKGROUND', (0, i), (-1, i), HexColor(color_row_odd))
+        # Styling
+        new_header_bg_color = colors.HexColor('#f5f5f5') # Light gray for header
+        color_row_odd_bg = colors.HexColor(PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5'))
+        color_row_even_bg = colors.white
+        grid_color = colors.HexColor(PDF_CONFIG['colors'].get('border_light', '#B0C4DE'))
+        text_color_body = colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#222222'))
 
-        # General table grid (applied first, header BOXes will draw over it for header cells)
-        issues_table_style.add('GRID', (0,0), (-1,-1), 0.5, HexColor(color_border))
-        # Overall table border (can be same as grid or slightly thicker)
-        issues_table_style.add('BOX', (0,0), (-1,-1), 1, HexColor(color_border))
+        table_style_cmds = [
+            ('BACKGROUND', (0,0), (-1,0), new_header_bg_color),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.black), # Header text black
+            ('ALIGN', (0,0), (-1,0), 'CENTER'),
+            ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+            ('FONTNAME', (0,0), (-1,0), PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')), # Ensure bold font for header
+            ('FONTSIZE', (0,0), (-1,0), PDF_CONFIG['font_sizes'].get('small', 9)),
+            ('BOTTOMPADDING', (0,0), (-1,0), 8),
+            ('TOPPADDING', (0,0), (-1,0), 8),
 
-        table.setStyle(issues_table_style)
+            # Data Rows General Styling
+            ('TEXTCOLOR', (0,1), (-1,-1), text_color_body),
+            ('FONTNAME', (0,1), (-1,-1), PDF_CONFIG.get('font_family', 'Helvetica')),
+            ('FONTSIZE', (0,1), (-1,-1), PDF_CONFIG['font_sizes'].get('extra_small', 8)),
+            ('VALIGN', (0,1), (-1,-1), 'TOP'), # Top align content in cells
+
+            # Specific Column Alignments for data rows
+            ('ALIGN', (0,1), (0,-1), 'LEFT'),   # Categoria
+            ('ALIGN', (1,1), (1,-1), 'LEFT'),   # Gravità (text part, style handles color)
+            ('ALIGN', (2,1), (2,-1), 'LEFT'),   # Tipo di Problema
+            ('ALIGN', (3,1), (3,-1), 'LEFT'),   # URL/Dettagli
+            ('ALIGN', (4,1), (4,-1), 'CENTER'), # Valore Misurato
+
+            # Padding for all data cells
+            ('LEFTPADDING', (0,1), (-1,-1), 5),
+            ('RIGHTPADDING', (0,1), (-1,-1), 5),
+            ('TOPPADDING', (0,1), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,1), (-1,-1), 5),
+
+            # Grid and Borders
+            ('GRID', (0,0), (-1,-1), 0.5, grid_color),
+            ('BOX', (0,0), (-1,-1), 1, grid_color), # Thicker border for the whole table
+        ]
+
+        # Row striping
+        for i in range(1, len(data_rows)): # Start from 1 to skip header
+            bg_color = color_row_even_bg if i % 2 == 0 else color_row_odd_bg
+            table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), bg_color))
+
+        table.setStyle(TableStyle(table_style_cmds))
+
         flowables.append(table)
         flowables.append(Spacer(1, 0.5 * inch))
         self.story.append(KeepTogether(flowables))
@@ -586,10 +790,13 @@ class PDFGenerator:
             return None
 
         # Define header and data rows
-        header_row = [Paragraph("Parametro", self.styles['BodyText']), Paragraph("Valore", self.styles['BodyText'])]
+        header_row = [Paragraph("Parametro", self.styles['BodyText']), Paragraph("Valore", self.styles['BodyText'])] # Already Italian
         table_data = [header_row] # Add header row first
 
-        for name, value in items:
+        for name, value in items: # 'name' could be English here if items come from English keys
+            # If 'name' is from a fixed set of English keys, it should be translated here.
+            # Example: name_translated = {'Metric Name': 'Nome Parametro'}.get(name, name)
+            # For now, assuming 'name' is already being passed in Italian or is a general term.
             table_data.append([
                 Paragraph(name, self.styles['BodyText']),
                 Paragraph(str(value), self.styles['BodyText'])
@@ -651,9 +858,9 @@ class PDFGenerator:
         return KeepTogether(flowables)
 
     def _add_detailed_analysis_section(self):
-        self.story.append(Paragraph("Analisi Dettagliata per Categoria", self.styles['SectionHeading']))
+        self.story.append(Paragraph("Analisi Dettagliata per Categoria", self.styles['SectionHeading'])) # Already Italian
         self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Analisi dettagliata per categoria in fase di revisione.", self.styles['BodyText']))
+        self.story.append(Paragraph("Analisi dettagliata per categoria in fase di revisione.", self.styles['BodyText'])) # Already Italian
         self.story.append(Spacer(1, 0.5 * inch))
         # Comment out the previous content generation for this section
         # detailed_issues = self.analysis_results.get('detailed_issues', {})
@@ -661,9 +868,9 @@ class PDFGenerator:
         # self.story.append(PageBreak())
 
     def _add_recommendations_section(self):
-        self.story.append(Paragraph("Raccomandazioni", self.styles['SectionHeading']))
+        self.story.append(Paragraph("Raccomandazioni", self.styles['SectionHeading'])) # Already Italian
         self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Sezione raccomandazioni in fase di revisione. Le raccomandazioni principali sono ora integrate nel Riassunto Esecutivo.", self.styles['BodyText']))
+        self.story.append(Paragraph("Sezione raccomandazioni in fase di revisione. Le raccomandazioni principali sono ora integrate nel Riassunto Esecutivo.", self.styles['BodyText'])) # Already Italian
         self.story.append(Spacer(1, 0.5 * inch))
         # Comment out the previous content generation for this section
         # recommendations = self.analysis_results['recommendations']
@@ -673,24 +880,86 @@ class PDFGenerator:
     def _add_issue_details_appendix(self):
         # This method might be removed or significantly changed later.
         # For now, let's add a placeholder similar to other sections.
-        self.story.append(Paragraph("Descrizione Dettagliata dei Problemi Comuni", self.styles['SectionHeading']))
+        self.story.append(Paragraph("Descrizione Dettagliata dei Problemi Comuni", self.styles['SectionHeading'])) # Already Italian
         self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Sezione appendice descrizioni problemi in fase di revisione.", self.styles['BodyText']))
+        self.story.append(Paragraph("Sezione appendice descrizioni problemi in fase di revisione.", self.styles['BodyText'])) # Already Italian
         self.story.append(Spacer(1, 0.5 * inch))
 
-    def _get_evaluation_text(self, score):
+    def _add_core_web_vitals_section(self):
+        self.story.append(PageBreak())
+        self.story.append(Paragraph("Metriche Core Web Vitals", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+        # These values should ideally come from self.analysis_results
+        # Using placeholders as per the plan for now.
+        self.story.append(Paragraph("Interaction to Next Paint (INP): <b>600ms</b>", self.styles['BodyText']))
+        self.story.append(Paragraph("Cumulative Layout Shift (CLS): <b>0.3</b>", self.styles['BodyText']))
+        self.story.append(Paragraph("Tempo di risposta server: <b>809ms</b>", self.styles['BodyText']))
+        self.story.append(Spacer(1, 0.3 * inch))
+
+    def _add_seo_content_analysis_section(self):
+        self.story.append(PageBreak())
+        self.story.append(Paragraph("Analisi Contenuti SEO", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        self.story.append(Paragraph("Analisi Thin Content", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Elenco delle pagine con contenuto scarso o duplicato.", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        self.story.append(Paragraph("Analisi Meta Description", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Pagine con meta description mancanti, troppo corte o troppo lunghe.", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        self.story.append(Paragraph("Stato Implementazione Schema Markup", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Verifica degli schema markup implementati (es. FAQ, Video, LocalBusiness, Product) e potenziali errori.", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.3 * inch))
+
+    def _add_security_performance_section(self):
+        self.story.append(PageBreak())
+        self.story.append(Paragraph("Sicurezza e Performance Aggiuntive", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        self.story.append(Paragraph("Stato Content Security Policy (CSP)", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Verifica dell'implementazione e della corretta configurazione della Content Security Policy.", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        self.story.append(Paragraph("Configurazione X-Frame-Options", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Controllo delle intestazioni X-Frame-Options per la protezione contro il clickjacking.", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        self.story.append(Paragraph("Analisi Segnali E-E-A-T", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Valutazione preliminare dei segnali di Esperienza, Competenza, Autorevolezza e Affidabilità (E-E-A-T).", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.3 * inch))
+
+    def _add_priority_recommendations_section(self):
+        self.story.append(PageBreak())
+        self.story.append(Paragraph("Raccomandazioni Prioritarie", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        self.story.append(Paragraph("Priorità Alta", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Elenco delle azioni ad alta priorità da intraprendere immediatamente. Timeline stimata: [timeline].", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        self.story.append(Paragraph("Priorità Media", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Azioni a media priorità. Timeline stimata: [timeline].", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        self.story.append(Paragraph("Priorità Bassa", self.styles['SectionSubHeadingStyle']))
+        self.story.append(Paragraph("Azioni a bassa priorità. Timeline stimata: [timeline].", self.styles['BodyText'])) # Placeholder
+        self.story.append(Spacer(1, 0.3 * inch))
+
+    def _get_evaluation_text(self, score): # Already Italian
         if score >= 90: return "Eccellente"
         elif score >= 70: return "Buono"
         elif score >= 50: return "Da Migliorare"
         else: return "Critico"
     
-    def _get_status_text(self, score):
+    def _get_status_text(self, score): # Already Italian
         if score >= 90: return "✓ Eccellente"
         elif score >= 70: return "⚠ Buono"
         elif score >= 50: return "⚠ Da Migliorare"
         else: return "✗ Critico"
     
-    def _get_score_color_hex(self, score):
+    def _get_score_color_hex(self, score): # No text here
         if score >= 90: return '#28A745'
         elif score >= 70: return '#005A9C'
         elif score >= 50: return '#FFC107'
@@ -702,22 +971,26 @@ class PDFGenerator:
         # categories = {'Title Tags': self.analysis_results['title_analysis']['score'], 'Meta Descriptions': self.analysis_results['meta_description_analysis']['score'], 'Immagini': self.analysis_results['images_analysis']['score'], 'Contenuto': self.analysis_results['content_analysis']['score'], 'Performance': self.analysis_results['performance_analysis']['score'], 'SSL': self.analysis_results['ssl_analysis']['score'], 'Link Interni': self.analysis_results['links_analysis']['score'], 'Aspetti Tecnici': self.analysis_results['technical_analysis']['score']}
         # Simplified list of categories for strengths, based on available analysis results keys
         # This avoids KeyError if some analyses were not run or 'score' is missing.
-        strength_candidate_categories = [
-            'title_analysis', 'meta_description_analysis', 'images_analysis',
-            'content_analysis', 'performance_analysis', 'ssl_analysis',
-            'links_analysis', 'technical_analysis'
-        ]
-        for cat_key in strength_candidate_categories:
+        strength_candidate_categories = { # Dictionary for mapping keys to Italian names
+            'title_analysis': 'Analisi Titoli',
+            'meta_description_analysis': 'Analisi Meta Description',
+            'images_analysis': 'Analisi Immagini',
+            'content_analysis': 'Analisi Contenuto',
+            'performance_analysis': 'Analisi delle Prestazioni', # Changed "Analisi Prestazioni"
+            'ssl_analysis': 'Analisi SSL',
+            'links_analysis': 'Analisi Link Interni',
+            'technical_analysis': 'Analisi Tecnica'
+        }
+        for cat_key, category_name_it in strength_candidate_categories.items(): # Iterate through dict
             category_analysis = self.analysis_results.get(cat_key)
             if category_analysis and isinstance(category_analysis, dict):
                 score = category_analysis.get('score')
-                # Use a more descriptive name for the category if available, otherwise use the key
-                category_name = cat_key.replace('_analysis', '').replace('_', ' ').capitalize()
+                # Use the Italian name from the dictionary
                 if score is not None and score >= 80: # Assuming 80 is the threshold for a strength
-                    strengths.append(f"{category_name} ottimizzato correttamente (punteggio: {score}/100)")
+                    strengths.append(f"{category_name_it} ottimizzato correttamente (punteggio: {score}/100)") # Already Italian format
 
         weaknesses_structured = {
-            'errors': {},
+            'errors': {}, # These keys 'errors', 'warnings', 'notices' are internal; display names are handled by severity_display_name
             'warnings': {},
             'notices': {}
         }
@@ -741,7 +1014,7 @@ class PDFGenerator:
                 if not isinstance(issue, dict): # Ensure each issue is a dict
                     continue
 
-                specific_type_key = issue.get('type', 'unknown_type')
+                specific_type_key = issue.get('type', 'tipo_sconosciuto') # 'unknown_type' to 'tipo_sconosciuto'
                 # Attempt to get label from PDF_ISSUE_TYPE_LABELS; if missing, create a fallback.
                 # This part is tricky because PDF_ISSUE_TYPE_LABELS was removed/restructured.
                 # The new structure AUDIT_CHECKS_CONFIG maps a technical key to a dict with 'label'.
@@ -749,28 +1022,28 @@ class PDFGenerator:
                 # For now, let's try to find a label from AUDIT_CHECKS_CONFIG if possible, or fallback.
 
                 # Fallback label generation if direct mapping is not found
-                user_friendly_label = specific_type_key.replace('_', ' ').capitalize()
-                found_in_new_config = False
-                for check_key_new, check_data_new in AUDIT_CHECKS_CONFIG.items():
-                    # This is an imperfect match, as old 'type' might not be new 'key'
-                    if specific_type_key == check_key_new or specific_type_key == check_data_new.get('label','').lower().replace(' ','_'):
-                        user_friendly_label = check_data_new.get('label', user_friendly_label)
-                        found_in_new_config = True
-                        break
-                if not found_in_new_config and 'PDF_ISSUE_TYPE_LABELS' in globals(): # Check if old global exists (it shouldn't)
-                     user_friendly_label = PDF_ISSUE_TYPE_LABELS.get(specific_type_key, user_friendly_label)
+                # Assuming issue.get('label') is the primary source now, or AUDIT_CHECKS_CONFIG provides it.
+                user_friendly_label = issue.get('label') # Prioritize given label
+                if not user_friendly_label:
+                    # Fallback to a generic label if specific_type_key is also not very descriptive
+                    user_friendly_label = specific_type_key.replace('_', ' ').capitalize()
+                    check_config = AUDIT_CHECKS_CONFIG.get(issue.get('key')) # issue['key'] is the new standard
+                    if check_config:
+                        user_friendly_label = check_config.get('label', user_friendly_label)
+                    elif 'PDF_ISSUE_TYPE_LABELS' in globals(): # Should not exist, but as a safeguard
+                         user_friendly_label = PDF_ISSUE_TYPE_LABELS.get(specific_type_key, user_friendly_label)
 
 
-                details_text = issue.get('image', issue.get('details', issue.get('issue', 'N/A')))
+                details_text = issue.get('image', issue.get('details', issue.get('issue', 'N/D'))) # N/A to N/D
                 issue_entry = {
-                    'url': issue.get('url', 'N/A'),
+                    'url': issue.get('url', 'N/D'), # N/A to N/D
                     'details': details_text,
                     'type': specific_type_key
                 }
 
                 if user_friendly_label not in weaknesses_structured[macro_key]:
                     weaknesses_structured[macro_key][user_friendly_label] = {
-                        'type': specific_type_key,
+                        'type': specific_type_key, # This is an internal key, not directly displayed
                         'instances': []
                     }
                 weaknesses_structured[macro_key][user_friendly_label]['instances'].append(issue_entry)
@@ -800,9 +1073,18 @@ class PDFGenerator:
             self._add_score_overview()
             self.story.append(PageBreak())
             self._add_issues_table_section()
+
+            # New sections added here
+            self._add_core_web_vitals_section()
+            self._add_seo_content_analysis_section()
+            self._add_security_performance_section()
+            self._add_priority_recommendations_section()
+
+            # Existing sections that were marked "in fase di revisione"
             self._add_detailed_analysis_section()
-            self._add_recommendations_section()
-            # self.story.append(PageBreak()) # Page break might be desired before recommendations, or not, depending on flow. Let's keep it for now.
+            self._add_recommendations_section() # This was the old general recommendations
+
+            # self.story.append(PageBreak()) # Optional Page break
             # Removed sections:
             # self._add_issue_details_appendix()
             # self._add_appendix()
