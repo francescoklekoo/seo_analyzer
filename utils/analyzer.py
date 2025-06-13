@@ -395,24 +395,32 @@ class SEOAnalyzer:
 
             elif category == CATEGORY_SEO_AUDIT: # Most SEO Audit checks are site-wide/strategic
                 is_site_wide_check = True
-                # Generic placeholder for all SEO Audit checks for now
-                if True: # This will make all SEO Audit checks appear as "not implemented"
-                    details_for_issue = f"Logica per check SEO Audit '{check_config['label']}' non implementata (placeholder)."
+                # Logic for specific, auto-detectable SEO audit checks can be added here.
+                # For now, most are qualitative and will rely on 'always_add_placeholder_if_no_issue'
+                # or manual review based on their presence in the report.
+                # Example:
+                # if check_key == 'seo_specific_detectable_issue_key':
+                #     if some_condition_from_site_wide_data:
+                #         details_for_issue = "Specific SEO audit issue detected."
+                # No generic "not implemented" placeholder for all SEO checks anymore.
+                pass # Allow falling through to the 'always_add_placeholder_if_no_issue' logic
 
 
             if is_site_wide_check:
                 site_wide_checks_processed.add(check_key)
-                if details_for_issue: # If an issue was actually detected by the (placeholder or real) logic
+                if details_for_issue: # If an issue was actually detected by specific logic above
                      self.analysis_results['categorized_issues'][category][severity].append({
-                        'key': check_key, 'label': check_config['label'], 'url': self.domain,
+                        'key': check_key, 'label': check_config['label'], 'url': self.domain, # Site-wide issues point to the domain
                         'details': details_for_issue,
-                        'description_key': check_config['description_key'], 'severity': severity
+                        'description_key': check_config['description_key'],
+                        'severity': severity
                     })
-                elif check_config.get('always_add_placeholder_if_no_issue', False): # For checks that should show even if "passing"
+                elif check_config.get('always_add_placeholder_if_no_issue', False):
                      self.analysis_results['categorized_issues'][category][severity].append({
                         'key': check_key, 'label': check_config['label'], 'url': self.domain,
-                        'details': "Nessun problema rilevato per questo check site-wide (placeholder).",
-                        'description_key': check_config['description_key'], 'severity': severity # Should be 'passed' or similar
+                        'details': f"Verifica manuale richiesta per '{check_config['label']}'. Consultare la descrizione per dettagli su cosa controllare.", # Updated placeholder
+                        'description_key': check_config['description_key'],
+                        'severity': severity
                     })
 
 
