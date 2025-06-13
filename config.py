@@ -22,12 +22,12 @@ CATEGORY_SEO_AUDIT = "SITE SEO AUDIT"
 
 # Configurazioni di crawling
 CRAWL_CONFIG = {
-    'max_pages': 50,  # Numero massimo di pagine da analizzare
-    'timeout': 30,    # Timeout per le richieste HTTP
-    'delay': 1,       # Delay tra le richieste (in secondi)
-    'max_depth': 3,   # Profondità massima di crawling
-    'follow_external': False,  # Se seguire link esterni
-    'respect_robots': True,    # Se rispettare robots.txt
+    'max_pages': 50,
+    'timeout': 30,
+    'delay': 1,
+    'max_depth': 3,
+    'follow_external': False,
+    'respect_robots': True,
     'restrict_to_start_path': False
 }
 
@@ -59,12 +59,9 @@ PERFORMANCE_CONFIG = {
 
 # Soglie Core Web Vitals
 CORE_WEB_VITALS_THRESHOLDS = {
-    'LCP_ERROR': 4.0,
-    'LCP_GOOD': 2.5,
-    'INP_ERROR': 500,
-    'INP_GOOD': 200,
-    'CLS_ERROR': 0.25,
-    'CLS_GOOD': 0.1
+    'LCP_ERROR': 4.0, 'LCP_GOOD': 2.5,
+    'INP_ERROR': 500, 'INP_GOOD': 200,
+    'CLS_ERROR': 0.25, 'CLS_GOOD': 0.1
 }
 
 SERVER_RESPONSE_TIME_ERROR = 600
@@ -72,9 +69,7 @@ TOUCH_ELEMENT_MIN_SIZE_PX = 44
 
 # Configurazioni GUI
 GUI_CONFIG = {
-    'window_title': 'SEO Analyzer Pro',
-    'window_size': '1200x800',
-    'theme': 'dark',
+    'window_title': 'SEO Analyzer Pro', 'window_size': '1200x800', 'theme': 'dark',
     'colors': {
         'primary': '#1f538d', 'primary_light': '#6699CC', 'primary_dark': '#14375e',
         'secondary': '#6699CC', 'secondary_dark': '#4477AA',
@@ -110,7 +105,6 @@ E_E_A_T_SIGNALS_CONFIG = {}
 YMYL_CONTENT_CONFIG = {}
 
 AUDIT_CHECKS_CONFIG = {
-    # OCM Checks from previous state
     'ocm_lcp_gt_4_error': {
         'label': 'Largest Contentful Paint (LCP) > 4.0 secondi - Tempo di caricamento contenuto principale troppo lento',
         'category': CATEGORY_OCM, 'severity': 'ERROR', 'description_key': 'desc_ocm_lcp_gt_4_error'
@@ -339,8 +333,6 @@ AUDIT_CHECKS_CONFIG = {
         'label': "Google Search Console non collegato al progetto - Google Search Console deve essere collegata al progetto",
         'category': CATEGORY_OCM, 'severity': 'WARNING', 'description_key': 'desc_ocm_gsc_non_collegato_progetto_warning'
     },
-
-    # SEO Audit Checks (merged from previous step + new additions)
     'seo_audit_eeat_signals_error': {
         'label': "Verificare presenza segnali E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_audit_eeat_signals_error', 'always_add_placeholder_if_no_issue': True
@@ -417,13 +409,13 @@ AUDIT_CHECKS_CONFIG = {
         'label': "Verificare presenza penalizzazioni manuali (Google Search Console)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_audit_gsc_manual_penalties_error', 'always_add_placeholder_if_no_issue': True
     },
-    'seo_audit_images_missing_alt_error': { # Updated/Ensured
+    'seo_audit_images_missing_alt_error': {
         'label': "Immagini senza attributo ALT",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR',
         'description_key': 'desc_seo_audit_images_missing_alt_error',
         'always_add_placeholder_if_no_issue': False
     },
-    'seo_audit_images_missing_title_error': { # New
+    'seo_audit_images_missing_title_error': {
         'label': "Immagini senza attributo Title",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR',
         'description_key': 'desc_seo_audit_images_missing_title_error',
@@ -549,26 +541,6 @@ AUDIT_CHECKS_CONFIG = {
         'label': "Implementare guest post strategy (per contenuti e/o backlink)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_implement_guest_post_strategy_content_notice', 'always_add_placeholder_if_no_issue': True
     },
-    'seo_audit_gmb_optimize_notice': {
-        'label': "Ottimizzare Google My Business",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_optimize_notice', 'always_add_placeholder_if_no_issue': True
-    },
-    'seo_audit_gmb_upload_images_notice': {
-        'label': "Caricare immagini attività GMB",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_upload_images_notice', 'always_add_placeholder_if_no_issue': True
-    },
-    'seo_audit_gmb_update_hours_notice': {
-        'label': "Aggiornare orari apertura GMB",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_update_hours_notice', 'always_add_placeholder_if_no_issue': True
-    },
-    'seo_audit_gmb_manage_reviews_notice': {
-        'label': "Migliorare gestione recensioni GMB",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_manage_reviews_notice', 'always_add_placeholder_if_no_issue': True
-    },
-    'seo_audit_gmb_geolocalized_keywords_notice': {
-        'label': "Inserire keyword geolocalizzate (in GMB e sito)",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_geolocalized_keywords_notice', 'always_add_placeholder_if_no_issue': True
-    },
     'seo_audit_backlink_anchor_text_optimize_notice': {
         'label': "Ottimizzare anchor text backlink (naturali e variati)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_backlink_anchor_text_optimize_notice', 'always_add_placeholder_if_no_issue': True
@@ -600,19 +572,10 @@ AUDIT_CHECKS_CONFIG = {
     'seo_audit_images_lazy_loading_offscreen_notice': {
         'label': "Implementare lazy loading su immagini fuori schermo",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_images_lazy_loading_offscreen_notice'
-    },
-    'seo_audit_gmb_upload_activity_images_notice': {
-        'label': "Caricare immagini dell'attività su Google My Business",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_upload_activity_images_notice', 'always_add_placeholder_if_no_issue': True
-    },
-    'seo_audit_gmb_optimize_images_local_search_notice': {
-        'label': "Ottimizzare immagini per ricerche locali (geotag, nomi file descrittivi)",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_gmb_optimize_images_local_search_notice', 'always_add_placeholder_if_no_issue': True
     }
 }
 
 PDF_ISSUE_DESCRIPTIONS = {
-    # OCM Descriptions from previous state
     'desc_ocm_lcp_gt_4_error': "Largest Contentful Paint (LCP) > 4.0 secondi. Indica che il tempo di caricamento del contenuto principale della pagina è troppo lento. Ottimizzare le immagini, il codice JavaScript/CSS critico e le risorse del server per migliorare questa metrica fondamentale per l'esperienza utente e il ranking.",
     'desc_ocm_inp_gt_500ms_error': "Interaction to Next Paint (INP) > 500ms. Segnala che il tempo di risposta della pagina alle interazioni dell'utente (click, tap, input da tastiera) è eccessivo. Ottimizzare il codice JavaScript, ridurre il carico del thread principale e migliorare l'efficienza degli script per garantire una reattività rapida.",
     'desc_ocm_cls_gt_025_error': "Cumulative Layout Shift (CLS) > 0.25. Indica la presenza di spostamenti visivi imprevisti degli elementi della pagina durante il caricamento, peggiorando l'esperienza utente. Specificare le dimensioni per immagini e video, gestire dinamicamente i contenuti e precaricare i font per migliorare la stabilità visuale.",
@@ -670,8 +633,6 @@ PDF_ISSUE_DESCRIPTIONS = {
     'desc_ocm_ga_non_collegato_progetto_warning': "Google Analytics non collegato al progetto. Assicurare corretto collegamento.",
     'desc_ocm_gsc_non_configurato_warning': "Google Search Console non configurato. Verificare proprietà sito in GSC.",
     'desc_ocm_gsc_non_collegato_progetto_warning': "Google Search Console non collegato al progetto. Collegare GSC.",
-
-    # SEO Audit Descriptions (merged from previous step + new additions)
     'desc_seo_audit_eeat_signals_error': "Mancanza o carenza di segnali E-E-A-T. Implementare: biografie autori dettagliate, fonti autorevoli, testimonianze, certificazioni, informazioni 'About Us' complete. Cruciale per YMYL.",
     'desc_seo_audit_ymyl_quality_error': "Contenuti YMYL di bassa qualità. Revisionare e migliorare i contenuti YMYL con informazioni accurate, aggiornate, supportate da esperti e fonti affidabili. Assicurare trasparenza e disclaimer.",
     'desc_seo_audit_duplicate_content_extensive_error': "Contenuti duplicati estensivi. Identificare e risolvere problemi di contenuto duplicato interno (usando canonical, noindex, o riscrivendo) ed esterno (richiedendo rimozione o canonicalizzazione).",
@@ -691,8 +652,8 @@ PDF_ISSUE_DESCRIPTIONS = {
     'desc_seo_audit_anchor_text_over_optimization_error': "Anchor text over-optimization. Diversificare gli anchor text dei link interni ed esterni, utilizzando un mix di keyword esatte, parziali, brand e generiche.",
     'desc_seo_audit_gsc_coverage_issues_error': "Problemi di copertura dell'indice in GSC. Analizzare e risolvere gli errori di copertura segnalati in Google Search Console (es. errori server, URL bloccati, noindex errati).",
     'desc_seo_audit_gsc_manual_penalties_error': "Penalizzazioni manuali in GSC. Controllare la sezione 'Azioni manuali' in Google Search Console. Se presenti, seguire le indicazioni per risolvere il problema e inviare una richiesta di riconsiderazione.",
-    'desc_seo_audit_images_missing_alt_error': "ERRORE: Rilevate immagini senza attributo ALT. Ogni immagine significativa deve avere un ALT text descrittivo per l'accessibilità e per fornire contesto ai motori di ricerca. Correggere aggiungendo ALT appropriati.", # Updated
-    'desc_seo_audit_images_missing_title_error': "ERRORE: Rilevate immagini senza attributo Title. Sebbene meno critico dell'ALT, l'attributo Title può fornire informazioni aggiuntive all'utente al passaggio del mouse e in alcuni contesti. Valutare l'aggiunta di Title descrittivi dove opportuno.", # New
+    'desc_seo_audit_images_missing_alt_error': "ERRORE: Rilevate immagini senza attributo ALT. Ogni immagine significativa deve avere un ALT text descrittivo per l'accessibilità e per fornire contesto ai motori di ricerca. Correggere aggiungendo ALT appropriati.",
+    'desc_seo_audit_images_missing_title_error': "ERRORE: Rilevate immagini senza attributo Title. Sebbene meno critico dell'ALT, l'attributo Title può fornire informazioni aggiuntive all'utente al passaggio del mouse e in alcuni contesti. Valutare l'aggiunta di Title descrittivi dove opportuno.",
     'desc_seo_audit_images_decorative_alt_error': "ALT mancante su immagini decorative. Per immagini puramente decorative, usare un attributo ALT vuoto (alt=\"\") per indicare agli screen reader di ignorarle.",
     'desc_seo_audit_images_not_optimized_web_error': "Immagini non ottimizzate per web. Comprimere le immagini, usare formati moderni (WebP), e specificare dimensioni per ridurre il peso delle pagine e migliorare i tempi di caricamento.",
     'desc_seo_audit_images_lazy_loading_error': "Mancanza di lazy loading per immagini. Implementare il lazy loading per le immagini sotto la piega (below the fold) per velocizzare il caricamento iniziale della pagina.",
@@ -723,11 +684,6 @@ PDF_ISSUE_DESCRIPTIONS = {
     'desc_seo_audit_use_editorial_assistant_notice': "Mancato uso di assistente editoriale. Utilizzare strumenti per migliorare grammatica, stile, leggibilità e originalità dei testi.",
     'desc_seo_audit_develop_content_strategy_editorial_plan_notice': "Strategia contenuti e piano editoriale assenti. Sviluppare una strategia di content marketing documentata e un piano editoriale per guidare la produzione di contenuti.",
     'desc_seo_audit_implement_guest_post_strategy_content_notice': "Guest post strategy (contenuti) non implementata. Considerare il guest posting su siti autorevoli per aumentare visibilità e autorevolezza (attenzione alla qualità).",
-    'desc_seo_audit_gmb_optimize_notice': "Google My Business non ottimizzato. Completare e ottimizzare ogni sezione del profilo GMB (informazioni, categorie, servizi, post, Q&A, foto).",
-    'desc_seo_audit_gmb_upload_images_notice': "Poche immagini su GMB. Caricare regolarmente foto di alta qualità dell'attività, prodotti, team su Google My Business.",
-    'desc_seo_audit_gmb_update_hours_notice': "Orari GMB non aggiornati. Mantenere sempre aggiornati gli orari di apertura su GMB, inclusi festività ed eventi speciali.",
-    'desc_seo_audit_gmb_manage_reviews_notice': "Gestione recensioni GMB carente. Rispondere a tutte le recensioni (positive e negative) in modo professionale e tempestivo. Incoraggiare recensioni autentiche.",
-    'desc_seo_audit_gmb_geolocalized_keywords_notice': "Keyword geolocalizzate non inserite. Integrare keyword specifiche per la località nel profilo GMB e nei contenuti del sito, se rilevante.",
     'desc_seo_audit_backlink_anchor_text_optimize_notice': "Anchor text backlink poco ottimizzati. Per i backlink in ingresso (ove possibile influenzarli), puntare a una varietà di anchor text naturali e pertinenti.",
     'desc_seo_audit_identify_websites_link_building_notice': "Mancata identificazione siti per link building. Ricercare attivamente siti web autorevoli e pertinenti per opportunità di link building.",
     'desc_seo_audit_analyze_backlink_profile_quality_notice': "Analisi qualità profilo backlink superficiale. Valutare regolarmente l'autorevolezza, la pertinenza e la naturalezza dei siti che linkano al proprio.",
@@ -735,9 +691,7 @@ PDF_ISSUE_DESCRIPTIONS = {
     'desc_seo_audit_verify_brand_mentions_citations_notice': "Mancata verifica menzioni e citazioni brand. Monitorare le menzioni del brand online e, ove possibile e appropriato, richiedere che diventino link.",
     'desc_seo_audit_images_alt_description_notice': "Attributo ALT non sufficientemente descrittivo. L'ALT text deve descrivere l'immagine per chi non può vederla, non essere solo un elenco di keyword.",
     'desc_seo_audit_images_optimize_performance_notice': "Ottimizzazione immagini per performance migliorabile. Oltre alla compressione, considerare formati come WebP, SVG per icone, e responsive images.",
-    'desc_seo_audit_images_lazy_loading_offscreen_notice': "Lazy loading non implementato per tutte le immagini offscreen. Assicurarsi che tutte le immagini non immediatamente visibili siano caricate in modo differito.",
-    'desc_seo_audit_gmb_upload_activity_images_notice': "Caricare immagini dell'attività su GMB. Simile a 'Poche immagini su GMB', focus specifico sulle immagini che mostrano l'attività in corso.",
-    'desc_seo_audit_gmb_optimize_images_local_search_notice': "Immagini GMB non ottimizzate per ricerca locale. Nominare i file immagine in modo descrittivo, aggiungere geotag se appropriato, e scrivere descrizioni utili."
+    'desc_seo_audit_images_lazy_loading_offscreen_notice': "Lazy loading non implementato per tutte le immagini offscreen. Assicurarsi che tutte le immagini non immediatamente visibili siano caricate in modo differito."
 }
 
 MESSAGES = {

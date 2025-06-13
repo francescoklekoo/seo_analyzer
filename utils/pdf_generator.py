@@ -619,17 +619,17 @@ class PDFGenerator:
         flowables.append(Spacer(1, 0.1 * inch))
         return KeepTogether(flowables)
 
-    def _add_detailed_analysis_section(self):
-        self.story.append(Paragraph("Analisi Dettagliata per Categoria", self.styles['SectionHeading']))
-        self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Analisi dettagliata per categoria in fase di revisione.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.5 * inch))
+    # def _add_detailed_analysis_section(self):
+    #     self.story.append(Paragraph("Analisi Dettagliata per Categoria", self.styles['SectionHeading']))
+    #     self.story.append(Spacer(1, 0.2 * inch))
+    #     self.story.append(Paragraph("Analisi dettagliata per categoria in fase di revisione.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.5 * inch))
 
-    def _add_recommendations_section(self):
-        self.story.append(Paragraph("Raccomandazioni", self.styles['SectionHeading']))
-        self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Sezione raccomandazioni in fase di revisione. Le raccomandazioni principali sono ora integrate nel Riassunto Esecutivo.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.5 * inch))
+    # def _add_recommendations_section(self):
+    #     self.story.append(Paragraph("Raccomandazioni", self.styles['SectionHeading']))
+    #     self.story.append(Spacer(1, 0.2 * inch))
+    #     self.story.append(Paragraph("Sezione raccomandazioni in fase di revisione. Le raccomandazioni principali sono ora integrate nel Riassunto Esecutivo.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.5 * inch))
 
     def _add_issue_details_appendix(self):
         self.story.append(Paragraph("Descrizione Dettagliata dei Problemi Comuni", self.styles['SectionHeading']))
@@ -646,50 +646,50 @@ class PDFGenerator:
         self.story.append(Paragraph("Tempo di risposta server: <b>809ms</b>", self.styles['BodyText']))
         self.story.append(Spacer(1, 0.3 * inch))
 
-    def _add_seo_content_analysis_section(self):
-        self.story.append(PageBreak())
-        self.story.append(Paragraph("Analisi Contenuti SEO", self.styles['SectionHeading']))
-        self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Analisi Thin Content", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Elenco delle pagine con contenuto scarso o duplicato.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        self.story.append(Paragraph("Analisi Meta Description", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Pagine con meta description mancanti, troppo corte o troppo lunghe.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        self.story.append(Paragraph("Stato Implementazione Schema Markup", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Verifica degli schema markup implementati (es. FAQ, Video, LocalBusiness, Product) e potenziali errori.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.3 * inch))
+    # def _add_seo_content_analysis_section(self):
+    #     self.story.append(PageBreak())
+    #     self.story.append(Paragraph("Analisi Contenuti SEO", self.styles['SectionHeading']))
+    #     self.story.append(Spacer(1, 0.2 * inch))
+    #     self.story.append(Paragraph("Analisi Thin Content", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Elenco delle pagine con contenuto scarso o duplicato.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.1 * inch))
+    #     self.story.append(Paragraph("Analisi Meta Description", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Pagine con meta description mancanti, troppo corte o troppo lunghe.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.1 * inch))
+    #     self.story.append(Paragraph("Stato Implementazione Schema Markup", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Verifica degli schema markup implementati (es. FAQ, Video, LocalBusiness, Product) e potenziali errori.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.3 * inch))
 
-    def _add_security_performance_section(self):
-        self.story.append(PageBreak())
-        self.story.append(Paragraph("Sicurezza e Performance Aggiuntive", self.styles['SectionHeading']))
-        self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Stato Content Security Policy (CSP)", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Verifica dell'implementazione e della corretta configurazione della Content Security Policy.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        self.story.append(Paragraph("Configurazione X-Frame-Options", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Controllo delle intestazioni X-Frame-Options per la protezione contro il clickjacking.", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        self.story.append(Paragraph("Analisi Segnali E-E-A-T", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Valutazione preliminare dei segnali di Esperienza, Competenza, Autorevolezza e Affidabilità (E-E-A-T).", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.3 * inch))
+    # def _add_security_performance_section(self):
+    #     self.story.append(PageBreak())
+    #     self.story.append(Paragraph("Sicurezza e Performance Aggiuntive", self.styles['SectionHeading']))
+    #     self.story.append(Spacer(1, 0.2 * inch))
+    #     self.story.append(Paragraph("Stato Content Security Policy (CSP)", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Verifica dell'implementazione e della corretta configurazione della Content Security Policy.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.1 * inch))
+    #     self.story.append(Paragraph("Configurazione X-Frame-Options", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Controllo delle intestazioni X-Frame-Options per la protezione contro il clickjacking.", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.1 * inch))
+    #     self.story.append(Paragraph("Analisi Segnali E-E-A-T", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Valutazione preliminare dei segnali di Esperienza, Competenza, Autorevolezza e Affidabilità (E-E-A-T).", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.3 * inch))
 
-    def _add_priority_recommendations_section(self):
-        self.story.append(PageBreak())
-        self.story.append(Paragraph("Raccomandazioni Prioritarie", self.styles['SectionHeading']))
-        self.story.append(Spacer(1, 0.2 * inch))
-        self.story.append(Paragraph("Priorità Alta", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Elenco delle azioni ad alta priorità da intraprendere immediatamente. Timeline stimata: [timeline].", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        self.story.append(Paragraph("Priorità Media", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Azioni a media priorità. Timeline stimata: [timeline].", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        self.story.append(Paragraph("Priorità Bassa", self.styles['SectionSubHeadingStyle']))
-        self.story.append(Paragraph("Azioni a bassa priorità. Timeline stimata: [timeline].", self.styles['BodyText']))
-        self.story.append(Spacer(1, 0.3 * inch))
+    # def _add_priority_recommendations_section(self):
+    #     self.story.append(PageBreak())
+    #     self.story.append(Paragraph("Raccomandazioni Prioritarie", self.styles['SectionHeading']))
+    #     self.story.append(Spacer(1, 0.2 * inch))
+    #     self.story.append(Paragraph("Priorità Alta", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Elenco delle azioni ad alta priorità da intraprendere immediatamente. Timeline stimata: [timeline].", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.1 * inch))
+    #     self.story.append(Paragraph("Priorità Media", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Azioni a media priorità. Timeline stimata: [timeline].", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.1 * inch))
+    #     self.story.append(Paragraph("Priorità Bassa", self.styles['SectionSubHeadingStyle']))
+    #     self.story.append(Paragraph("Azioni a bassa priorità. Timeline stimata: [timeline].", self.styles['BodyText']))
+    #     self.story.append(Spacer(1, 0.3 * inch))
 
     def _get_evaluation_text(self, score):
-        if score >= 90: return "Eccellente"
+        if score is None: return "N/D"
         elif score >= 70: return "Buono"
         elif score >= 50: return "Da Migliorare"
         else: return "Critico"
@@ -765,15 +765,17 @@ class PDFGenerator:
             self._add_executive_summary()
             self._add_score_overview()
             self.story.append(PageBreak())
-            self._add_issues_table_section()
-            self._add_core_web_vitals_section()
-            self._add_seo_content_analysis_section()
-            self._add_security_performance_section()
-            self._add_priority_recommendations_section()
-            self._add_detailed_analysis_section()
-            self._add_recommendations_section()
+            self._add_issues_table_section() # This will now contain the two tables if issues exist
+            self._add_core_web_vitals_section() # Ensuring this call is active
+            # self._add_seo_content_analysis_section() # Removed as per subtask
+            # self._add_security_performance_section() # Removed as per subtask
+            # self._add_priority_recommendations_section() # Removed as per subtask
+            # self._add_detailed_analysis_section() # Removed as per subtask
+            # self._add_recommendations_section() # Removed as per subtask
             self.doc.build(self.story)
             return True
         except Exception as e:
             self.logger.error(f"Errore durante la generazione del PDF: {e}", exc_info=True)
             return False
+
+[end of utils/pdf_generator.py]
