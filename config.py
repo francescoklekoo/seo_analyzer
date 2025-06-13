@@ -28,7 +28,7 @@ CRAWL_CONFIG = {
     'max_depth': 3,   # Profondità massima di crawling
     'follow_external': False,  # Se seguire link esterni
     'respect_robots': True,    # Se rispettare robots.txt
-    'restrict_to_start_path': False  # NEW: Restrict crawl to the initial path (e.g., /it/, /en/)
+    'restrict_to_start_path': False
 }
 
 # User agents per il crawling
@@ -52,102 +52,65 @@ SEO_CONFIG = {
 
 # Configurazioni per le performance
 PERFORMANCE_CONFIG = {
-    'max_response_time': 3.0,  # secondi
-    'min_speed_score': 70,     # punteggio minimo PageSpeed
-    'compression_threshold': 0.8,  # soglia di compressione
+    'max_response_time': 3.0,
+    'min_speed_score': 70,
+    'compression_threshold': 0.8,
 }
 
 # Soglie Core Web Vitals
 CORE_WEB_VITALS_THRESHOLDS = {
-    'LCP_ERROR': 4.0,  # secondi
-    'LCP_GOOD': 2.5,   # secondi
-    'INP_ERROR': 500,  # millisecondi
-    'INP_GOOD': 200,   # millisecondi
+    'LCP_ERROR': 4.0,
+    'LCP_GOOD': 2.5,
+    'INP_ERROR': 500,
+    'INP_GOOD': 200,
     'CLS_ERROR': 0.25,
     'CLS_GOOD': 0.1
 }
 
-SERVER_RESPONSE_TIME_ERROR = 600  # millisecondi
+SERVER_RESPONSE_TIME_ERROR = 600
+TOUCH_ELEMENT_MIN_SIZE_PX = 44
 
-TOUCH_ELEMENT_MIN_SIZE_PX = 44 # Dimensione minima elementi touch in px
-
-# Configurazioni GUI (Aggiornato con colori aggiuntivi)
+# Configurazioni GUI
 GUI_CONFIG = {
     'window_title': 'SEO Analyzer Pro',
     'window_size': '1200x800',
-    'theme': 'dark', # 'System', 'Dark', 'Light'
+    'theme': 'dark',
     'colors': {
-        'primary': '#1f538d',
-        'primary_light': '#6699CC',
-        'primary_dark': '#14375e',
-        'secondary': '#6699CC',
-        'secondary_dark': '#4477AA',
-        'success': '#2fa827',
-        'success_dark': '#22881f',
-        'warning': '#ff9500',
-        'warning_dark': '#cc7700',
-        'error': '#d32f2f',
-        'error_dark': '#a32222',
-        'text': '#ffffff',
-        'background': '#212121',
-        'dark_gray': '#666666',
-        'white': '#FFFFFF',
-        'light_gray': '#EEEEEE',
-        'border': '#CCCCCC',
-        'disabled': '#AAAAAA'
+        'primary': '#1f538d', 'primary_light': '#6699CC', 'primary_dark': '#14375e',
+        'secondary': '#6699CC', 'secondary_dark': '#4477AA',
+        'success': '#2fa827', 'success_dark': '#22881f',
+        'warning': '#ff9500', 'warning_dark': '#cc7700',
+        'error': '#d32f2f', 'error_dark': '#a32222',
+        'text': '#ffffff', 'background': '#212121', 'dark_gray': '#666666',
+        'white': '#FFFFFF', 'light_gray': '#EEEEEE', 'border': '#CCCCCC', 'disabled': '#AAAAAA'
     },
     'fonts': {
-        'title': ('Helvetica', 24, 'bold'),
-        'heading': ('Helvetica', 16, 'bold'),
-        'body': ('Helvetica', 12),
-        'small': ('Helvetica', 10),
+        'title': ('Helvetica', 24, 'bold'), 'heading': ('Helvetica', 16, 'bold'),
+        'body': ('Helvetica', 12), 'small': ('Helvetica', 10),
     }
 }
 
 # Configurazioni per il report PDF
 PDF_CONFIG = {
     'page_size': 'A4',
-    'margin': {
-        'left': 1.0,
-        'right': 1.0,
-        'top': 1.0,
-        'bottom': 1.0
-    },
-    'font_family': 'Helvetica',
-    'font_family_bold': 'Helvetica',
-    'font_sizes': {
-        'title': 18,
-        'heading': 14,
-        'body': 10,
-        'small': 8
-    },
+    'margin': {'left': 1.0, 'right': 1.0, 'top': 1.0, 'bottom': 1.0},
+    'font_family': 'Helvetica', 'font_family_bold': 'Helvetica',
+    'font_sizes': {'title': 18, 'heading': 14, 'body': 10, 'small': 8},
     'colors': {
-        'primary': '#336699',
-        'secondary': '#6699CC',
-        'success': '#2fa827',
-        'warning': '#ff9500',
-        'error': '#d32f2f',
-        'light_gray': '#f0f0f0',
-        'dark_gray': '#333333',
-        'secondary_dark': '#556677',
-        'border': '#CCCCCC'
+        'primary': '#336699', 'secondary': '#6699CC', 'success': '#2fa827',
+        'warning': '#ff9500', 'error': '#d32f2f', 'light_gray': '#f0f0f0',
+        'dark_gray': '#333333', 'secondary_dark': '#556677', 'border': '#CCCCCC'
     }
 }
 
-# Nuova classificazione Punteggio
 NEW_SCORING_CLASSIFICATION = {
-    'ERROR': (90, 100),
-    'WARNING': (60, 89),
-    'NOTICE': (20, 59)
+    'ERROR': (90, 100), 'WARNING': (60, 89), 'NOTICE': (20, 59)
 }
-
-# Configurazioni per segnali E-E-A-T e contenuti YMYL (da definire)
 E_E_A_T_SIGNALS_CONFIG = {}
 YMYL_CONTENT_CONFIG = {}
 
-# CONFIGURAZIONE DETTAGLIATA DEI CHECK DI AUDIT
-# Existing OCM Checks (from previous file content)
-AUDIT_CHECKS_CONFIG_OCM = {
+AUDIT_CHECKS_CONFIG = {
+    # OCM Checks from previous state
     'ocm_lcp_gt_4_error': {
         'label': 'Largest Contentful Paint (LCP) > 4.0 secondi - Tempo di caricamento contenuto principale troppo lento',
         'category': CATEGORY_OCM, 'severity': 'ERROR', 'description_key': 'desc_ocm_lcp_gt_4_error'
@@ -376,180 +339,8 @@ AUDIT_CHECKS_CONFIG_OCM = {
         'label': "Google Search Console non collegato al progetto - Google Search Console deve essere collegata al progetto",
         'category': CATEGORY_OCM, 'severity': 'WARNING', 'description_key': 'desc_ocm_gsc_non_collegato_progetto_warning'
     },
-    # Existing SITE SEO AUDIT Checks (from previous file content, might be overridden by new list if keys match)
-    'seo_no_eeat_signals_error': {
-        'label': 'Assenza o carenza segnali E-E-A-T per contenuti rilevanti',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_no_eeat_signals_error'
-    },
-    'seo_low_quality_ymyl_error': {
-        'label': 'Contenuti YMYL di bassa qualità o non autorevoli',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_low_quality_ymyl_error'
-    },
-    'seo_extensive_duplicate_content_error': {
-        'label': 'Contenuti duplicati estensivi interni/esterni',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_extensive_duplicate_content_error'
-    },
-    'seo_keyword_stuffing_error': {
-        'label': 'Keyword stuffing evidente nel contenuto',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_keyword_stuffing_error'
-    },
-    'seo_thin_content_pages_error': {
-        'label': 'Pagine con contenuto scarso (thin content)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_thin_content_pages_error'
-    },
-    'seo_page_titles_not_optimized_error': {
-        'label': 'Titoli pagina non ottimizzati (non unici, non descrittivi)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_page_titles_not_optimized_error'
-    },
-    'seo_meta_descriptions_not_optimized_error': {
-        'label': 'Meta descriptions non ottimizzate (non uniche, non persuasive)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_meta_descriptions_not_optimized_error'
-    },
-    'seo_no_clear_seo_strategy_error': {
-        'label': 'Mancanza di una chiara strategia SEO (obiettivi, target, keyword)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_no_clear_seo_strategy_error'
-    },
-    'seo_outdated_content_error': {
-        'label': 'Contenuti obsoleti o non aggiornati su temi importanti',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_outdated_content_error'
-    },
-    'seo_keyword_cannibalization_error': {
-        'label': 'Cannibalizzazione delle keyword tra più pagine',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_keyword_cannibalization_error'
-    },
-    'seo_seasonal_keywords_missed_error': {
-        'label': 'Mancata ottimizzazione per keyword stagionali rilevanti',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_seasonal_keywords_missed_error'
-    },
-    'seo_toxic_backlinks_error': {
-        'label': 'Presenza significativa di backlink tossici o spam',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_toxic_backlinks_error'
-    },
-    'seo_poor_internal_linking_strategy_error': {
-        'label': 'Strategia di internal linking carente o inefficace',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_poor_internal_linking_strategy_error'
-    },
-    'seo_anchor_text_not_optimized_error': {
-        'label': 'Anchor text dei link interni non ottimizzati',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_anchor_text_not_optimized_error'
-    },
-    'seo_gsc_critical_errors_unresolved_error': {
-        'label': 'Errori critici non risolti in Google Search Console',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_gsc_critical_errors_unresolved_error'
-    },
-    'seo_title_meta_missing_duplicated_error': {
-        'label': 'Titoli o Meta Description mancanti o duplicati',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_title_meta_missing_duplicated_error'
-    },
-    'seo_title_too_long_error': {
-        'label': f"Titolo pagina troppo lungo (> {SEO_CONFIG['title_max_length']} caratteri)",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_title_too_long_error'
-    },
-    'seo_meta_desc_bad_length_error': {
-        'label': f"Meta Description con lunghezza non ottimale (< {SEO_CONFIG['meta_description_min_length']} o > {SEO_CONFIG['meta_description_max_length']} caratteri)",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_meta_desc_bad_length_error'
-    },
-    'seo_inconsistent_header_structure_warning': {
-        'label': 'Struttura degli header (H1-H6) inconsistente o non gerarchica',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'WARNING', 'description_key': 'desc_seo_inconsistent_header_structure_warning'
-    },
-    'seo_author_bylines_missing_warning': {
-        'label': 'Author bylines (autori) mancanti per contenuti informativi/YMYL',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'WARNING', 'description_key': 'desc_seo_author_bylines_missing_warning'
-    },
-    'seo_social_sharing_notice': {
-        'label': 'Contenuti non facilmente condivisibili sui social media',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_social_sharing_notice'
-    },
-    'seo_gmb_not_optimized_notice': {
-        'label': 'Profilo Google My Business non ottimizzato o incompleto',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_gmb_not_optimized_notice'
-    },
-    'seo_faq_schema_missing_notice': {
-        'label': 'FAQ Schema mancante per pagine Q&A',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_faq_schema_missing_notice'
-    },
-    'seo_howto_schema_missing_notice': {
-        'label': 'HowTo Schema mancante per guide/tutorial',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_howto_schema_missing_notice'
-    },
-    'seo_video_schema_missing_notice': {
-        'label': 'Video Schema mancante per contenuti video',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_video_schema_missing_notice'
-    },
-    'seo_event_schema_missing_notice': {
-        'label': 'Event Schema mancante per eventi',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_event_schema_missing_notice'
-    },
-    'seo_localbusiness_schema_missing_notice': {
-        'label': 'LocalBusiness Schema mancante (se attività locale)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_localbusiness_schema_missing_notice'
-    },
-    'seo_product_schema_missing_notice': {
-        'label': 'Product Schema mancante per schede prodotto e-commerce',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_product_schema_missing_notice'
-    },
-    'seo_review_schema_missing_notice': {
-        'label': 'Review Schema mancante per recensioni',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_review_schema_missing_notice'
-    },
-    'seo_internal_search_ux_poor_notice': {
-        'label': 'Esperienza utente della ricerca interna sito scarsa',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_internal_search_ux_poor_notice'
-    },
-    'seo_blog_category_tags_suboptimal_notice': {
-        'label': 'Categorie e tag del blog non ottimizzati',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_blog_category_tags_suboptimal_notice'
-    },
-    'seo_pagination_seo_issues_notice': {
-        'label': 'Paginazione con potenziali problemi SEO (es. no rel prev/next)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_pagination_seo_issues_notice'
-    },
-    'seo_faceted_navigation_seo_issues_notice': {
-        'label': 'Navigazione a faccette con potenziali problemi SEO',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_faceted_navigation_seo_issues_notice'
-    },
-    'seo_website_accessibility_basic_review_notice': {
-        'label': 'Revisione base accessibilità sito (es. contrasto, navigazione tastiera)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_website_accessibility_basic_review_notice'
-    },
-    'seo_privacy_policy_cookie_notice_review_notice': {
-        'label': 'Revisione Privacy Policy e Cookie Notice per completezza/trasparenza',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_privacy_policy_cookie_notice_review_notice'
-    },
-    'seo_terms_conditions_review_notice': {
-        'label': 'Revisione Termini e Condizioni per chiarezza',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_terms_conditions_review_notice'
-    },
-    'seo_user_engagement_signals_low_notice': {
-        'label': 'Segnali di user engagement bassi (alta bounce rate, basso tempo su pagina)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_user_engagement_signals_low_notice'
-    },
-    'seo_conversion_rate_tracking_notice': {
-        'label': 'Tracciamento conversioni (goal) non impostato o incompleto',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_conversion_rate_tracking_notice'
-    },
-    'seo_regular_seo_audits_missing_notice': {
-        'label': 'Mancanza di audit SEO regolari pianificati',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_regular_seo_audits_missing_notice'
-    },
-    'seo_seo_kpi_monitoring_absent_notice': {
-        'label': 'Mancato monitoraggio KPI SEO fondamentali',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_seo_kpi_monitoring_absent_notice'
-    },
-    'seo_core_web_vitals_monitoring_notice': {
-        'label': 'Monitoraggio Core Web Vitals non attivo (es. via GSC)',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_core_web_vitals_monitoring_notice'
-    },
-    'seo_backlink_profile_growth_slow_notice': {
-        'label': 'Crescita profilo backlink lenta o stagnante',
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_backlink_profile_growth_slow_notice'
-    }
-}
 
-# New SEO Audit specific checks (provided in the prompt)
-AUDIT_CHECKS_CONFIG_SEO_NEW = {
-    # SEO Audit - ERRORI
+    # SEO Audit Checks (merged from previous step + new additions)
     'seo_audit_eeat_signals_error': {
         'label': "Verificare presenza segnali E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_audit_eeat_signals_error', 'always_add_placeholder_if_no_issue': True
@@ -626,9 +417,17 @@ AUDIT_CHECKS_CONFIG_SEO_NEW = {
         'label': "Verificare presenza penalizzazioni manuali (Google Search Console)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_audit_gsc_manual_penalties_error', 'always_add_placeholder_if_no_issue': True
     },
-    'seo_audit_images_missing_alt_error': {
-        'label': "Verificare immagini senza attributo ALT",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_audit_images_missing_alt_error'
+    'seo_audit_images_missing_alt_error': { # Updated/Ensured
+        'label': "Immagini senza attributo ALT",
+        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR',
+        'description_key': 'desc_seo_audit_images_missing_alt_error',
+        'always_add_placeholder_if_no_issue': False
+    },
+    'seo_audit_images_missing_title_error': { # New
+        'label': "Immagini senza attributo Title",
+        'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR',
+        'description_key': 'desc_seo_audit_images_missing_title_error',
+        'always_add_placeholder_if_no_issue': False
     },
     'seo_audit_images_decorative_alt_error': {
         'label': "Aggiungere ALT mancante su immagini decorative (se necessario, o specificare alt vuoto)",
@@ -642,7 +441,6 @@ AUDIT_CHECKS_CONFIG_SEO_NEW = {
         'label': "Implementare lazy loading immagini",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'ERROR', 'description_key': 'desc_seo_audit_images_lazy_loading_error'
     },
-    # SEO Audit - AVVERTIMENTI
     'seo_audit_header_structure_warning': {
         'label': "Verificare header structure consistente",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'WARNING', 'description_key': 'desc_seo_audit_header_structure_warning', 'always_add_placeholder_if_no_issue': True
@@ -667,7 +465,7 @@ AUDIT_CHECKS_CONFIG_SEO_NEW = {
         'label': "Ridurre uso eccessivo parole chiave (non stuffing, ma sovra-ottimizzazione)",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'WARNING', 'description_key': 'desc_seo_audit_excessive_keyword_usage_warning', 'always_add_placeholder_if_no_issue': True
     },
-    'seo_audit_fix_broken_internal_links_warning': { #Potentially duplicate key, ensure description is clear
+    'seo_audit_fix_broken_internal_links_warning': {
         'label': "Sistemare link interni rotti",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'WARNING', 'description_key': 'desc_seo_audit_fix_broken_internal_links_warning'
     },
@@ -699,7 +497,6 @@ AUDIT_CHECKS_CONFIG_SEO_NEW = {
         'label': "Potenziare competitor analysis",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'WARNING', 'description_key': 'desc_seo_audit_competitor_analysis_enhance_warning', 'always_add_placeholder_if_no_issue': True
     },
-    # SEO Audit - AVVISI
     'seo_audit_content_shareable_notice': {
         'label': "Rendere contenuti facilmente condivisibili",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_content_shareable_notice', 'always_add_placeholder_if_no_issue': True
@@ -748,9 +545,9 @@ AUDIT_CHECKS_CONFIG_SEO_NEW = {
         'label': "Sviluppare strategia contenuti con piano editoriale",
         'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_develop_content_strategy_editorial_plan_notice', 'always_add_placeholder_if_no_issue': True
     },
-    'seo_audit_implement_guest_post_strategy_notice': { # Renamed key slightly from prompt
+    'seo_audit_implement_guest_post_strategy_notice': {
         'label': "Implementare guest post strategy (per contenuti e/o backlink)",
-        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_implement_guest_post_strategy_content_notice', 'always_add_placeholder_if_no_issue': True # Prompt had desc_seo_audit_implement_guest_post_strategy_content_notice
+        'category': CATEGORY_SEO_AUDIT, 'severity': 'NOTICE', 'description_key': 'desc_seo_audit_implement_guest_post_strategy_content_notice', 'always_add_placeholder_if_no_issue': True
     },
     'seo_audit_gmb_optimize_notice': {
         'label': "Ottimizzare Google My Business",
@@ -814,19 +611,8 @@ AUDIT_CHECKS_CONFIG_SEO_NEW = {
     }
 }
 
-# Merge OCM and new SEO Audit checks
-# The AUDIT_CHECKS_CONFIG_OCM contains the original OCM checks + some SEO checks from a previous iteration that might be overwritten or complemented
-# The AUDIT_CHECKS_CONFIG_SEO_NEW contains the definitive list of SEO_AUDIT checks for this update
-# Start with the OCM (which might include some older SEO checks)
-MERGED_AUDIT_CHECKS = AUDIT_CHECKS_CONFIG_OCM.copy()
-# Update/Add the new SEO Audit checks. If a key exists in both, the one from _SEO_NEW will prevail.
-MERGED_AUDIT_CHECKS.update(AUDIT_CHECKS_CONFIG_SEO_NEW)
-# Assign the final merged dictionary to the main config variable
-AUDIT_CHECKS_CONFIG = MERGED_AUDIT_CHECKS
-
-
-# DESCRIZIONI E CONSIGLI PER IL PDF
-PDF_ISSUE_DESCRIPTIONS_OCM = {
+PDF_ISSUE_DESCRIPTIONS = {
+    # OCM Descriptions from previous state
     'desc_ocm_lcp_gt_4_error': "Largest Contentful Paint (LCP) > 4.0 secondi. Indica che il tempo di caricamento del contenuto principale della pagina è troppo lento. Ottimizzare le immagini, il codice JavaScript/CSS critico e le risorse del server per migliorare questa metrica fondamentale per l'esperienza utente e il ranking.",
     'desc_ocm_inp_gt_500ms_error': "Interaction to Next Paint (INP) > 500ms. Segnala che il tempo di risposta della pagina alle interazioni dell'utente (click, tap, input da tastiera) è eccessivo. Ottimizzare il codice JavaScript, ridurre il carico del thread principale e migliorare l'efficienza degli script per garantire una reattività rapida.",
     'desc_ocm_cls_gt_025_error': "Cumulative Layout Shift (CLS) > 0.25. Indica la presenza di spostamenti visivi imprevisti degli elementi della pagina durante il caricamento, peggiorando l'esperienza utente. Specificare le dimensioni per immagini e video, gestire dinamicamente i contenuti e precaricare i font per migliorare la stabilità visuale.",
@@ -851,87 +637,41 @@ PDF_ISSUE_DESCRIPTIONS_OCM = {
     'desc_ocm_third_party_scripts_non_ottimizzati_notice': "Third-party scripts non ottimizzati. Script di terze parti (es. analytics, social media, advertising) potrebbero impattare negativamente le performance. Valutare la necessità di ogni script, caricarli in modo asincrono o differito, e ove possibile, ospitarli localmente o utilizzare versioni più leggere.",
     'desc_ocm_dns_lookup_optimization_notice': "DNS lookup optimization. Le risoluzioni DNS per domini di terze parti possono aggiungere latenza. Utilizzare tecniche come `dns-prefetch` o `preconnect` per risolvere in anticipo i DNS di risorse critiche esterne e ridurre i tempi di attesa.",
     'desc_ocm_verifiche_url_parlanti_notice': "Verifiche URL parlanti. Assicurarsi che gli URL siano 'parlanti', ovvero descrittivi, facili da leggere per gli utenti e che includano keyword rilevanti. Evitare URL con parametri eccessivi o stringhe incomprensibili.",
-    'desc_ocm_utilizzo_direttive_noindex_notice': "Utilizzo direttive noindex. Verificare che le direttive `noindex` (meta tag o X-Robots-Tag) siano usate correttamente per impedire l'indicizzazione di pagine non desiderate (es. contenuti duplicati, pagine di servizio). Un uso errato può escludere pagine importanti.",
-    'desc_ocm_utilizzo_attributo_alt_immagini_notice': "Utilizzo attributo ALT immagini. Assicurarsi che tutte le immagini significative abbiano un attributo ALT descrittivo. Questo migliora l'accessibilità per utenti con screen reader e fornisce contesto ai motori di ricerca.",
-    'desc_ocm_dati_strutturati_implementazione_notice': "Dati strutturati implementazione. Considerare l'utilizzo di dati strutturati (Schema.org) per descrivere meglio i vari tipi di contenuto nelle pagine web (articoli, prodotti, eventi, etc.). Questo può aiutare a ottenere rich snippet nei risultati di ricerca e migliorare la comprensione da parte dei motori.",
-    'desc_ocm_risorse_render_blocking_critiche_error': "Risorse render-blocking critiche. Identifica elementi (solitamente script o fogli di stile) che bloccano il rendering iniziale della pagina, peggiorando i tempi di caricamento percepiti. Differire il caricamento di JS/CSS non critico, minificare le risorse e utilizzare il caricamento asincrono.",
-    'desc_ocm_assenza_compressione_sito_web_error': "Assenza compressione sito web. Il sito non utilizza sistemi di compressione (come Gzip o Brotli) per le risorse testuali (HTML, CSS, JS). Abilitare la compressione a livello server per ridurre le dimensioni dei file trasferiti e migliorare la velocità di caricamento.",
-    'desc_ocm_mancata_implementazione_http2_error': "Mancata implementazione HTTP/2. Il sito non utilizza il protocollo HTTP/2 (o HTTP/3), che offre miglioramenti prestazionali rispetto a HTTP/1.1. Verificare con il provider hosting la disponibilità di HTTP/2 e abilitarlo per beneficiare di funzionalità come multiplexing e server push.",
-    'desc_ocm_sistema_cache_inadeguato_error': "Sistema di cache inadeguato. Le policy di caching del browser per le risorse statiche non sono ottimali o sono assenti. Configurare correttamente gli header HTTP di caching (es. Cache-Control, Expires) per istruire il browser a memorizzare le risorse localmente, riducendo i tempi di caricamento per visite successive.",
-    'desc_ocm_minificazione_css_js_mancante_error': "Minificazione CSS e JS mancante. I file CSS e JavaScript non sono minificati, aumentando inutilmente le loro dimensioni. Implementare processi di minificazione per rimuovere caratteri non necessari (spazi, commenti) dal codice e ridurre i tempi di download.",
-    'desc_ocm_immagini_non_ottimizzate_web_error': "Immagini non ottimizzate per web. Segnala che le immagini sul sito non sono adeguatamente ottimizzate (es. dimensioni eccessive, formati non moderni come WebP). Comprimere le immagini, scegliere formati appropriati e utilizzare dimensioni responsive per ridurre il peso delle pagine e migliorare la velocità di caricamento.",
-    'desc_ocm_assenza_lazy_loading_immagini_error': "Assenza lazy loading immagini. Indica che non è implementato il caricamento differito (lazy loading) per le immagini 'offscreen' (non visibili senza scroll). Implementare il lazy loading per le immagini per migliorare il tempo di caricamento iniziale della pagina e risparmiare banda.",
-    'desc_ocm_contenuto_non_accessibile_mobile_error': "Contenuto non accessibile su mobile. Indica che alcuni contenuti importanti del sito non sono facilmente accessibili o visibili su dispositivi mobili. Assicurare che tutti i contenuti siano responsive e che l'esperienza utente sia ottimale su mobile, in linea con il mobile-first indexing di Google.",
-    'desc_ocm_assenza_tag_viewport_error': "Assenza tag viewport. Manca il meta tag viewport nella `<head>` delle pagine, essenziale per un responsive design corretto. Inserire `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">` per garantire che la pagina si adatti correttamente alle dimensioni dello schermo dei dispositivi mobili.",
-    'desc_ocm_touch_elements_lt_44px_error': "Touch elements < 44px. Alcuni elementi interattivi (pulsanti, link) sono troppo piccoli o ravvicinati, rendendo difficile l'interazione su dispositivi touch. Aumentare le dimensioni degli elementi touch ad almeno 44x44 pixel e garantire una spaziatura adeguata.",
-    'desc_ocm_sito_non_mobile_friendly_error': "Sito non mobile-friendly. Il design generale del sito non è ottimizzato per i dispositivi mobili, offrendo un'esperienza utente scadente. Adottare un design responsive o adattivo, testare la mobile-friendliness con gli strumenti di Google e migliorare la navigazione e la leggibilità su schermi piccoli.",
-    'desc_ocm_unnecessary_redirects_warning': "Reindirizzamenti inutili. Identificati reindirizzamenti non strettamente necessari. Eliminare questi passaggi superflui per migliorare la velocità e l'efficienza del crawling.",
-    'desc_ocm_url_structure_suboptimal_warning': "URL structure non ottimizzata. Creare URL chiare, concise e \"parlanti\", che includano keyword rilevanti e riflettano la gerarchia del sito.",
-    'desc_ocm_hsts_missing_warning': "Assenza HSTS. Implementare HSTS per forzare il browser a comunicare con il server esclusivamente tramite HTTPS.",
-    'desc_ocm_csp_missing_warning': "Content Security Policy mancante. Definire una CSP robusta per controllare le risorse che la pagina può caricare, mitigando rischi come XSS.",
-    'desc_ocm_x_frame_options_missing_warning': "Assenza X-Frame-Options. Implementare X-Frame-Options (es. DENY o SAMEORIGIN) per impedire che il sito venga incorporato in frame non autorizzati.",
-    'desc_ocm_404_errors_excessive_warning': "404 errors eccessivi. Verificare l'origine di questi link rotti e correggerli o implementare redirect 301. Ottimizzare la pagina 404 personalizzata.",
-    'desc_ocm_broken_internal_links_warning': "Broken links interni. Correggere questi link per migliorare l'esperienza utente e la distribuzione del link equity.",
-    'desc_ocm_internal_linking_insufficient_warning': "Internal linking insufficiente. Migliorare la strategia di internal linking per distribuire meglio il 'link juice' e aiutare la scoperta dei contenuti.",
-    'desc_ocm_gestione_url_meta_inadeguata_warning': "Gestione URL e Meta inadeguata. Implementare una gestione programmatica e centralizzata di URL e meta tag, specialmente per siti di grandi dimensioni.",
-    'desc_ocm_sistema_controllo_uptime_mancante_warning': "Sistema controllo uptime mancante. Implementare un servizio di monitoraggio uptime per ricevere notifiche immediate in caso di downtime.",
-    'desc_ocm_meta_tags_inconsistent_warning': "Inconsistenze nella strategia dei meta tag. Standardizzare formati e lunghezze per migliorare la cura dei contenuti.",
-    'desc_ocm_url_strategy_inconsistent_warning': "Incoerenze nella strategia degli URL. Uniformare l'uso di trailing slash, maiuscole/minuscole per evitare confusione e duplicazioni.",
-    'desc_ocm_hreflang_errors_warning': "Errori non critici nell'implementazione di hreflang. Correggere codici lingua/regione non validi e assicurare return tag corretti per il targeting internazionale.",
-    'desc_ocm_website_uptime_low_warning': "Un uptime storicamente basso del sito. Indagare le cause e migliorare l'affidabilità dell'hosting/server.",
-    'desc_ocm_ga_gsc_not_configured_warning': "Google Analytics o Google Search Console non configurati/collegati. Configurare e collegare questi strumenti per monitorare performance e problemi.",
-    'desc_ocm_ga_non_configurato_sito_warning': "Google Analytics non configurato sul sito. Implementare il tracciamento GA su tutte le pagine.",
-    'desc_ocm_ga_non_collegato_progetto_warning': "Google Analytics non collegato al progetto. Assicurare il corretto collegamento per un flusso di dati completo.",
-    'desc_ocm_gsc_non_configurato_warning': "Google Search Console non configurato. Verificare la proprietà del sito in GSC.",
-    'desc_ocm_gsc_non_collegato_progetto_warning': "Google Search Console non collegato al progetto. Collegare GSC per integrare dati sulla salute SEO.",
-    # Existing SEO Audit descriptions from previous file content (might be overridden by new list if keys match)
-    'desc_seo_no_eeat_signals_error': "Assenza o carenza di segnali E-E-A-T. Cruciale per YMYL. Implementare biografie autori, fonti, testimonianze.",
-    'desc_seo_low_quality_ymyl_error': "Contenuti YMYL di bassa qualità. Revisionare con informazioni accurate, aggiornate, da esperti.",
-    'desc_seo_extensive_duplicate_content_error': "Contenuti duplicati estensivi. Risolvere con canonical, noindex, o riscrittura.",
-    'desc_seo_keyword_stuffing_error': "Keyword stuffing evidente. Riscrivere il contenuto in modo naturale.",
-    'desc_seo_thin_content_pages_error': "Pagine con contenuto scarso. Arricchire, consolidare, o reindirizzare/rimuovere.",
-    'desc_seo_page_titles_not_optimized_error': "Titoli pagina non ottimizzati. Rendere unici, descrittivi, pertinenti.",
-    'desc_seo_meta_descriptions_not_optimized_error': "Meta description non ottimizzate. Rendere uniche, persuasive, pertinenti.",
-    'desc_seo_no_clear_seo_strategy_error': "Mancanza di una chiara strategia SEO. Sviluppare strategia basata su obiettivi, target, keyword.",
-    'desc_seo_outdated_content_error': "Contenuti obsoleti. Aggiornare regolarmente i contenuti importanti.",
-    'desc_seo_keyword_cannibalization_error': "Cannibalizzazione keyword. Consolidare contenuti o differenziare focus keyword.",
-    'desc_seo_seasonal_keywords_missed_error': "Mancata ottimizzazione keyword stagionali. Identificare e pianificare contenuti stagionali.",
-    'desc_seo_toxic_backlinks_error': "Presenza di backlink tossici. Analizzare e inviare file di disavow.",
-    'desc_seo_poor_internal_linking_strategy_error': "Strategia internal linking carente. Migliorare per distribuire PageRank e aiutare navigazione.",
-    'desc_seo_anchor_text_not_optimized_error': "Anchor text non ottimizzati. Diversificare usando keyword esatte, parziali, brand, generiche.",
-    'desc_seo_gsc_critical_errors_unresolved_error': "Errori critici GSC non risolti. Analizzare e risolvere errori di copertura, usabilità, etc.",
-    'desc_seo_title_meta_missing_duplicated_error': "Titoli o Meta Description mancanti/duplicati. Assicurare unicità e presenza.",
-    'desc_seo_title_too_long_error': f"Titoli pagina > {SEO_CONFIG['title_max_length']} caratteri. Accorciare per evitare troncamenti.",
-    'desc_seo_meta_desc_bad_length_error': f"Meta Description lunghezza non ottimale. Ottimizzare tra {SEO_CONFIG['meta_description_min_length']}-{SEO_CONFIG['meta_description_max_length']} caratteri.",
-    'desc_seo_inconsistent_header_structure_warning': "Struttura header non gerarchica. Usare H1-H6 in ordine logico.",
-    'desc_seo_author_bylines_missing_warning': "Author bylines mancanti. Aggiungere info autore per credibilità (E-E-A-T).",
-    'desc_seo_social_sharing_notice': "Contenuti non facilmente condivisibili. Aggiungere pulsanti e meta tag social.",
-    'desc_seo_gmb_not_optimized_notice': "Profilo Google My Business non ottimizzato. Completare e ottimizzare tutte le sezioni.",
-    'desc_seo_faq_schema_missing_notice': "FAQ Schema mancante. Implementare per pagine Q&A per rich snippet.",
-    'desc_seo_howto_schema_missing_notice': "HowTo Schema mancante. Usare per guide/tutorial per migliore rappresentazione SERP.",
-    'desc_seo_video_schema_missing_notice': "Video Schema mancante. Usare per contenuti video per fornire dettagli ai motori.",
-    'desc_seo_event_schema_missing_notice': "Event Schema mancante. Implementare per pagine eventi.",
-    'desc_seo_localbusiness_schema_missing_notice': "LocalBusiness Schema mancante. Cruciale per attività locali (indirizzo, orari).",
-    'desc_seo_product_schema_missing_notice': "Product Schema mancante. Fondamentale per e-commerce (prezzo, disponibilità).",
-    'desc_seo_review_schema_missing_notice': "Review Schema mancante. Usare per recensioni per rich snippet con valutazioni.",
-    'desc_seo_internal_search_ux_poor_notice': "Ricerca interna sito scarsa. Migliorare per UX e prevenire abbandono.",
-    'desc_seo_blog_category_tags_suboptimal_notice': "Categorie/tag blog non ottimizzati. Evitare duplicati, non pertinenti.",
-    'desc_seo_pagination_seo_issues_notice': "Paginazione con problemi SEO. Gestire con rel/next/prev, canonical.",
-    'desc_seo_faceted_navigation_seo_issues_notice': "Navigazione a faccette con problemi SEO. Gestire per evitare URL duplicati.",
-    'desc_seo_website_accessibility_basic_review_notice': "Revisione accessibilità base. Controllare contrasto, navigazione tastiera.",
-    'desc_seo_privacy_policy_cookie_notice_review_notice': "Privacy Policy/Cookie Notice da revisionare. Assicurare completezza e trasparenza.",
-    'desc_seo_terms_conditions_review_notice': "Termini e Condizioni da revisionare. Assicurare chiarezza.",
-    'desc_seo_user_engagement_signals_low_notice': "Segnali user engagement bassi. Indagare problemi UX o pertinenza contenuti.",
-    'desc_seo_conversion_rate_tracking_notice': "Tracciamento conversioni incompleto. Impostare goal per misurare efficacia.",
-    'desc_seo_regular_seo_audits_missing_notice': "Mancanza audit SEO regolari. Pianificare per identificare problemi/opportunità.",
-    'desc_seo_seo_kpi_monitoring_absent_notice': "Mancato monitoraggio KPI SEO. Tracciare traffico organico, ranking, conversioni.",
-    'desc_seo_core_web_vitals_monitoring_notice': "Monitoraggio Core Web Vitals non attivo. Cruciale per UX e ranking.",
-    'desc_seo_backlink_profile_growth_slow_notice': "Crescita profilo backlink lenta. Può limitare autorevolezza e ranking."
-}
+    'desc_ocm_utilizzo_direttive_noindex_notice': "Utilizzo direttive noindex. Verificare che le direttive `noindex` (meta tag o X-Robots-Tag) siano usate correttamente per impedire l'indicizzazione di pagine non desiderate. Un uso errato può escludere pagine importanti.",
+    'desc_ocm_utilizzo_attributo_alt_immagini_notice': "Utilizzo attributo ALT immagini. Assicurarsi che tutte le immagini significative abbiano un attributo ALT descrittivo. Questo migliora l'accessibilità e fornisce contesto ai motori di ricerca.",
+    'desc_ocm_dati_strutturati_implementazione_notice': "Dati strutturati implementazione. Considerare l'utilizzo di dati strutturati (Schema.org) per descrivere meglio i contenuti. Questo può aiutare a ottenere rich snippet.",
+    'desc_ocm_risorse_render_blocking_critiche_error': "Risorse render-blocking critiche. Differire il caricamento di JS/CSS non critico, minificare le risorse e utilizzare il caricamento asincrono.",
+    'desc_ocm_assenza_compressione_sito_web_error': "Assenza compressione sito web. Abilitare la compressione Gzip/Brotli a livello server per ridurre le dimensioni dei file.",
+    'desc_ocm_mancata_implementazione_http2_error': "Mancata implementazione HTTP/2. Verificare con il provider hosting la disponibilità di HTTP/2 e abilitarlo.",
+    'desc_ocm_sistema_cache_inadeguato_error': "Sistema di cache inadeguato. Configurare correttamente gli header HTTP di caching (Cache-Control, Expires).",
+    'desc_ocm_minificazione_css_js_mancante_error': "Minificazione CSS e JS mancante. Implementare processi di minificazione per rimuovere caratteri non necessari.",
+    'desc_ocm_immagini_non_ottimizzate_web_error': "Immagini non ottimizzate per web. Comprimere le immagini, scegliere formati appropriati e usare dimensioni responsive.",
+    'desc_ocm_assenza_lazy_loading_immagini_error': "Assenza lazy loading immagini. Implementare il lazy loading per le immagini 'offscreen'.",
+    'desc_ocm_contenuto_non_accessibile_mobile_error': "Contenuto non accessibile su mobile. Assicurare che tutti i contenuti siano responsive e l'esperienza utente ottimale su mobile.",
+    'desc_ocm_assenza_tag_viewport_error': "Assenza tag viewport. Inserire `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">`.",
+    'desc_ocm_touch_elements_lt_44px_error': "Touch elements < 44px. Aumentare le dimensioni degli elementi touch ad almeno 44x44 pixel.",
+    'desc_ocm_sito_non_mobile_friendly_error': "Sito non mobile-friendly. Adottare un design responsive o adattivo.",
+    'desc_ocm_unnecessary_redirects_warning': "Reindirizzamenti inutili. Eliminare passaggi superflui per migliorare velocità e crawl budget.",
+    'desc_ocm_url_structure_suboptimal_warning': "URL structure non ottimizzata. Creare URL chiare, concise e 'parlanti'.",
+    'desc_ocm_hsts_missing_warning': "Assenza HSTS. Implementare HSTS per forzare comunicazioni HTTPS.",
+    'desc_ocm_csp_missing_warning': "Content Security Policy mancante. Definire una CSP robusta per mitigare rischi come XSS.",
+    'desc_ocm_x_frame_options_missing_warning': "Assenza X-Frame-Options. Implementare per impedire clickjacking.",
+    'desc_ocm_404_errors_excessive_warning': "404 errors eccessivi. Correggere link rotti o implementare redirect 301. Ottimizzare pagina 404.",
+    'desc_ocm_broken_internal_links_warning': "Broken links interni. Correggere per migliorare UX e distribuzione link equity.",
+    'desc_ocm_internal_linking_insufficient_warning': "Internal linking insufficiente. Migliorare strategia per distribuire 'link juice'.",
+    'desc_ocm_gestione_url_meta_inadeguata_warning': "Gestione URL e Meta inadeguata. Implementare gestione programmatica e centralizzata.",
+    'desc_ocm_sistema_controllo_uptime_mancante_warning': "Sistema controllo uptime mancante. Implementare servizio di monitoraggio.",
+    'desc_ocm_meta_tags_inconsistent_warning': "Strategia meta tag inconsistente. Standardizzare formati e lunghezze.",
+    'desc_ocm_url_strategy_inconsistent_warning': "Strategia URL inconsistente. Uniformare uso di trailing slash, maiuscole/minuscole.",
+    'desc_ocm_hreflang_errors_warning': "Errori implementazione hreflang (non critici). Correggere codici lingua/regione e return tag.",
+    'desc_ocm_website_uptime_low_warning': "Uptime del sito web storicamente basso. Indagare cause e migliorare affidabilità.",
+    'desc_ocm_ga_gsc_not_configured_warning': "Google Analytics o GSC non configurati/collegati. Configurare e collegare.",
+    'desc_ocm_ga_non_configurato_sito_warning': "Google Analytics non configurato sul sito. Implementare tracciamento GA.",
+    'desc_ocm_ga_non_collegato_progetto_warning': "Google Analytics non collegato al progetto. Assicurare corretto collegamento.",
+    'desc_ocm_gsc_non_configurato_warning': "Google Search Console non configurato. Verificare proprietà sito in GSC.",
+    'desc_ocm_gsc_non_collegato_progetto_warning': "Google Search Console non collegato al progetto. Collegare GSC.",
 
-# New SEO Audit specific descriptions (provided in the prompt)
-PDF_ISSUE_DESCRIPTIONS_SEO_NEW = {
-    # SEO Audit - ERRORI Descriptions
+    # SEO Audit Descriptions (merged from previous step + new additions)
     'desc_seo_audit_eeat_signals_error': "Mancanza o carenza di segnali E-E-A-T. Implementare: biografie autori dettagliate, fonti autorevoli, testimonianze, certificazioni, informazioni 'About Us' complete. Cruciale per YMYL.",
     'desc_seo_audit_ymyl_quality_error': "Contenuti YMYL di bassa qualità. Revisionare e migliorare i contenuti YMYL con informazioni accurate, aggiornate, supportate da esperti e fonti affidabili. Assicurare trasparenza e disclaimer.",
     'desc_seo_audit_duplicate_content_extensive_error': "Contenuti duplicati estensivi. Identificare e risolvere problemi di contenuto duplicato interno (usando canonical, noindex, o riscrivendo) ed esterno (richiedendo rimozione o canonicalizzazione).",
@@ -951,11 +691,11 @@ PDF_ISSUE_DESCRIPTIONS_SEO_NEW = {
     'desc_seo_audit_anchor_text_over_optimization_error': "Anchor text over-optimization. Diversificare gli anchor text dei link interni ed esterni, utilizzando un mix di keyword esatte, parziali, brand e generiche.",
     'desc_seo_audit_gsc_coverage_issues_error': "Problemi di copertura dell'indice in GSC. Analizzare e risolvere gli errori di copertura segnalati in Google Search Console (es. errori server, URL bloccati, noindex errati).",
     'desc_seo_audit_gsc_manual_penalties_error': "Penalizzazioni manuali in GSC. Controllare la sezione 'Azioni manuali' in Google Search Console. Se presenti, seguire le indicazioni per risolvere il problema e inviare una richiesta di riconsiderazione.",
-    'desc_seo_audit_images_missing_alt_error': "Immagini senza attributo ALT. Aggiungere attributi ALT descrittivi a tutte le immagini significative per accessibilità e SEO.",
+    'desc_seo_audit_images_missing_alt_error': "ERRORE: Rilevate immagini senza attributo ALT. Ogni immagine significativa deve avere un ALT text descrittivo per l'accessibilità e per fornire contesto ai motori di ricerca. Correggere aggiungendo ALT appropriati.", # Updated
+    'desc_seo_audit_images_missing_title_error': "ERRORE: Rilevate immagini senza attributo Title. Sebbene meno critico dell'ALT, l'attributo Title può fornire informazioni aggiuntive all'utente al passaggio del mouse e in alcuni contesti. Valutare l'aggiunta di Title descrittivi dove opportuno.", # New
     'desc_seo_audit_images_decorative_alt_error': "ALT mancante su immagini decorative. Per immagini puramente decorative, usare un attributo ALT vuoto (alt=\"\") per indicare agli screen reader di ignorarle.",
     'desc_seo_audit_images_not_optimized_web_error': "Immagini non ottimizzate per web. Comprimere le immagini, usare formati moderni (WebP), e specificare dimensioni per ridurre il peso delle pagine e migliorare i tempi di caricamento.",
     'desc_seo_audit_images_lazy_loading_error': "Mancanza di lazy loading per immagini. Implementare il lazy loading per le immagini sotto la piega (below the fold) per velocizzare il caricamento iniziale della pagina.",
-    # SEO Audit - AVVERTIMENTI Descriptions
     'desc_seo_audit_header_structure_warning': "Header structure non consistente. Assicurare una struttura gerarchica e logica dei tag H (un solo H1 per pagina, seguito da H2, H3, ecc. in ordine).",
     'desc_seo_audit_h1_usage_warning': "Uso non corretto del tag H1. Ogni pagina dovrebbe avere un unico tag H1 che descriva accuratamente il contenuto principale.",
     'desc_seo_audit_content_length_warning': "Content length non adeguata. Valutare se la lunghezza del contenuto è appropriata per il tipo di pagina e l'intento di ricerca. Contenuti troppo scarni potrebbero non posizionarsi.",
@@ -970,7 +710,6 @@ PDF_ISSUE_DESCRIPTIONS_SEO_NEW = {
     'desc_seo_audit_increase_keyword_monitoring_warning': "Keyword monitorate insufficienti. Espandere il set di keyword monitorate per avere una visione più completa delle performance organiche.",
     'desc_seo_audit_brand_references_improve_warning': "Riferimenti brand da migliorare. Lavorare per aumentare le menzioni e citazioni positive del brand online, anche non linkate.",
     'desc_seo_audit_competitor_analysis_enhance_warning': "Competitor analysis superficiale. Approfondire l'analisi dei competitor (contenuti, keyword, backlink, strategie) per identificare opportunità e minacce.",
-    # SEO Audit - AVVISI Descriptions
     'desc_seo_audit_content_shareable_notice': "Contenuti poco condivisibili. Facilitare la condivisione dei contenuti sui social media con pulsanti ben visibili e meta tag Open Graph/Twitter Cards ottimizzati.",
     'desc_seo_audit_featured_snippets_opportunities_notice': "Mancato sfruttamento featured snippets. Identificare opportunità per ottimizzare i contenuti (risposte concise, elenchi, tabelle) per apparire nei featured snippet.",
     'desc_seo_audit_long_tail_keyword_opportunities_notice': "Poche opportunità long-tail keyword. Ricercare e targettizzare keyword long-tail specifiche per attrarre traffico qualificato e con intento di ricerca chiaro.",
@@ -983,40 +722,24 @@ PDF_ISSUE_DESCRIPTIONS_SEO_NEW = {
     'desc_seo_audit_align_content_search_intent_notice': "Contenuti non allineati al search intent. Assicurarsi che ogni pagina soddisfi l'intento di ricerca primario (informativo, navigazionale, transazionale, commerciale) per quella keyword.",
     'desc_seo_audit_use_editorial_assistant_notice': "Mancato uso di assistente editoriale. Utilizzare strumenti per migliorare grammatica, stile, leggibilità e originalità dei testi.",
     'desc_seo_audit_develop_content_strategy_editorial_plan_notice': "Strategia contenuti e piano editoriale assenti. Sviluppare una strategia di content marketing documentata e un piano editoriale per guidare la produzione di contenuti.",
-    'desc_seo_audit_implement_guest_post_strategy_content_notice': "Guest post strategy (contenuti) non implementata. Considerare il guest posting su siti autorevoli per aumentare visibilità e autorevolezza (attenzione alla qualità).", # Key matches prompt
+    'desc_seo_audit_implement_guest_post_strategy_content_notice': "Guest post strategy (contenuti) non implementata. Considerare il guest posting su siti autorevoli per aumentare visibilità e autorevolezza (attenzione alla qualità).",
     'desc_seo_audit_gmb_optimize_notice': "Google My Business non ottimizzato. Completare e ottimizzare ogni sezione del profilo GMB (informazioni, categorie, servizi, post, Q&A, foto).",
     'desc_seo_audit_gmb_upload_images_notice': "Poche immagini su GMB. Caricare regolarmente foto di alta qualità dell'attività, prodotti, team su Google My Business.",
     'desc_seo_audit_gmb_update_hours_notice': "Orari GMB non aggiornati. Mantenere sempre aggiornati gli orari di apertura su GMB, inclusi festività ed eventi speciali.",
     'desc_seo_audit_gmb_manage_reviews_notice': "Gestione recensioni GMB carente. Rispondere a tutte le recensioni (positive e negative) in modo professionale e tempestivo. Incoraggiare recensioni autentiche.",
     'desc_seo_audit_gmb_geolocalized_keywords_notice': "Keyword geolocalizzate non inserite. Integrare keyword specifiche per la località nel profilo GMB e nei contenuti del sito, se rilevante.",
     'desc_seo_audit_backlink_anchor_text_optimize_notice': "Anchor text backlink poco ottimizzati. Per i backlink in ingresso (ove possibile influenzarli), puntare a una varietà di anchor text naturali e pertinenti.",
-    'desc_seo_audit_identify_websites_link_building_notice': "Mancata identificazione siti per link building. Ricercare attivamente siti web autorevoli e pertinenti per opportunità di link building (es. guest post, broken link building).",
-    'desc_seo_audit_analyze_backlink_profile_quality_notice': "Analisi qualità profilo backlink superficiale. Valutare regolarmente l'autorevolezza (es. Domain Authority), la pertinenza e la naturalezza dei siti che linkano al proprio.",
-    'desc_seo_audit_plan_guest_post_strategy_backlinks_notice': "Piano guest post (backlink) assente. Sviluppare una strategia mirata per ottenere backlink di qualità tramite guest posting su siti tematici.",
+    'desc_seo_audit_identify_websites_link_building_notice': "Mancata identificazione siti per link building. Ricercare attivamente siti web autorevoli e pertinenti per opportunità di link building.",
+    'desc_seo_audit_analyze_backlink_profile_quality_notice': "Analisi qualità profilo backlink superficiale. Valutare regolarmente l'autorevolezza, la pertinenza e la naturalezza dei siti che linkano al proprio.",
+    'desc_seo_audit_plan_guest_post_strategy_backlinks_notice': "Piano guest post (backlink) assente. Sviluppare una strategia mirata per ottenere backlink di qualità tramite guest posting.",
     'desc_seo_audit_verify_brand_mentions_citations_notice': "Mancata verifica menzioni e citazioni brand. Monitorare le menzioni del brand online e, ove possibile e appropriato, richiedere che diventino link.",
     'desc_seo_audit_images_alt_description_notice': "Attributo ALT non sufficientemente descrittivo. L'ALT text deve descrivere l'immagine per chi non può vederla, non essere solo un elenco di keyword.",
-    'desc_seo_audit_images_optimize_performance_notice': "Ottimizzazione immagini per performance migliorabile. Oltre alla compressione, considerare formati come WebP, SVG per icone, e responsive images (`<picture>`, `srcset`).",
+    'desc_seo_audit_images_optimize_performance_notice': "Ottimizzazione immagini per performance migliorabile. Oltre alla compressione, considerare formati come WebP, SVG per icone, e responsive images.",
     'desc_seo_audit_images_lazy_loading_offscreen_notice': "Lazy loading non implementato per tutte le immagini offscreen. Assicurarsi che tutte le immagini non immediatamente visibili siano caricate in modo differito.",
     'desc_seo_audit_gmb_upload_activity_images_notice': "Caricare immagini dell'attività su GMB. Simile a 'Poche immagini su GMB', focus specifico sulle immagini che mostrano l'attività in corso.",
-    'desc_seo_audit_gmb_optimize_images_local_search_notice': "Immagini GMB non ottimizzate per ricerca locale. Nominare i file immagine in modo descrittivo, aggiungere geotag se appropriato, e scrivere descrizioni utili per le immagini su GMB."
+    'desc_seo_audit_gmb_optimize_images_local_search_notice': "Immagini GMB non ottimizzate per ricerca locale. Nominare i file immagine in modo descrittivo, aggiungere geotag se appropriato, e scrivere descrizioni utili."
 }
 
-# Merge OCM and new SEO Audit descriptions
-MERGED_PDF_DESCRIPTIONS = PDF_ISSUE_DESCRIPTIONS_OCM.copy()
-MERGED_PDF_DESCRIPTIONS.update(PDF_ISSUE_DESCRIPTIONS_SEO_NEW)
-PDF_ISSUE_DESCRIPTIONS = MERGED_PDF_DESCRIPTIONS
-
-
-# Etichette user-friendly per i tipi di problemi nel report PDF (DEPRECATED by AUDIT_CHECKS_CONFIG)
-# PDF_ISSUE_TYPE_LABELS = {}
-
-# Raccomandazioni PDF (DEPRECATED by PDF_ISSUE_DESCRIPTIONS)
-# PDF_ISSUE_RECOMMENDATIONS = {}
-
-# Fattori di penalità (Consider if NEW_SCORING_CLASSIFICATION makes this fully obsolete)
-# CATEGORY_ISSUE_PENALTY_FACTORS = { ... }
-
-# Messaggi e testi dell'applicazione
 MESSAGES = {
     'crawling_started': 'Crawling iniziato per: {}',
     'crawling_completed': 'Crawling completato. Analizzate {} pagine',
@@ -1029,24 +752,12 @@ MESSAGES = {
     'error_pdf_generation': 'Errore durante la generazione del PDF: {}',
 }
 
-# Pesi per il calcolo del punteggio SEO (Consider if NEW_SCORING_CLASSIFICATION makes this fully obsolete)
-# SEO_WEIGHTS = { ... }
-
-# Configurazioni per controlli specifici
 CHECKS_CONFIG = {
-    'check_images': True,
-    'check_links': True,
-    'check_speed': True,
-    'check_mobile': True,
-    'check_ssl': True,
-    'check_meta_tags': True,
-    'check_headings': True,
-    'check_content': True,
-    'check_sitemap': True,
-    'check_robots': True,
+    'check_images': True, 'check_links': True, 'check_speed': True, 'check_mobile': True,
+    'check_ssl': True, 'check_meta_tags': True, 'check_headings': True, 'check_content': True,
+    'check_sitemap': True, 'check_robots': True,
 }
 
-# Headers HTTP standard
 HTTP_HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Language': 'it-IT,it;q=0.8,en-US;q=0.5,en;q=0.3',
@@ -1055,7 +766,6 @@ HTTP_HEADERS = {
     'Cache-Control': 'no-cache',
 }
 
-# Estensioni file da ignorare durante il crawling
 IGNORED_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
     '.zip', '.rar', '.tar', '.gz', '.7z',
@@ -1064,17 +774,14 @@ IGNORED_EXTENSIONS = {
     '.css', '.js', '.json', '.xml'
 }
 
-# Regex per validazione URL
 URL_REGEX = r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
 
-# Configurazioni logging
 LOGGING_CONFIG = {
     'level': 'INFO',
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'file': 'seo_analyzer.log'
 }
 
-# Configurazioni Selenium
 SELENIUM_CONFIG = {
     'headless': True,
     'chrome_options': ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1920x1080"],
@@ -1082,11 +789,3 @@ SELENIUM_CONFIG = {
     'page_load_timeout': 30,
     'implicit_wait': 10,
 }
-
-# Clean up temporary merge variables so they don't persist in the file
-del AUDIT_CHECKS_CONFIG_OCM
-del AUDIT_CHECKS_CONFIG_SEO_NEW
-del MERGED_AUDIT_CHECKS
-del PDF_ISSUE_DESCRIPTIONS_OCM
-del PDF_ISSUE_DESCRIPTIONS_SEO_NEW
-del MERGED_PDF_DESCRIPTIONS

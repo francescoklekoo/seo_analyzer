@@ -536,7 +536,55 @@ class SEOAnalyzer:
                     })
                 # No "else: if False:" here, as we only add if an actual condition is met or explicitly placeholder-ed above.
 
-        self.logger.info("Nuova analisi dettagliata dei problemi completata (OCM).")
+        self.logger.info("Analisi dettagliata dei problemi site-wide e OCM per pagina completata.")
+
+        # --- Pass 3: Page-Specific SEO Audit Checks ---
+        self.logger.info("Inizio analisi dettagliata problemi SEO Audit per pagina...")
+        for page in self.pages_data:
+            page_url = page.get('url', self.domain)
+            images_on_page = page.get('images', []) # Get images once per page
+
+            for check_key, check_config in AUDIT_CHECKS_CONFIG.items():
+                if check_config['category'] != CATEGORY_SEO_AUDIT or check_key in site_wide_checks_processed:
+                    continue # Skip if not SEO Audit or already processed as site-wide
+
+                category = check_config['category'] # Should be CATEGORY_SEO_AUDIT
+                severity = check_config['severity']
+                details = ""
+
+                # Specific page-level SEO Audit checks implemented here
+                if check_key == 'seo_audit_images_missing_alt_error':
+                    missing_alt_images_src = [img.get('src', 'N/A') for img in images_on_page if img.get('alt') is None]
+                    if missing_alt_images_src:
+                        details = f"Rilevate {len(missing_alt_images_src)} immagini senza attributo ALT HTML. Esempi src: {'; '.join(missing_alt_images_src[:3])}"
+                        if len(missing_alt_images_src) > 3:
+                            details += "..."
+
+                elif check_key == 'seo_audit_images_missing_title_error':
+                    missing_title_images_src = [img.get('src', 'N/A') for img in images_on_page if img.get('title') is None]
+                    if missing_title_images_src:
+                        details = f"Rilevate {len(missing_title_images_src)} immagini senza attributo Title HTML. Esempi src: {'; '.join(missing_title_images_src[:3])}"
+                        if len(missing_title_images_src) > 3:
+                            details += "..."
+
+                # Add other page-specific SEO Audit checks here as elif blocks
+                # Example:
+                # elif check_key == 'seo_audit_another_page_specific_check':
+                #     if condition_for_this_page_seo_issue:
+                #         details = "Details for another page-specific SEO audit issue."
+
+                if details: # If an issue was found for this page-specific SEO audit check
+                    self.analysis_results['categorized_issues'][category][severity].append({
+                        'key': check_key,
+                        'label': check_config['label'],
+                        'url': page_url,
+                        'details': details,
+                        'description_key': check_config['description_key'],
+                        'severity': severity
+                    })
+
+        self.logger.info("Analisi dettagliata problemi SEO Audit per pagina completata.")
+
 
     def _find_duplicates(self, detailed_issues: Dict) -> None:
         """Trova title e meta description duplicati tra le pagine."""

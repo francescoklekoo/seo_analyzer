@@ -475,58 +475,127 @@ class PDFGenerator:
         severity_style_map = {'ERROR': severity_error_style, 'WARNING': severity_warning_style, 'NOTICE': severity_notice_style}
 
         categorized_issues = self.analysis_results.get('categorized_issues', {})
-        all_issues_for_table = []
+        ocm_issues_for_table = []
+        seo_audit_issues_for_table = []
 
+        # Data Segregation
         for category_key, severities in categorized_issues.items():
-            categoria_text = category_key
             for severity_level_key, issues_list in severities.items():
-                gravita_text_key = severity_level_key
                 for issue in issues_list:
                     tipo_problema_text = issue.get('label', 'N/D')
-                    url_text = issue.get('url', ''); details_text = issue.get('details', 'N/D')
+                    url_text = issue.get('url', '') # issue.get('url') is correct as populated by analyzer
+                    details_text = issue.get('details', 'N/D')
+
                     url_dettagli_text = ""
-                    if url_text and url_text != self.domain: url_dettagli_text += f"URL: {url_text}\n"
+                    if url_text and url_text != self.domain: # Show URL if it's specific to a page
+                        url_dettagli_text += f"URL: {url_text}<br/>"
                     url_dettagli_text += f"Dettagli: {details_text}"
                     url_dettagli_text = url_dettagli_text.strip()
                     if not url_dettagli_text: url_dettagli_text = "N/D"
-                    valore_misurato_text = issue.get('value', issue.get('measured_value', 'N/D'))
-                    all_issues_for_table.append({'categoria': categoria_text, 'gravita_key': gravita_text_key, 'tipo_problema': tipo_problema_text, 'url_dettagli': url_dettagli_text, 'valore_misurato': valore_misurato_text})
 
-        if not all_issues_for_table:
-            flowables.append(Paragraph("Nessun problema specifico identificato.", self.styles['BodyText']))
-            flowables.append(Spacer(1, 0.5 * inch))
+                    valore_misurato_text = issue.get('value', issue.get('measured_value', 'N/D'))
+
+                    formatted_issue = {
+                        'gravita_key': severity_level_key,
+                        'tipo_problema': tipo_problema_text,
+                        'url_dettagli': url_dettagli_text,
+                        'valore_misurato': valore_misurato_text
+                    }
+                    if category_key == CATEGORY_OCM:
+                        ocm_issues_for_table.append(formatted_issue)
+                    elif category_key == CATEGORY_SEO_AUDIT:
+                        seo_audit_issues_for_table.append(formatted_issue)
+
+        if not ocm_issues_for_table and not seo_audit_issues_for_table:
+            flowables.append(Paragraph("Nessun problema specifico identificato nelle tabelle dettagliate.", self.styles['BodyText']))
             self.story.append(KeepTogether(flowables))
             return
 
         header_style = self.styles.get('SmallText', ParagraphStyle(name='TableHeaderSmall', fontSize=9, fontName=PDF_CONFIG['font_family_bold'], alignment=TA_CENTER))
-        header_row_text = ["Categoria", "Gravità", "Tipo di Problema", "URL/Dettagli Specifici", "Valore Misurato"]
-        header_row = [Paragraph(text, header_style) for text in header_row_text]
-        data_rows = [header_row]
+        header_row_text_4_cols = ["Gravità", "Tipo di Problema", "URL/Dettagli Specifici", "Valore Misurato"]
+        header_row_4_cols = [Paragraph(text, header_style) for text in header_row_text_4_cols]
+
         data_cell_style = self.styles.get('SmallText', ParagraphStyle(name='DataCellSmall', fontSize=8, fontName=PDF_CONFIG['font_family'], alignment=TA_LEFT))
         data_cell_style_center = ParagraphStyle(name='DataCellSmallCenter', parent=data_cell_style, alignment=TA_CENTER)
 
-        for item in all_issues_for_table:
-            row = [ Paragraph(item['categoria'], data_cell_style), Paragraph(severity_text_map.get(item['gravita_key'], item['gravita_key']), severity_style_map.get(item['gravita_key'], data_cell_style)), Paragraph(item['tipo_problema'], data_cell_style), Paragraph(item['url_dettagli'].replace("\n", "<br/>"), data_cell_style), Paragraph(str(item['valore_misurato']), data_cell_style_center) ]
-            data_rows.append(row)
-
         available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        col_widths = [available_width * 0.15, available_width * 0.15, available_width * 0.25, available_width * 0.35, available_width * 0.10]
-        table = Table(data_rows, colWidths=col_widths)
-        new_header_bg_color = colors.HexColor('#f5f5f5'); color_row_odd_bg = colors.HexColor(PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5')); color_row_even_bg = colors.white; grid_color = colors.HexColor(PDF_CONFIG['colors'].get('border_light', '#B0C4DE')); text_color_body = colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#222222'))
-        table_style_cmds = [
-            ('BACKGROUND', (0,0), (-1,0), new_header_bg_color), ('TEXTCOLOR', (0,0), (-1,0), colors.black), ('ALIGN', (0,0), (-1,0), 'CENTER'), ('VALIGN', (0,0), (-1,0), 'MIDDLE'), ('FONTNAME', (0,0), (-1,0), PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')), ('FONTSIZE', (0,0), (-1,0), PDF_CONFIG['font_sizes'].get('small', 9)), ('BOTTOMPADDING', (0,0), (-1,0), 8), ('TOPPADDING', (0,0), (-1,0), 8),
-            ('TEXTCOLOR', (0,1), (-1,-1), text_color_body), ('FONTNAME', (0,1), (-1,-1), PDF_CONFIG.get('font_family', 'Helvetica')), ('FONTSIZE', (0,1), (-1,-1), PDF_CONFIG['font_sizes'].get('extra_small', 8)), ('VALIGN', (0,1), (-1,-1), 'TOP'),
-            ('ALIGN', (0,1), (0,-1), 'LEFT'), ('ALIGN', (1,1), (1,-1), 'LEFT'), ('ALIGN', (2,1), (2,-1), 'LEFT'), ('ALIGN', (3,1), (3,-1), 'LEFT'), ('ALIGN', (4,1), (4,-1), 'CENTER'),
-            ('LEFTPADDING', (0,1), (-1,-1), 5), ('RIGHTPADDING', (0,1), (-1,-1), 5), ('TOPPADDING', (0,1), (-1,-1), 5), ('BOTTOMPADDING', (0,1), (-1,-1), 5),
+        col_widths_4_cols = [available_width * 0.15, available_width * 0.30, available_width * 0.40, available_width * 0.15]
+
+        new_header_bg_color = colors.HexColor('#f5f5f5')
+        color_row_odd_bg = colors.HexColor(PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5'))
+        color_row_even_bg = colors.white
+        grid_color = colors.HexColor(PDF_CONFIG['colors'].get('border_light', '#B0C4DE'))
+        text_color_body = colors.HexColor(PDF_CONFIG['colors'].get('text_primary', '#222222'))
+
+        base_table_style_cmds = [
+            ('BACKGROUND', (0,0), (-1,0), new_header_bg_color), ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+            ('ALIGN', (0,0), (-1,0), 'CENTER'), ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+            ('FONTNAME', (0,0), (-1,0), PDF_CONFIG.get('font_family_bold', 'Helvetica-Bold')),
+            ('FONTSIZE', (0,0), (-1,0), PDF_CONFIG['font_sizes'].get('small', 9)),
+            ('BOTTOMPADDING', (0,0), (-1,0), 8), ('TOPPADDING', (0,0), (-1,0), 8),
+            ('TEXTCOLOR', (0,1), (-1,-1), text_color_body),
+            ('FONTNAME', (0,1), (-1,-1), PDF_CONFIG.get('font_family', 'Helvetica')),
+            ('FONTSIZE', (0,1), (-1,-1), PDF_CONFIG['font_sizes'].get('extra_small', 8)),
+            ('VALIGN', (0,1), (-1,-1), 'TOP'),
+            ('ALIGN', (0,1), (0,-1), 'LEFT'), # Gravità
+            ('ALIGN', (1,1), (1,-1), 'LEFT'), # Tipo di Problema
+            ('ALIGN', (2,1), (2,-1), 'LEFT'), # URL/Dettagli
+            ('ALIGN', (3,1), (3,-1), 'CENTER'),# Valore Misurato
+            ('LEFTPADDING', (0,1), (-1,-1), 5), ('RIGHTPADDING', (0,1), (-1,-1), 5),
+            ('TOPPADDING', (0,1), (-1,-1), 5), ('BOTTOMPADDING', (0,1), (-1,-1), 5),
             ('GRID', (0,0), (-1,-1), 0.5, grid_color), ('BOX', (0,0), (-1,-1), 1, grid_color),
         ]
-        for i in range(1, len(data_rows)): bg_color = color_row_even_bg if i % 2 == 0 else color_row_odd_bg; table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), bg_color))
-        table.setStyle(TableStyle(table_style_cmds))
-        flowables.append(table)
-        flowables.append(Spacer(1, 0.5 * inch))
+
+        # OCM Table
+        if ocm_issues_for_table:
+            flowables.append(Paragraph("Dettaglio Problemi OCM", self.styles['SectionSubHeadingStyle']))
+            flowables.append(Spacer(1, 0.1 * inch))
+            ocm_data_rows = [header_row_4_cols]
+            for item in ocm_issues_for_table:
+                row = [
+                    Paragraph(severity_text_map.get(item['gravita_key'], item['gravita_key']), severity_style_map.get(item['gravita_key'], data_cell_style)),
+                    Paragraph(item['tipo_problema'], data_cell_style),
+                    Paragraph(item['url_dettagli'].replace("\n", "<br/>"), data_cell_style),
+                    Paragraph(str(item['valore_misurato']), data_cell_style_center)
+                ]
+                ocm_data_rows.append(row)
+
+            ocm_table = Table(ocm_data_rows, colWidths=col_widths_4_cols)
+            ocm_table_style_cmds = list(base_table_style_cmds) # Make a copy
+            for i in range(1, len(ocm_data_rows)):
+                bg_color = color_row_even_bg if i % 2 == 0 else color_row_odd_bg
+                ocm_table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), bg_color))
+            ocm_table.setStyle(TableStyle(ocm_table_style_cmds))
+            flowables.append(ocm_table)
+            flowables.append(Spacer(1, 0.3 * inch))
+
+        # SEO Audit Table
+        if seo_audit_issues_for_table:
+            flowables.append(Paragraph("Dettaglio Problemi SEO Audit", self.styles['SectionSubHeadingStyle']))
+            flowables.append(Spacer(1, 0.1 * inch))
+            seo_audit_data_rows = [header_row_4_cols]
+            for item in seo_audit_issues_for_table:
+                row = [
+                    Paragraph(severity_text_map.get(item['gravita_key'], item['gravita_key']), severity_style_map.get(item['gravita_key'], data_cell_style)),
+                    Paragraph(item['tipo_problema'], data_cell_style),
+                    Paragraph(item['url_dettagli'].replace("\n", "<br/>"), data_cell_style),
+                    Paragraph(str(item['valore_misurato']), data_cell_style_center)
+                ]
+                seo_audit_data_rows.append(row)
+
+            seo_table = Table(seo_audit_data_rows, colWidths=col_widths_4_cols)
+            seo_table_style_cmds = list(base_table_style_cmds) # Make a copy
+            for i in range(1, len(seo_audit_data_rows)):
+                bg_color = color_row_even_bg if i % 2 == 0 else color_row_odd_bg
+                seo_table_style_cmds.append(('BACKGROUND', (0,i), (-1,i), bg_color))
+            seo_table.setStyle(TableStyle(seo_table_style_cmds))
+            flowables.append(seo_table)
+            flowables.append(Spacer(1, 0.3 * inch))
+
         self.story.append(KeepTogether(flowables))
 
-    def _create_summary_table_for_section(self, items: List[Tuple[str, str]], available_width: float) -> Table:
+
+    def _create_summary_table_for_section(self, items: List[Tuple[str, str]], available_width: float) -> Optional[Table]:
         if not items: return None
         header_row = [Paragraph("Parametro", self.styles['BodyText']), Paragraph("Valore", self.styles['BodyText'])]
         table_data = [header_row]
