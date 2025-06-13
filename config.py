@@ -151,224 +151,300 @@ YMYL_CONTENT_CONFIG = {}
 # Sostituisce e migliora PDF_ISSUE_TYPE_LABELS
 AUDIT_CHECKS_CONFIG = {
     # OCM Checks
-    'ocm_lcp_error': {
-        'label': 'Largest Contentful Paint (LCP) > 4.0 secondi',
+    'ocm_lcp_gt_4_error': { # Key kept from previous step, label and desc value updated
+        'label': 'Largest Contentful Paint (LCP) > 4.0 secondi - Tempo di caricamento contenuto principale troppo lento',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_lcp_error'
+        'description_key': 'desc_ocm_lcp_gt_4_error'
     },
-    'ocm_inp_error': {
-        'label': 'Interaction to Next Paint (INP) > 500 millisecondi',
+    'ocm_inp_gt_500ms_error': { # Key renamed, label and desc value updated
+        'label': 'Interaction to Next Paint (INP) > 500ms - Tempo di risposta alle interazioni utente eccessivo',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_inp_error'
+        'description_key': 'desc_ocm_inp_gt_500ms_error'
     },
-    'ocm_cls_error': {
-        'label': 'Cumulative Layout Shift (CLS) > 0.25',
+    'ocm_cls_gt_025_error': { # Key renamed, label and desc value updated
+        'label': 'Cumulative Layout Shift (CLS) > 0.25 - Spostamenti visivi imprevisti durante il caricamento',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_cls_error'
+        'description_key': 'desc_ocm_cls_gt_025_error'
     },
-    'ocm_server_response_time_error': {
-        'label': f'Server Response Time > {SERVER_RESPONSE_TIME_ERROR}ms',
+    'ocm_server_response_time_gt_600ms_error': { # Key renamed, label and desc value updated
+        'label': 'Server Response Time > 600ms - Il server deve essere adeguatamente veloce',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_server_response_time_error'
+        'description_key': 'desc_ocm_server_response_time_gt_600ms_error'
     },
-    'ocm_no_cdn_global_error': {
-        'label': 'Assenza CDN per siti globali',
+    'ocm_assenza_cdn_siti_globali_error': { # Key renamed, label and desc value updated
+        'label': 'Assenza CDN per siti globali - È importante utilizzare una CDN per le risorse del sito',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_no_cdn_global_error'
+        'description_key': 'desc_ocm_assenza_cdn_siti_globali_error'
     },
-    'ocm_no_https_error': {
-        'label': 'Assenza implementazione HTTPS',
+    'ocm_assenza_implementazione_https_error': { # Key renamed, label updated
+        'label': 'Assenza implementazione HTTPS - Il sito deve avere un certificato SSL valido',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_no_https_error'
+        'description_key': 'desc_ocm_assenza_implementazione_https_error'
     },
-    'ocm_critical_robots_block_error': {
-        'label': 'Risorse critiche bloccate in robots.txt',
+    'ocm_certificato_ssl_scaduto_malconfigurato_error': { # Key renamed, label updated
+        'label': 'Certificato SSL scaduto/malconfigurato - Il certificato SSL deve essere valido e configurato correttamente',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_critical_robots_block_error'
+        'description_key': 'desc_ocm_certificato_ssl_scaduto_malconfigurato_error'
     },
-    'ocm_structured_data_errors_warning': {
-        'label': 'Errori nei dati strutturati',
+    'ocm_problemi_mixed_content_error': { # Key renamed from ocm_mixed_content_warning, label updated, severity changed to ERROR
+        'label': 'Problemi mixed content (HTTP/HTTPS) - Il sito non deve presentare contenuti misti http/https',
         'category': CATEGORY_OCM,
-        'severity': 'WARNING',
-        'description_key': 'desc_ocm_structured_data_errors_warning'
+        'severity': 'ERROR', # Was WARNING
+        'description_key': 'desc_ocm_problemi_mixed_content_error'
     },
-    'ocm_redirect_chains_warning': {
-        'label': 'Catene di redirect (> 3 hop)',
-        'category': CATEGORY_OCM,
-        'severity': 'WARNING',
-        'description_key': 'desc_ocm_redirect_chains_warning'
-    },
-    'ocm_meta_description_missing_notice': { # Esempio di Notice per OCM
-        'label': 'Meta description mancanti (OCM Check)',
-        'category': CATEGORY_OCM,
-        'severity': 'NOTICE',
-        'description_key': 'desc_ocm_meta_description_missing_notice'
-    },
-    # Added OCM ERROR Checks
-    'ocm_render_blocking_resources_error': {
-        'label': 'Presenza risorse render-blocking significative',
+    'ocm_malware_contenuto_compromesso_error': { # Key renamed, label updated
+        'label': 'Malware o contenuto compromesso - Presenza di codice malevolo o contenuti dannosi',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_render_blocking_resources_error'
+        'description_key': 'desc_ocm_malware_contenuto_compromesso_error'
     },
-    'ocm_image_optimization_error': {
-        'label': 'Immagini non ottimizzate (formati, compressione)',
+    'ocm_risorse_critiche_bloccate_robots_txt_error': { # Key renamed, label updated
+        'label': 'Risorse critiche bloccate in robots.txt - Il file robots.txt deve essere configurato adeguatamente',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_image_optimization_error'
+        'description_key': 'desc_ocm_risorse_critiche_bloccate_robots_txt_error'
     },
-    'ocm_lazy_loading_missing_error': {
-        'label': 'Mancata implementazione lazy loading per immagini offscreen',
+    'ocm_problemi_gravi_javascript_seo_error': { # Key renamed, label updated
+        'label': 'Problemi gravi JavaScript SEO - Contenuto JavaScript non accessibile ai motori di ricerca',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_lazy_loading_missing_error'
+        'description_key': 'desc_ocm_problemi_gravi_javascript_seo_error'
     },
-    'ocm_ssl_expired_error': {
-        'label': 'Certificato SSL scaduto o non valido',
+    'ocm_errori_critici_xml_sitemap_error': { # Key renamed, label updated
+        'label': 'Errori critici XML sitemap - È necessario creare e inviare una sitemap XML in Google Search Console',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_ssl_expired_error'
+        'description_key': 'desc_ocm_errori_critici_xml_sitemap_error'
     },
-    'ocm_malware_detected_error': {
-        'label': 'Rilevamento malware o codice sospetto',
+    'ocm_problemi_canonical_tag_gravi_error': { # Key renamed, label updated
+        'label': 'Problemi canonical tag gravi - Il meta tag canonical deve essere configurato adeguatamente; il sito non deve essere indicizzato con www e senza www',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_malware_detected_error'
+        'description_key': 'desc_ocm_problemi_canonical_tag_gravi_error'
     },
-    'ocm_no_http2_error': {
-        'label': 'Mancato utilizzo di HTTP/2',
+    'ocm_pagine_http_404_500_error': { # New entry
+        'label': 'Pagine con codice di stato HTTP 404 o 500 - Le pagine 404 devono essere verificate e ottimizzate',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_no_http2_error'
+        'description_key': 'desc_ocm_pagine_http_404_500_error'
     },
-    'ocm_compression_missing_error': {
-        'label': 'Mancata compressione Gzip/Brotli per risorse testuali',
-        'category': CATEGORY_OCM,
-        'severity': 'ERROR',
-        'description_key': 'desc_ocm_compression_missing_error'
-    },
-    'ocm_inadequate_caching_policy_error': {
-        'label': 'Policy di caching inadeguata per asset statici',
-        'category': CATEGORY_OCM,
-        'severity': 'ERROR',
-        'description_key': 'desc_ocm_inadequate_caching_policy_error'
-    },
-    'ocm_js_seo_critical_error': {
-        'label': 'Errori JS che impattano la SEO critica (rendering, navigazione)',
-        'category': CATEGORY_OCM,
-        'severity': 'ERROR',
-        'description_key': 'desc_ocm_js_seo_critical_error'
-    },
-    'ocm_xml_sitemap_errors_error': {
-        'label': 'Errori gravi nella XML Sitemap (parsing, URL non validi)',
-        'category': CATEGORY_OCM,
-        'severity': 'ERROR',
-        'description_key': 'desc_ocm_xml_sitemap_errors_error'
-    },
-    'ocm_canonical_grave_error': {
-        'label': 'Errori gravi di canonicalizzazione (es. loop, a 404)',
-        'category': CATEGORY_OCM,
-        'severity': 'ERROR',
-        'description_key': 'desc_ocm_canonical_grave_error'
-    },
-    'ocm_http_404_errors_extensive_error': {
+    # Existing specific 404 and 500 error checks are kept for now.
+    'ocm_http_404_errors_extensive_error': { # No changes to this, kept for its specificity
         'label': 'Errori 404 estensivi (link interni rotti)',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
         'description_key': 'desc_ocm_http_404_errors_extensive_error'
     },
-    'ocm_http_500_errors_error': {
+    'ocm_http_500_errors_error': { # No changes to this, kept for its specificity
         'label': 'Errori Server (5xx) frequenti o diffusi',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
         'description_key': 'desc_ocm_http_500_errors_error'
     },
-    'ocm_minification_missing_error': {
-        'label': 'Mancata minificazione CSS/JS',
+    'ocm_structured_data_errors_warning': { # Label updated
+        'label': "Structured data errors - Errori nell'implementazione dei dati strutturati",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_structured_data_errors_warning'
+    },
+    'ocm_redirect_chains_warning': { # Label updated
+        'label': "Redirect chains > 3 hop - Catene di reindirizzamento troppo lunghe",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_redirect_chains_warning'
+    },
+    'ocm_meta_description_missing_notice': { # Label updated
+        'label': "Meta description mancanti - Verificare pagine con meta description mancanti",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_meta_description_missing_notice'
+    },
+    'ocm_css_js_non_utilizzato_notice': { # New entry
+        'label': "CSS/JS non utilizzato - Presenza di codice CSS/JavaScript inutilizzato",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_css_js_non_utilizzato_notice'
+    },
+    'ocm_font_loading_non_ottimizzato_notice': { # New entry
+        'label': "Font loading non ottimizzato - Caricamento dei font non ottimizzato",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_font_loading_non_ottimizzato_notice'
+    },
+    'ocm_third_party_scripts_non_ottimizzati_notice': { # New entry
+        'label': "Third-party scripts non ottimizzati - Script di terze parti non ottimizzati",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_third_party_scripts_non_ottimizzati_notice'
+    },
+    'ocm_dns_lookup_optimization_notice': { # New entry
+        'label': "DNS lookup optimization - Ottimizzazione delle ricerche DNS",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_dns_lookup_optimization_notice'
+    },
+    'ocm_verifiche_url_parlanti_notice': { # New entry
+        'label': "Verifiche URL parlanti - Verificare URL parlanti",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_verifiche_url_parlanti_notice'
+    },
+    'ocm_utilizzo_direttive_noindex_notice': { # New entry
+        'label': "Utilizzo direttive noindex - Verificare che le direttive noindex siano utilizzate adeguatamente",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_utilizzo_direttive_noindex_notice'
+    },
+    'ocm_utilizzo_attributo_alt_immagini_notice': { # New entry
+        'label': "Utilizzo attributo ALT immagini - Verificare l'utilizzo dell'attributo ALT per descrivere le immagini",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_utilizzo_attributo_alt_immagini_notice'
+    },
+    'ocm_dati_strutturati_implementazione_notice': { # New entry
+        'label': "Dati strutturati implementazione - Utilizzare dati strutturati per descrivere meglio i contenuti delle pagine web",
+        'category': CATEGORY_OCM,
+        'severity': 'NOTICE',
+        'description_key': 'desc_ocm_dati_strutturati_implementazione_notice'
+    },
+    # Performance Critica ERROR Checks (formerly part of Added OCM ERROR Checks)
+    'ocm_risorse_render_blocking_critiche_error': { # Key renamed, label updated
+        'label': 'Risorse render-blocking critiche - Elementi che bloccano il rendering della pagina',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_minification_missing_error'
+        'description_key': 'desc_ocm_risorse_render_blocking_critiche_error'
     },
-    'ocm_mobile_content_not_accessible_error': {
-        'label': 'Contenuti importanti non accessibili/visibili su mobile',
+    'ocm_assenza_compressione_sito_web_error': { # Key renamed, label updated
+        'label': 'Assenza compressione sito web - Il sito web deve utilizzare un sistema di compressione',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_mobile_content_not_accessible_error'
+        'description_key': 'desc_ocm_assenza_compressione_sito_web_error'
     },
-    'ocm_no_viewport_tag_error': {
-        'label': 'Assenza meta tag viewport per responsività',
+    'ocm_mancata_implementazione_http2_error': { # Key renamed, label updated
+        'label': 'Mancata implementazione HTTP/2 - Il sito web deve utilizzare HTTP/2',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_no_viewport_tag_error'
+        'description_key': 'desc_ocm_mancata_implementazione_http2_error'
     },
-    'ocm_touch_elements_too_small_error': {
-        'label': 'Elementi touch troppo piccoli o ravvicinati su mobile',
+    'ocm_sistema_cache_inadeguato_error': { # Key renamed, label updated
+        'label': 'Sistema di cache inadeguato - Il sito web deve utilizzare un sistema di cache',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_touch_elements_too_small_error'
+        'description_key': 'desc_ocm_sistema_cache_inadeguato_error'
     },
-    'ocm_not_mobile_friendly_design_error': {
-        'label': 'Design complessivamente non mobile-friendly',
+    'ocm_minificazione_css_js_mancante_error': { # Key renamed, label updated, description_key corrected
+        'label': 'Minificazione CSS e JS mancante - Il sito deve utilizzare la minificazione sui file CSS e JS',
         'category': CATEGORY_OCM,
         'severity': 'ERROR',
-        'description_key': 'desc_ocm_not_mobile_friendly_design_error'
+        'description_key': 'desc_ocm_minificazione_css_js_mancante_error' # Corrected
     },
-    # OCM WARNING CHECKS (Adding new ones here, some might exist already)
-    'ocm_unnecessary_redirects_warning': {
-        'label': 'Redirect non necessari (es. HTTP > HTTPS su link interni già HTTPS)',
+    # Ottimizzazione Immagini ERROR Checks
+    'ocm_immagini_non_ottimizzate_web_error': { # Key renamed, label updated
+        'label': 'Immagini non ottimizzate per web - Le immagini caricate sul sito devono essere ottimizzate per il web',
+        'category': CATEGORY_OCM,
+        'severity': 'ERROR',
+        'description_key': 'desc_ocm_immagini_non_ottimizzate_web_error'
+    },
+    'ocm_assenza_lazy_loading_immagini_error': { # Key renamed, label updated
+        'label': 'Assenza lazy loading immagini - Deve essere utilizzato il caricamento differito delle immagini fuori dallo schermo (Lazy loading)',
+        'category': CATEGORY_OCM,
+        'severity': 'ERROR',
+        'description_key': 'desc_ocm_assenza_lazy_loading_immagini_error'
+    },
+    # Mobile-First Indexing ERROR Checks
+    'ocm_contenuto_non_accessibile_mobile_error': { # Key renamed, label updated
+        'label': 'Contenuto non accessibile su mobile - Tutti i contenuti devono essere fruibili da mobile',
+        'category': CATEGORY_OCM,
+        'severity': 'ERROR',
+        'description_key': 'desc_ocm_contenuto_non_accessibile_mobile_error'
+    },
+    'ocm_assenza_tag_viewport_error': { # Key renamed, label updated
+        'label': 'Assenza tag viewport - Meta tag viewport mancante per responsive design',
+        'category': CATEGORY_OCM,
+        'severity': 'ERROR',
+        'description_key': 'desc_ocm_assenza_tag_viewport_error'
+    },
+    'ocm_touch_elements_lt_44px_error': { # Key renamed, label updated
+        'label': "Touch elements < 44px - Elementi touch troppo piccoli per l'interazione mobile",
+        'category': CATEGORY_OCM,
+        'severity': 'ERROR',
+        'description_key': 'desc_ocm_touch_elements_lt_44px_error'
+    },
+    'ocm_sito_non_mobile_friendly_error': { # Key renamed, label updated
+        'label': 'Sito non mobile-friendly - Il sito deve essere mobile friendly',
+        'category': CATEGORY_OCM,
+        'severity': 'ERROR',
+        'description_key': 'desc_ocm_sito_non_mobile_friendly_error'
+    },
+    # OCM WARNING CHECKS (Labels updated for Technical SEO warnings)
+    'ocm_unnecessary_redirects_warning': { # Label updated
+        'label': "Reindirizzamenti inutili - I reindirizzamenti inutili devono essere eliminati",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_unnecessary_redirects_warning'
     },
-    'ocm_url_structure_suboptimal_warning': {
-        'label': 'Struttura URL non ottimale (es. parametri eccessivi, profondità)',
+    'ocm_url_structure_suboptimal_warning': { # Label updated
+        'label': "URL structure non ottimizzata - Le URL devono essere \"parlanti\"",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_url_structure_suboptimal_warning'
     },
-    'ocm_hsts_missing_warning': {
-        'label': 'Mancata implementazione HSTS (HTTP Strict Transport Security)',
+    'ocm_hsts_missing_warning': { # Label updated
+        'label': "Assenza HSTS - Header di sicurezza HSTS mancante",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_hsts_missing_warning'
     },
-    'ocm_csp_missing_warning': {
-        'label': 'Content Security Policy (CSP) non implementata o troppo permissiva',
+    'ocm_csp_missing_warning': { # Label updated
+        'label': "Content Security Policy mancante - Policy di sicurezza dei contenuti non implementata",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_csp_missing_warning'
     },
-    'ocm_x_frame_options_missing_warning': {
-        'label': 'Header X-Frame-Options non configurato (rischio clickjacking)',
+    'ocm_x_frame_options_missing_warning': { # Label updated
+        'label': "Assenza X-Frame-Options - Header di protezione da clickjacking mancante",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_x_frame_options_missing_warning'
     },
-    'ocm_404_errors_excessive_warning': {
-        'label': 'Errori 404 (non critici, ma numerosi)',
+    'ocm_404_errors_excessive_warning': { # Label updated
+        'label': "404 errors eccessivi - Le pagine 404 devono essere verificate e ottimizzate",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_404_errors_excessive_warning'
     },
-    'ocm_broken_internal_links_warning': {
-        'label': 'Link interni rotti (non estensivi)',
+    'ocm_broken_internal_links_warning': { # Label updated
+        'label': "Broken links interni - I link interni rotti devono essere corretti",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_broken_internal_links_warning'
     },
-    'ocm_internal_linking_insufficient_warning': {
-        'label': 'Pagine importanti con pochi link interni',
+    'ocm_internal_linking_insufficient_warning': { # Label updated
+        'label': "Internal linking insufficiente - Collegamento interno tra pagine inadeguato",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_internal_linking_insufficient_warning'
     },
+    'ocm_gestione_url_meta_inadeguata_warning': { # New entry
+        'label': "Gestione URL e Meta inadeguata - La gestione URL e Meta deve essere implementata lato codice",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_gestione_url_meta_inadeguata_warning'
+    },
+    'ocm_sistema_controllo_uptime_mancante_warning': { # New entry
+        'label': "Sistema controllo uptime mancante - Deve essere utilizzato un sistema di controllo uptime",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_sistema_controllo_uptime_mancante_warning'
+    },
+    # Keeping existing related checks
     'ocm_meta_tags_inconsistent_warning': {
         'label': 'Strategia meta tag (title/description) inconsistente tra pagine',
         'category': CATEGORY_OCM,
@@ -387,25 +463,44 @@ AUDIT_CHECKS_CONFIG = {
         'severity': 'WARNING',
         'description_key': 'desc_ocm_hreflang_errors_warning'
     },
-    'ocm_website_uptime_low_warning': {
+    'ocm_website_uptime_low_warning': { # Keeping this as it's different from missing control system
         'label': 'Uptime del sito web storicamente basso (richiede monitoraggio esterno)',
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_website_uptime_low_warning'
     },
-    'ocm_ga_gsc_not_configured_warning': {
+    'ocm_ga_gsc_not_configured_warning': { # General existing check
         'label': 'Google Analytics o Google Search Console non configurati/collegati',
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
         'description_key': 'desc_ocm_ga_gsc_not_configured_warning'
     },
-    'ocm_mixed_content_warning': {
-        'label': 'Presenza di mixed content (contenuti HTTP su pagine HTTPS)',
+    'ocm_ga_non_configurato_sito_warning': { # New entry
+        'label': "Google Analytics non configurato sul sito - Google Analytics deve essere configurato sul sito",
         'category': CATEGORY_OCM,
         'severity': 'WARNING',
-        'description_key': 'desc_ocm_mixed_content_warning'
+        'description_key': 'desc_ocm_ga_non_configurato_sito_warning'
+    },
+    'ocm_ga_non_collegato_progetto_warning': { # New entry
+        'label': "Google Analytics non collegato al progetto - Google Analytics deve essere collegato al progetto",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_ga_non_collegato_progetto_warning'
+    },
+    'ocm_gsc_non_configurato_warning': { # New entry
+        'label': "Google Search Console non configurato - Google Search Console deve essere configurata",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_gsc_non_configurato_warning'
+    },
+    'ocm_gsc_non_collegato_progetto_warning': { # New entry
+        'label': "Google Search Console non collegato al progetto - Google Search Console deve essere collegata al progetto",
+        'category': CATEGORY_OCM,
+        'severity': 'WARNING',
+        'description_key': 'desc_ocm_gsc_non_collegato_progetto_warning'
     },
     # Note: 'ocm_structured_data_errors_warning' and 'ocm_redirect_chains_warning' should exist from previous steps.
+    # 'ocm_mixed_content_warning' was moved and changed to 'ocm_problemi_mixed_content_error'
 
     # SITE SEO AUDIT Checks
     # Existing ones verified/modified:
@@ -671,50 +766,68 @@ AUDIT_CHECKS_CONFIG = {
 # Sostituisce e migliora PDF_ISSUE_RECOMMENDATIONS
 PDF_ISSUE_DESCRIPTIONS = {
     # OCM Descriptions
-    'desc_ocm_lcp_error': "Largest Contentful Paint (LCP) superiore a 4.0 secondi. Fattore di ranking primario nel Page Experience; misura la performance di caricamento percepita dall'utente.",
-    'desc_ocm_inp_error': "Interaction to Next Paint (INP) superiore a 500ms. Metrica Core Web Vital che valuta la reattività generale di una pagina alle interazioni dell'utente.",
-    'desc_ocm_cls_error': "Cumulative Layout Shift (CLS) superiore a 0.25. Metrica Core Web Vital che misura la stabilità visuale e previene spostamenti inattesi del layout.",
-    'desc_ocm_server_response_time_error': f"Tempo di risposta del server superiore a {SERVER_RESPONSE_TIME_ERROR}ms. Un server lento impatta negativamente l'esperienza utente e il crawling.",
-    'desc_ocm_no_cdn_global_error': "Mancanza di una Content Delivery Network (CDN) per siti con traffico globale. Una CDN migliora la velocità di caricamento per utenti distanti dal server.",
-    'desc_ocm_no_https_error': "Il sito non utilizza HTTPS. HTTPS è cruciale per la sicurezza, la fiducia dell'utente e un fattore di ranking.",
-    'desc_ocm_critical_robots_block_error': "File robots.txt blocca risorse critiche (CSS, JS) necessarie per il rendering corretto della pagina. Ciò può impedire a Google di comprendere appieno il sito.",
-    'desc_ocm_structured_data_errors_warning': "Presenza di errori (es. parsing, campi mancanti) nei dati strutturati implementati. Correggere per abilitare i rich snippet e migliorare la comprensione da parte dei motori di ricerca.",
-    'desc_ocm_redirect_chains_warning': "Catene di redirect con più di 3 hop. Le catene lunghe possono sprecare crawl budget e rallentare l'esperienza utente.",
-    'desc_ocm_meta_description_missing_notice': "Alcune pagine presentano meta description mancanti. Anche se non un fattore di ranking diretto, le meta description influenzano il CTR dalle SERP.",
-    # Descriptions for added OCM ERROR Checks
-    'desc_ocm_render_blocking_resources_error': "Risorse (JS/CSS) bloccano il rendering iniziale della pagina, peggiorando LCP e l'esperienza utente.",
-    'desc_ocm_image_optimization_error': "Immagini pesanti o in formati non ottimali (es. JPEG invece di WebP) rallentano il caricamento e consumano banda.",
-    'desc_ocm_lazy_loading_missing_error': "Mancata implementazione del lazy loading per immagini e iframe 'below the fold', sprecando risorse e rallentando il caricamento iniziale.",
-    'desc_ocm_ssl_expired_error': "Un certificato SSL scaduto o non valido compromette la sicurezza, la fiducia dell'utente e può bloccare l'accesso al sito.",
-    'desc_ocm_malware_detected_error': "La presenza di malware o codice sospetto danneggia gravemente la reputazione, la sicurezza degli utenti e porta a penalizzazioni severe da Google.",
-    'desc_ocm_no_http2_error': "Il mancato utilizzo di HTTP/2 (o HTTP/3) impedisce miglioramenti prestazionali significativi come multiplexing e server push.",
-    'desc_ocm_compression_missing_error': "La mancata compressione (Gzip, Brotli) per risorse testuali (HTML, CSS, JS) aumenta i tempi di download e lo spreco di banda.",
-    'desc_ocm_inadequate_caching_policy_error': "Policy di caching del browser inadeguate o assenti per asset statici costringono il browser a riscaricare risorse inutilmente.",
-    'desc_ocm_js_seo_critical_error': "Errori JavaScript bloccano o alterano il rendering dei contenuti, la navigazione o altre funzionalità SEO-critiche.",
-    'desc_ocm_xml_sitemap_errors_error': "Errori nella XML Sitemap (URL non validi, formato errato, etc.) possono impedire a Google di scoprire e indicizzare correttamente tutte le pagine.",
-    'desc_ocm_canonical_grave_error': "Errori gravi di canonicalizzazione (es. canonical loop, canonical a pagine 404 o non indicizzabili) confondono i motori di ricerca e diluiscono il ranking.",
-    'desc_ocm_http_404_errors_extensive_error': "Un numero elevato di errori 404 (Pagina Non Trovata) per link interni indica problemi di manutenzione e peggiora l'esperienza utente e il crawl budget.",
-    'desc_ocm_http_500_errors_error': "Errori Server (5xx) frequenti o diffusi indicano problemi infrastrutturali seri che rendono il sito inaccessibile e danneggiano la SEO.",
-    'desc_ocm_minification_missing_error': "La mancata minificazione di risorse CSS e JavaScript aumenta inutilmente le dimensioni dei file e i tempi di caricamento.",
-    'desc_ocm_mobile_content_not_accessible_error': "Contenuti testuali o funzionali importanti presenti su desktop ma nascosti o inaccessibili su mobile, violando il mobile-first indexing.",
-    'desc_ocm_no_viewport_tag_error': "Assenza del meta tag viewport, fondamentale per indicare al browser come adattare la pagina ai dispositivi mobili, causando problemi di visualizzazione.",
-    'desc_ocm_touch_elements_too_small_error': "Elementi interattivi (pulsanti, link) troppo piccoli o vicini tra loro su mobile rendono difficile la navigazione e peggiorano l'usabilità.",
-    'desc_ocm_not_mobile_friendly_design_error': "Il design complessivo del sito non è responsive o adattivo, offrendo un'esperienza utente scadente su dispositivi mobili, penalizzata da Google.",
-    # Descriptions for OCM WARNING Checks
-    'desc_ocm_unnecessary_redirects_warning': "Redirect non necessari (es. link interni a URL HTTP che poi ridirigono a HTTPS) causano piccoli ritardi e possono consumare crawl budget.",
-    'desc_ocm_url_structure_suboptimal_warning': "Una struttura URL complessa, con troppi parametri o eccessiva profondità, può essere meno user-friendly e più difficile da indicizzare per i motori di ricerca.",
-    'desc_ocm_hsts_missing_warning': "L'assenza di HSTS (HTTP Strict Transport Security) rende il sito più vulnerabile ad attacchi man-in-the-middle (es. SSL stripping).",
-    'desc_ocm_csp_missing_warning': "Una Content Security Policy (CSP) mancante o troppo permissiva aumenta il rischio di attacchi XSS (Cross-Site Scripting).",
-    'desc_ocm_x_frame_options_missing_warning': "La mancanza dell'header X-Frame-Options o di una CSP adeguata espone il sito a rischi di clickjacking.",
-    'desc_ocm_404_errors_excessive_warning': "Un numero eccessivo di errori 404, anche se non critici singolarmente, può indicare scarsa manutenzione del sito e peggiorare l'esperienza utente.",
-    'desc_ocm_broken_internal_links_warning': "Link interni rotti portano a pagine di errore, frustrando l'utente e sprecando crawl budget. Anche se non estensivi, vanno corretti.",
-    'desc_ocm_internal_linking_insufficient_warning': "Pagine importanti con pochi link interni potrebbero non ricevere sufficiente 'link juice' e essere più difficili da scoprire per utenti e crawler.",
+    'desc_ocm_lcp_gt_4_error': "Largest Contentful Paint (LCP) > 4.0 secondi. Indica che il tempo di caricamento del contenuto principale della pagina è troppo lento. Ottimizzare le immagini, il codice JavaScript/CSS critico e le risorse del server per migliorare questa metrica fondamentale per l'esperienza utente e il ranking.",
+    'desc_ocm_inp_gt_500ms_error': "Interaction to Next Paint (INP) > 500ms. Segnala che il tempo di risposta della pagina alle interazioni dell'utente (click, tap, input da tastiera) è eccessivo. Ottimizzare il codice JavaScript, ridurre il carico del thread principale e migliorare l'efficienza degli script per garantire una reattività rapida.",
+    'desc_ocm_cls_gt_025_error': "Cumulative Layout Shift (CLS) > 0.25. Indica la presenza di spostamenti visivi imprevisti degli elementi della pagina durante il caricamento, peggiorando l'esperienza utente. Specificare le dimensioni per immagini e video, gestire dinamicamente i contenuti e precaricare i font per migliorare la stabilità visuale.",
+    'desc_ocm_server_response_time_gt_600ms_error': "Server Response Time > 600ms. Il tempo di risposta del server (TTFB) è troppo alto, indicando che il server non è adeguatamente veloce. Ottimizzare le query del database, implementare un sistema di caching efficace, considerare un upgrade del server o scegliere un provider hosting più performante.",
+    'desc_ocm_assenza_cdn_siti_globali_error': "Assenza CDN per siti globali. Segnala che non viene utilizzata una Content Delivery Network (CDN), importante per siti con traffico globale. Implementare una CDN per distribuire le risorse del sito (immagini, CSS, JS) su server geograficamente più vicini agli utenti, riducendo la latenza e migliorando i tempi di caricamento.",
+    'desc_ocm_assenza_implementazione_https_error': "Assenza implementazione HTTPS. Indica che il sito non utilizza HTTPS, esponendo i dati degli utenti a rischi. È cruciale installare un certificato SSL valido e configurare il server per forzare HTTPS su tutte le connessioni per garantire sicurezza, fiducia e migliorare il ranking.",
+    'desc_ocm_certificato_ssl_scaduto_malconfigurato_error': "Certificato SSL scaduto/malconfigurato. Segnala che il certificato SSL del sito è scaduto, non valido o malconfigurato, compromettendo la sicurezza. Rinnovare immediatamente il certificato SSL e assicurarsi che sia installato e configurato correttamente per tutte le varianti del dominio.",
+    'desc_ocm_problemi_mixed_content_error': "Problemi mixed content (HTTP/HTTPS). Indica che la pagina HTTPS carica risorse (immagini, script, CSS) tramite HTTP non sicuro, creando vulnerabilità. Identificare e aggiornare tutti i link a risorse interne ed esterne affinché utilizzino HTTPS.",
+    'desc_ocm_malware_contenuto_compromesso_error': "Malware o contenuto compromesso. Rilevata possibile presenza di codice malevolo o contenuti dannosi sul sito. Effettuare una scansione completa del sito, rimuovere immediatamente qualsiasi malware o codice sospetto e mettere in sicurezza il sito per proteggere gli utenti e la reputazione.",
+    'desc_ocm_risorse_critiche_bloccate_robots_txt_error': "Risorse critiche bloccate in robots.txt. Indica che il file robots.txt impedisce ai motori di ricerca di accedere a risorse cruciali (come CSS o JavaScript) per la corretta visualizzazione e interpretazione del sito. Rivedere le direttive in robots.txt per assicurarsi che non blocchino file necessari al rendering.",
+    'desc_ocm_problemi_gravi_javascript_seo_error': "Problemi gravi JavaScript SEO. Segnala che contenuti importanti generati tramite JavaScript potrebbero non essere accessibili o indicizzabili dai motori di ricerca. Assicurarsi che il rendering lato client (CSR) sia gestito correttamente, considerare il rendering lato server (SSR) o il rendering dinamico per contenuti critici.",
+    'desc_ocm_errori_critici_xml_sitemap_error': "Errori critici XML sitemap. Indica errori gravi nella sitemap XML (es. formato non valido, URL errati o non raggiungibili) che ne compromettono l'utilità. Correggere la sitemap, assicurarsi che sia aggiornata e inviarla tramite Google Search Console per facilitare la scoperta dei contenuti.",
+    'desc_ocm_problemi_canonical_tag_gravi_error': "Problemi canonical tag gravi. Segnala errori significativi nell'uso dei tag canonical (es. loop di canonical, puntamento a URL non indicizzabili, o a versioni multiple del sito come www e non-www). Verificare e correggere l'implementazione dei tag canonical per consolidare i segnali di ranking e prevenire problemi di contenuto duplicato.",
+    'desc_ocm_pagine_http_404_500_error': "Pagine con codice di stato HTTP 404 o 500. Rilevazione di pagine che restituiscono errori 404 (Non Trovato) o 500 (Errore Interno del Server). Verificare l'origine di questi errori, correggere i link interni rotti, ripristinare le pagine mancanti o implementare redirect 301 per quelle permanentemente spostate. Per gli errori 500, investigare i log del server.",
+    'desc_ocm_http_404_errors_extensive_error': "Un numero elevato di errori 404 (Pagina Non Trovata) per link interni indica problemi di manutenzione e peggiora l'esperienza utente e il crawl budget.", # Kept specific
+    'desc_ocm_http_500_errors_error': "Errori Server (5xx) frequenti o diffusi indicano problemi infrastrutturali seri che rendono il sito inaccessibile e danneggiano la SEO.", # Kept specific
+    'desc_ocm_structured_data_errors_warning': "Structured data errors - Errori nell'implementazione dei dati strutturati",
+    'desc_ocm_redirect_chains_warning': "Redirect chains > 3 hop - Catene di reindirizzamento troppo lunghe",
+    'desc_ocm_meta_description_missing_notice': "Meta description mancanti. Alcune pagine del sito non hanno una meta description. Scrivere meta description uniche e persuasive per ogni pagina importante per migliorare il Click-Through Rate (CTR) dai risultati di ricerca.",
+    'desc_ocm_css_js_non_utilizzato_notice': "CSS/JS non utilizzato. Rilevata la presenza di codice CSS o JavaScript non utilizzato che appesantisce inutilmente le pagine. Rimuovere il codice inutilizzato per ridurre le dimensioni dei file e migliorare i tempi di caricamento.",
+    'desc_ocm_font_loading_non_ottimizzato_notice': "Font loading non ottimizzato. Il caricamento dei web font potrebbe non essere ottimale, causando ritardi nel rendering del testo (FOIT/FOUT). Utilizzare strategie come `font-display: swap`, preloading dei font critici o formati moderni (WOFF2) per migliorare le performance.",
+    'desc_ocm_third_party_scripts_non_ottimizzati_notice': "Third-party scripts non ottimizzati. Script di terze parti (es. analytics, social media, advertising) potrebbero impattare negativamente le performance. Valutare la necessità di ogni script, caricarli in modo asincrono o differito, e ove possibile, ospitarli localmente o utilizzare versioni più leggere.",
+    'desc_ocm_dns_lookup_optimization_notice': "DNS lookup optimization. Le risoluzioni DNS per domini di terze parti possono aggiungere latenza. Utilizzare tecniche come `dns-prefetch` o `preconnect` per risolvere in anticipo i DNS di risorse critiche esterne e ridurre i tempi di attesa.",
+    'desc_ocm_verifiche_url_parlanti_notice': "Verifiche URL parlanti. Assicurarsi che gli URL siano 'parlanti', ovvero descrittivi, facili da leggere per gli utenti e che includano keyword rilevanti. Evitare URL con parametri eccessivi o stringhe incomprensibili.",
+    'desc_ocm_utilizzo_direttive_noindex_notice': "Utilizzo direttive noindex. Verificare che le direttive `noindex` (meta tag o X-Robots-Tag) siano usate correttamente per impedire l'indicizzazione di pagine non desiderate (es. contenuti duplicati, pagine di servizio). Un uso errato può escludere pagine importanti.",
+    'desc_ocm_utilizzo_attributo_alt_immagini_notice': "Utilizzo attributo ALT immagini. Assicurarsi che tutte le immagini significative abbiano un attributo ALT descrittivo. Questo migliora l'accessibilità per utenti con screen reader e fornisce contesto ai motori di ricerca.",
+    'desc_ocm_dati_strutturati_implementazione_notice': "Dati strutturati implementazione. Considerare l'utilizzo di dati strutturati (Schema.org) per descrivere meglio i vari tipi di contenuto nelle pagine web (articoli, prodotti, eventi, etc.). Questo può aiutare a ottenere rich snippet nei risultati di ricerca e migliorare la comprensione da parte dei motori.",
+    # Descriptions for Performance Critica ERROR Checks and others previously in this block
+    'desc_ocm_risorse_render_blocking_critiche_error': "Risorse render-blocking critiche. Identifica elementi (solitamente script o fogli di stile) che bloccano il rendering iniziale della pagina, peggiorando i tempi di caricamento percepiti. Differire il caricamento di JS/CSS non critico, minificare le risorse e utilizzare il caricamento asincrono.",
+    'desc_ocm_assenza_compressione_sito_web_error': "Assenza compressione sito web. Il sito non utilizza sistemi di compressione (come Gzip o Brotli) per le risorse testuali (HTML, CSS, JS). Abilitare la compressione a livello server per ridurre le dimensioni dei file trasferiti e migliorare la velocità di caricamento.",
+    'desc_ocm_mancata_implementazione_http2_error': "Mancata implementazione HTTP/2. Il sito non utilizza il protocollo HTTP/2 (o HTTP/3), che offre miglioramenti prestazionali rispetto a HTTP/1.1. Verificare con il provider hosting la disponibilità di HTTP/2 e abilitarlo per beneficiare di funzionalità come multiplexing e server push.",
+    'desc_ocm_sistema_cache_inadeguato_error': "Sistema di cache inadeguato. Le policy di caching del browser per le risorse statiche non sono ottimali o sono assenti. Configurare correttamente gli header HTTP di caching (es. Cache-Control, Expires) per istruire il browser a memorizzare le risorse localmente, riducendo i tempi di caricamento per visite successive.",
+    'desc_ocm_minificazione_css_js_mancante_error': "Minificazione CSS e JS mancante. I file CSS e JavaScript non sono minificati, aumentando inutilmente le loro dimensioni. Implementare processi di minificazione per rimuovere caratteri non necessari (spazi, commenti) dal codice e ridurre i tempi di download.",
+    # Descriptions for Ottimizzazione Immagini ERROR Checks
+    'desc_ocm_immagini_non_ottimizzate_web_error': "Immagini non ottimizzate per web. Segnala che le immagini sul sito non sono adeguatamente ottimizzate (es. dimensioni eccessive, formati non moderni come WebP). Comprimere le immagini, scegliere formati appropriati e utilizzare dimensioni responsive per ridurre il peso delle pagine e migliorare la velocità di caricamento.",
+    'desc_ocm_assenza_lazy_loading_immagini_error': "Assenza lazy loading immagini. Indica che non è implementato il caricamento differito (lazy loading) per le immagini 'offscreen' (non visibili senza scroll). Implementare il lazy loading per le immagini per migliorare il tempo di caricamento iniziale della pagina e risparmiare banda.",
+    # Descriptions for Mobile-First Indexing ERROR Checks
+    'desc_ocm_contenuto_non_accessibile_mobile_error': "Contenuto non accessibile su mobile. Indica che alcuni contenuti importanti del sito non sono facilmente accessibili o visibili su dispositivi mobili. Assicurare che tutti i contenuti siano responsive e che l'esperienza utente sia ottimale su mobile, in linea con il mobile-first indexing di Google.",
+    'desc_ocm_assenza_tag_viewport_error': "Assenza tag viewport. Manca il meta tag viewport nella `<head>` delle pagine, essenziale per un responsive design corretto. Inserire `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">` per garantire che la pagina si adatti correttamente alle dimensioni dello schermo dei dispositivi mobili.",
+    'desc_ocm_touch_elements_lt_44px_error': "Touch elements < 44px. Alcuni elementi interattivi (pulsanti, link) sono troppo piccoli o ravvicinati, rendendo difficile l'interazione su dispositivi touch. Aumentare le dimensioni degli elementi touch ad almeno 44x44 pixel e garantire una spaziatura adeguata.",
+    'desc_ocm_sito_non_mobile_friendly_error': "Sito non mobile-friendly. Il design generale del sito non è ottimizzato per i dispositivi mobili, offrendo un'esperienza utente scadente. Adottare un design responsive o adattivo, testare la mobile-friendliness con gli strumenti di Google e migliorare la navigazione e la leggibilità su schermi piccoli.",
+    # Descriptions for OCM WARNING Checks - Values updated to new labels
+    'desc_ocm_unnecessary_redirects_warning': "Reindirizzamenti inutili. Identificati reindirizzamenti non strettamente necessari (es. da HTTP a HTTPS per link interni già HTTPS, o da URL con/senza trailing slash se gestiti in modo incoerente). Eliminare questi passaggi superflui per migliorare la velocità e l'efficienza del crawling.",
+    'desc_ocm_url_structure_suboptimal_warning': "URL structure non ottimizzata. La struttura degli URL potrebbe non essere ottimale per la SEO e l'usabilità (es. parametri eccessivi, URL non descrittive). Creare URL chiare, concise e \"parlanti\", che includano keyword rilevanti e riflettano la gerarchia del sito.",
+    'desc_ocm_hsts_missing_warning': "Assenza HSTS. Manca l'header HTTP Strict Transport Security (HSTS), che protegge da attacchi di tipo man-in-the-middle. Implementare HSTS per forzare il browser a comunicare con il server esclusivamente tramite HTTPS.",
+    'desc_ocm_csp_missing_warning': "Content Security Policy mancante. Non è implementata una Content Security Policy (CSP) o quella esistente è troppo permissiva. Definire una CSP robusta per controllare le risorse che la pagina può caricare, mitigando rischi come XSS.",
+    'desc_ocm_x_frame_options_missing_warning': "Assenza X-Frame-Options. Manca l'header X-Frame-Options (o una direttiva CSP equivalente), esponendo il sito a rischi di clickjacking. Implementare X-Frame-Options (es. DENY o SAMEORIGIN) per impedire che il sito venga incorporato in frame non autorizzati.",
+    'desc_ocm_404_errors_excessive_warning': "404 errors eccessivi. Presenza di un numero elevato di errori 404 (Pagina Non Trovata). Verificare l'origine di questi link rotti (interni o esterni) e correggerli o implementare redirect 301 se le pagine sono state spostate permanentemente. Ottimizzare la pagina 404 personalizzata.",
+    'desc_ocm_broken_internal_links_warning': "Broken links interni. Rilevati link interni che puntano a pagine non esistenti (errore 404). Correggere questi link per migliorare l'esperienza utente e la distribuzione del link equity.",
+    'desc_ocm_internal_linking_insufficient_warning': "Internal linking insufficiente. Un collegamento interno tra pagine inadeguato può rendere difficile per utenti e motori di ricerca scoprire contenuti importanti. Migliorare la strategia di internal linking per distribuire meglio il 'link juice'.",
+    'desc_ocm_gestione_url_meta_inadeguata_warning': "Gestione URL e Meta inadeguata. La gestione di URL e meta tag (title, description) dovrebbe essere implementata in modo programmatico e centralizzato, specialmente per siti di grandi dimensioni, per garantire coerenza e facilità di aggiornamento. Verificare se CMS o framework utilizzati permettono tale gestione.",
+    'desc_ocm_sistema_controllo_uptime_mancante_warning': "Sistema controllo uptime mancante. Indica che non è in uso un sistema proattivo per monitorare l'uptime del sito. Implementare un servizio di monitoraggio uptime per ricevere notifiche immediate in caso di downtime e intervenire tempestivamente.",
     'desc_ocm_meta_tags_inconsistent_warning': "Inconsistenze nella strategia dei meta tag (es. formati title variabili, lunghezza description molto diversa) possono indicare una cura non ottimale dei contenuti.",
     'desc_ocm_url_strategy_inconsistent_warning': "Incoerenze nella strategia degli URL (es. uso misto di trailing slash, maiuscole/minuscole variabili) possono creare confusione e potenziali problemi di contenuto duplicato.",
     'desc_ocm_hreflang_errors_warning': "Errori non critici nell'implementazione di hreflang (es. codici lingua/regione non validi, return tag mancanti) possono compromettere il targeting internazionale.",
     'desc_ocm_website_uptime_low_warning': "Un uptime storicamente basso del sito (basato su dati di monitoraggio esterno, se disponibili) indica inaffidabilità e impatta negativamente SEO e UX.",
-    'desc_ocm_ga_gsc_not_configured_warning': "La mancata configurazione di Google Analytics o Google Search Console (o il mancato collegamento) impedisce di monitorare le performance del sito e identificare problemi SEO.",
-    'desc_ocm_mixed_content_warning': "Servire risorse HTTP (immagini, script, CSS) su pagine HTTPS (mixed content) compromette la sicurezza della pagina e può causare il blocco di tali risorse da parte del browser.",
+    'desc_ocm_ga_gsc_not_configured_warning': "La mancata configurazione di Google Analytics o Google Search Console (o il mancato collegamento) impedisce di monitorare le performance del sito e identificare problemi SEO.", # Existing good description
+    'desc_ocm_ga_non_configurato_sito_warning': "Google Analytics non configurato sul sito. Google Analytics non risulta installato o correttamente configurato su tutte le pagine del sito. Implementare il tracciamento GA per raccogliere dati vitali sul traffico e il comportamento degli utenti.",
+    'desc_ocm_ga_non_collegato_progetto_warning': "Google Analytics non collegato al progetto. La proprietà di Google Analytics non è (o non sembra essere) collegata a questo progetto di analisi o ad altri strumenti rilevanti. Assicurare il corretto collegamento per un flusso di dati completo e report integrati.",
+    'desc_ocm_gsc_non_configurato_warning': "Google Search Console non configurato. Google Search Console non è configurata per il sito. Verificare la proprietà del sito in GSC per accedere a dati diagnostici cruciali, performance di ricerca, stato dell'indicizzazione e inviare sitemap.",
+    'desc_ocm_gsc_non_collegato_progetto_warning': "Google Search Console non collegato al progetto. La proprietà di Google Search Console non è (o non sembra essere) collegata a questo progetto di analisi. Collegare GSC per integrare dati importanti sulla salute SEO e le performance di ricerca.",
+    # 'desc_ocm_mixed_content_warning' was removed as the key was changed to desc_ocm_problemi_mixed_content_error
 
     # SITE SEO AUDIT Descriptions
     'desc_seo_no_eeat_signals_error': "Assenza o carenza di segnali E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) per contenuti che lo richiedono. Fondamentali per il ranking, specialmente per contenuti YMYL.", # Modified

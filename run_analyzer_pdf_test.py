@@ -277,7 +277,9 @@ def main():
     results = analyzer.analysis_results
 
     print(f"\n--- SEO Analyzer Results ---")
-    print(f"Overall Site Health: {results.get('health_percentage', 'N/A')}%")
+    site_health_info = results.get('site_health', {})
+    overall_score_value = site_health_info.get('health_percentage', 'N/A')
+    print(f"Overall Site Health: {overall_score_value}%")
 
     # Save categorized_issues to a file for easier inspection
     output_path_categorized = "/tmp/categorized_issues.json"
@@ -289,7 +291,7 @@ def main():
         print(f"\nCategorized issues saved to: {output_path_categorized}")
 
         with open(output_path_health, 'w') as f:
-            json.dump({"health_percentage": results.get('health_percentage', 'N/A')}, f, indent=4)
+            json.dump({"health_percentage": overall_score_value}, f, indent=4)
         print(f"Site health saved to: {output_path_health}")
     except Exception as e:
         print(f"Error saving analysis results: {e}")
