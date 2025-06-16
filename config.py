@@ -223,7 +223,6 @@ DETAILED_SEO_CHECKS = {
             {"id": "ocm_missing_meta_description", "description": "Meta description mancanti - Verifica presenza meta description in tutte le pagine", "impact": "Alto", "weight": WEIGHT_HIGH},
             {"id": "ocm_duplicate_meta_description", "description": "Meta description duplicate - Identifica meta description identiche tra pagine diverse", "impact": "Alto", "weight": WEIGHT_HIGH},
             {"id": "ocm_missing_h1", "description": "Tag H1 mancanti - Assicurati che ogni pagina abbia un H1", "impact": "Alto", "weight": WEIGHT_HIGH},
-            {"id": "ocm_duplicate_h1", "description": "Tag H1 duplicati - Evita H1 identici su pagine diverse, se non giustificato", "impact": "Medio", "weight": WEIGHT_MEDIUM},
             {"id": "ocm_multiple_h1", "description": "Tag H1 multipli - Ogni pagina dovrebbe avere un solo H1", "impact": "Alto", "weight": WEIGHT_HIGH},
             {"id": "ocm_missing_alt_text", "description": "Attributi ALT mancanti nelle immagini - Verifica che tutte le immagini abbiano un ALT text descrittivo", "impact": "Alto", "weight": WEIGHT_HIGH},
             {"id": "ocm_broken_internal_links", "description": "Link interni rotti - Identifica e correggi link interni che portano a errori 404", "impact": "Alto", "weight": WEIGHT_HIGH},
@@ -236,6 +235,7 @@ DETAILED_SEO_CHECKS = {
         IMPACT_WARNING: [
             {"id": "ocm_title_too_short", "description": "Tag title troppo corti - Assicurati che i title siano sufficientemente descrittivi (es. <30 caratteri)", "impact": "Medio", "weight": WEIGHT_MEDIUM},
             {"id": "ocm_title_too_long", "description": "Tag title troppo lunghi - Evita title eccessivamente lunghi (es. >60 caratteri)", "impact": "Medio", "weight": WEIGHT_MEDIUM},
+            {"id": "ocm_duplicate_h1", "description": "Tag H1 duplicati - Evita H1 identici su pagine diverse, se non giustificato", "impact": "Medio", "weight": WEIGHT_MEDIUM},
             {"id": "ocm_meta_description_too_short", "description": "Meta description troppo corte - Scrivi meta description più lunghe e informative (es. <120 caratteri)", "impact": "Medio", "weight": WEIGHT_MEDIUM},
             {"id": "ocm_meta_description_too_long", "description": "Meta description troppo lunghe - Riduci la lunghezza delle meta description (es. >160 caratteri)", "impact": "Medio", "weight": WEIGHT_MEDIUM},
             {"id": "ocm_h1_too_short", "description": "Tag H1 troppo corti o poco descrittivi - Rendi gli H1 più significativi", "impact": "Basso", "weight": WEIGHT_LOW},

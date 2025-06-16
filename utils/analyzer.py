@@ -1081,13 +1081,27 @@ class SEOAnalyzer:
     
     def _create_summary(self) -> Dict:
         """Crea un riassunto dell'analisi"""
+        # Calculate total issues from the new structure
+        total_new_issues = 0
+        if 'classified_detailed_issues' in self.analysis_results:
+            classified_issues = self.analysis_results['classified_detailed_issues']
+            if isinstance(classified_issues, dict): # Ensure it's a dict before iterating
+                for category_data in classified_issues.values():
+                    if isinstance(category_data, dict): # Ensure it's a dict
+                        for impact_data in category_data.values():
+                            if isinstance(impact_data, dict): # Ensure it's a dict
+                                for check_id_data in impact_data.values():
+                                    if isinstance(check_id_data, dict): # Ensure it's a dict
+                                        total_new_issues += check_id_data.get('count', 0)
+
         return {
             'domain': self.domain,
+            'report_title': f"SEO Analysis Report for {self.domain}", # Added this line
             'analysis_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'total_pages_analyzed': len(self.pages_data),
             'overall_score': self.analysis_results['overall_score'],
-            'total_issues': sum(len(analysis.get('issues', [])) for analysis in self.analysis_results.values() if isinstance(analysis, dict)),
-            'total_recommendations': len(self.analysis_results['recommendations']),
+            'total_issues': total_new_issues, # Updated to count from new structure
+            'total_recommendations': len(self.analysis_results.get('recommendations', [])), # Ensure recommendations exist
             'score_breakdown': {
                 'excellent': self.analysis_results['overall_score'] >= 90,
                 'good': 70 <= self.analysis_results['overall_score'] < 90,
