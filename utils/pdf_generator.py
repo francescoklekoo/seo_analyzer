@@ -264,7 +264,7 @@ class PDFGenerator:
                     has_issues_in_category_for_display = True # Mark that we found something to display for this category
 
                     severity_style_name = f"{severity.capitalize()}SubHeading"
-                    severity_display_text = {'ERROR': 'Errori Critici', 'WARNING': 'Avvertimenti Importanti', 'NOTICE': 'Avvisi Minori'}.get(severity, severity.capitalize())
+                    severity_display_text = {'ERROR': 'Errori', 'WARNING': 'Avvertimenti Importanti', 'NOTICE': 'Avvisi Minori'}.get(severity, severity.capitalize())
                     category_specific_flowables.append(Paragraph(f"{severity_display_text} ({len(issues_list)} problemi totali)", self.styles.get(severity_style_name, self.styles['SectionSubHeadingStyle'])))
 
                     grouped_issues = {}
@@ -578,13 +578,13 @@ class PDFGenerator:
             return
 
         header_table_style = ParagraphStyle(name='TableHeaderSmall', parent=self.styles['SmallText'], fontName=PDF_CONFIG['font_family_bold'], alignment=TA_CENTER)
-        header_row_text_4_cols = ["Gravità", "Tipo di Problema", "URL/Dettagli Specifici", "Valore Misurato"]
-        header_row_4_cols = [Paragraph(text, header_table_style) for text in header_row_text_4_cols]
+        header_row_text_3_cols = ["Gravità", "Tipo di Problema", "URL/Dettagli Specifici"]
+        header_row_3_cols = [Paragraph(text, header_table_style) for text in header_row_text_3_cols]
 
-        data_cell_style_center = ParagraphStyle(name='DataCellSmallCenter', parent=data_cell_style, alignment=TA_CENTER)
+        data_cell_style_center = ParagraphStyle(name='DataCellSmallCenter', parent=data_cell_style, alignment=TA_CENTER) # Kept if other centered cells are needed, though not for the removed column.
 
         available_width = A4[0] - self.doc.leftMargin - self.doc.rightMargin
-        col_widths_4_cols = [available_width * 0.15, available_width * 0.30, available_width * 0.40, available_width * 0.15]
+        col_widths_3_cols = [available_width * 0.15, available_width * 0.35, available_width * 0.50]
 
         new_header_bg_color = colors.HexColor('#f5f5f5')
         color_row_odd_bg = colors.HexColor(PDF_CONFIG['colors'].get('light_gray_alt', '#E8EFF5')) # A slightly different shade for striping
@@ -605,7 +605,7 @@ class PDFGenerator:
             ('ALIGN', (0,1), (0,-1), 'LEFT'),
             ('ALIGN', (1,1), (1,-1), 'LEFT'),
             ('ALIGN', (2,1), (2,-1), 'LEFT'),
-            ('ALIGN', (3,1), (3,-1), 'CENTER'),
+            # ('ALIGN', (3,1), (3,-1), 'CENTER'), # Removed for the 4th column
             ('LEFTPADDING', (0,1), (-1,-1), 5), ('RIGHTPADDING', (0,1), (-1,-1), 5),
             ('TOPPADDING', (0,1), (-1,-1), 5), ('BOTTOMPADDING', (0,1), (-1,-1), 5),
             ('GRID', (0,0), (-1,-1), 0.5, grid_color), ('BOX', (0,0), (-1,-1), 1, grid_color),
@@ -615,17 +615,17 @@ class PDFGenerator:
         if ocm_issues_for_table:
             flowables.append(Paragraph("Dettaglio Problemi OCM", self.styles['SectionSubHeadingStyle']))
             flowables.append(Spacer(1, 0.1 * inch))
-            ocm_data_rows = [header_row_4_cols]
+            ocm_data_rows = [header_row_3_cols]
             for item in ocm_issues_for_table:
                 row = [
                     Paragraph(severity_text_map.get(item['gravita_key'], item['gravita_key']), severity_style_map.get(item['gravita_key'], data_cell_style)),
                     Paragraph(item['tipo_problema'], data_cell_style),
                     Paragraph(item['url_dettagli'].replace("\n", "<br/>"), data_cell_style),
-                    Paragraph(str(item['valore_misurato']), data_cell_style_center)
+                    # Paragraph(str(item['valore_misurato']), data_cell_style_center) # Removed
                 ]
                 ocm_data_rows.append(row)
 
-            ocm_table = Table(ocm_data_rows, colWidths=col_widths_4_cols, repeatRows=1)
+            ocm_table = Table(ocm_data_rows, colWidths=col_widths_3_cols, repeatRows=1)
             ocm_table_style_cmds = list(base_table_style_cmds)
             for i in range(1, len(ocm_data_rows)):
                 bg_color = color_row_even_bg if i % 2 == 0 else color_row_odd_bg
@@ -638,17 +638,17 @@ class PDFGenerator:
         if seo_audit_issues_for_table:
             flowables.append(Paragraph("Dettaglio Problemi SEO Audit", self.styles['SectionSubHeadingStyle']))
             flowables.append(Spacer(1, 0.1 * inch))
-            seo_audit_data_rows = [header_row_4_cols]
+            seo_audit_data_rows = [header_row_3_cols]
             for item in seo_audit_issues_for_table:
                 row = [
                     Paragraph(severity_text_map.get(item['gravita_key'], item['gravita_key']), severity_style_map.get(item['gravita_key'], data_cell_style)),
                     Paragraph(item['tipo_problema'], data_cell_style),
                     Paragraph(item['url_dettagli'].replace("\n", "<br/>"), data_cell_style),
-                    Paragraph(str(item['valore_misurato']), data_cell_style_center)
+                    # Paragraph(str(item['valore_misurato']), data_cell_style_center) # Removed
                 ]
                 seo_audit_data_rows.append(row)
 
-            seo_table = Table(seo_audit_data_rows, colWidths=col_widths_4_cols, repeatRows=1)
+            seo_table = Table(seo_audit_data_rows, colWidths=col_widths_3_cols, repeatRows=1)
             seo_table_style_cmds = list(base_table_style_cmds)
             for i in range(1, len(seo_audit_data_rows)):
                 bg_color = color_row_even_bg if i % 2 == 0 else color_row_odd_bg

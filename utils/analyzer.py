@@ -549,39 +549,61 @@ class SEOAnalyzer:
                     continue # Skip if not SEO Audit or already processed as site-wide
 
                 category = check_config['category'] # Should be CATEGORY_SEO_AUDIT
-                severity = check_config['severity']
-                details = ""
+                # Severity for these specific checks will be 'ERROR' as per requirements, overriding check_config['severity'] if different
 
                 # Specific page-level SEO Audit checks implemented here
                 if check_key == 'seo_audit_images_missing_alt_error':
-                    missing_alt_images_src = [img.get('src', 'N/A') for img in images_on_page if img.get('alt') is None]
-                    if missing_alt_images_src:
-                        details = f"Rilevate {len(missing_alt_images_src)} immagini senza attributo ALT HTML. Esempi src: {'; '.join(missing_alt_images_src[:3])}"
-                        if len(missing_alt_images_src) > 3:
-                            details += "..."
+                    for img in images_on_page:
+                        if img.get('alt') is None:
+                            self.analysis_results['categorized_issues'][CATEGORY_SEO_AUDIT]['ERROR'].append({
+                                'key': 'seo_audit_images_missing_alt_error',
+                                'label': check_config['label'], # "Immagini senza attributo ALT"
+                                'url': page_url,
+                                'details': img.get('src', 'N/A'),
+                                'description_key': check_config['description_key'],
+                                'severity': 'ERROR' # Explicitly ERROR
+                            })
+                    # Removed old aggregated logic, continue to next check_key
+                    continue
 
                 elif check_key == 'seo_audit_images_missing_title_error':
-                    missing_title_images_src = [img.get('src', 'N/A') for img in images_on_page if img.get('title') is None]
-                    if missing_title_images_src:
-                        details = f"Rilevate {len(missing_title_images_src)} immagini senza attributo Title HTML. Esempi src: {'; '.join(missing_title_images_src[:3])}"
-                        if len(missing_title_images_src) > 3:
-                            details += "..."
+                    for img in images_on_page:
+                        if img.get('title') is None:
+                            self.analysis_results['categorized_issues'][CATEGORY_SEO_AUDIT]['ERROR'].append({
+                                'key': 'seo_audit_images_missing_title_error',
+                                'label': check_config['label'], # "Immagini senza attributo Title"
+                                'url': page_url,
+                                'details': img.get('src', 'N/A'),
+                                'description_key': check_config['description_key'],
+                                'severity': 'ERROR' # Explicitly ERROR
+                            })
+                    # Removed old aggregated logic, continue to next check_key
+                    continue
 
-                # Add other page-specific SEO Audit checks here as elif blocks
-                # Example:
-                # elif check_key == 'seo_audit_another_page_specific_check':
-                #     if condition_for_this_page_seo_issue:
-                #         details = "Details for another page-specific SEO audit issue."
+                # --- Original structure for other SEO audit issues (if any defined as page-specific) ---
+                # This part should remain if there are other page-specific SEO audit checks
+                # that are NOT 'seo_audit_images_missing_alt_error' or 'seo_audit_images_missing_title_error'.
+                # For now, we assume these are the only two page-specific ones being modified this way.
+                # If other checks exist and need the old "details" aggregation, that logic would be here:
 
-                if details: # If an issue was found for this page-specific SEO audit check
-                    self.analysis_results['categorized_issues'][category][severity].append({
-                        'key': check_key,
-                        'label': check_config['label'],
-                        'url': page_url,
-                        'details': details,
-                        'description_key': check_config['description_key'],
-                        'severity': severity
-                    })
+                else: # For any other page-specific SEO Audit check
+                    details = "" # Reset details for other checks
+                    # Example of how other checks might be structured (kept for context, adapt if needed)
+                    # if check_key == 'seo_audit_another_page_specific_check':
+                    #     if some_condition_for_this_page_seo_issue(page): # Implement this condition
+                    #         details = "Details for another page-specific SEO audit issue."
+
+                    if details: # If an issue was found for THIS OTHER page-specific SEO audit check
+                        # Use severity from config for these other checks
+                        severity_for_other_checks = check_config['severity']
+                        self.analysis_results['categorized_issues'][category][severity_for_other_checks].append({
+                            'key': check_key,
+                            'label': check_config['label'],
+                            'url': page_url,
+                            'details': details,
+                            'description_key': check_config['description_key'],
+                            'severity': severity_for_other_checks
+                        })
 
         self.logger.info("Analisi dettagliata problemi SEO Audit per pagina completata.")
 
