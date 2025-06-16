@@ -134,6 +134,30 @@ class PDFGenerator:
         style_name = 'ScoreCritical'
         if style_name not in self.styles:
             self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], textColor=HexColor(PDF_CONFIG['colors']['error']), fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'], alignment=TA_RIGHT))
+
+        # Stili per i titoli delle sottosezioni di impatto (Errori, Avvertimenti, Avvisi)
+        style_name = 'ImpactSectionTitleError'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['h3'], fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'] + 1, textColor=HexColor(PDF_CONFIG['colors']['error']), spaceBefore=10, spaceAfter=5))
+
+        style_name = 'ImpactSectionTitleWarning'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['h3'], fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'] + 1, textColor=HexColor(PDF_CONFIG['colors']['warning']), spaceBefore=10, spaceAfter=5))
+
+        style_name = 'ImpactSectionTitleNotice'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['h3'], fontName=PDF_CONFIG['font_family'], fontSize=PDF_CONFIG['font_sizes']['body'] + 1, textColor=HexColor(PDF_CONFIG['colors']['success']), spaceBefore=10, spaceAfter=5)) # Using success for notices
+
+        # Stile per la descrizione di un check specifico
+        style_name = 'CheckDescription'
+        if style_name not in self.styles:
+            self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['BodyText'], fontName=PDF_CONFIG['font_family'], spaceBefore=5, spaceAfter=2, keepWithNext=1))
+            self.styles['CheckDescription'].fontName = PDF_CONFIG['font_family'] # Ensure bold or specific font if needed
+
+        # Stile per i singoli risultati (URL + messaggio)
+        style_name = 'FindingListItem'
+        if style_name not in self.styles:
+             self.styles.add(ParagraphStyle(name=style_name, parent=self.styles['ListItem'], leftIndent=30, spaceAfter=1))
         
     def _add_header(self):
         """Aggiunge l'intestazione del report"""
@@ -198,18 +222,29 @@ class PDFGenerator:
             'Link Interni': self.analysis_results['links_analysis']['score'],
             'Performance': self.analysis_results['performance_analysis']['score'],
             'Aspetti Tecnici': self.analysis_results['technical_analysis']['score'],
-            'SSL': self.analysis_results['ssl_analysis']['score']
+            'SSL': self.analysis_results['ssl_analysis']['score'],
+            # New Scores
+            'Punteggio OCM': self.analysis_results.get('ocm_category_score', 0),
+            'Punteggio SEO Audit': self.analysis_results.get('seo_audit_category_score', 0),
         }
 
-        for category, score in categories.items():
-            status_text = self._get_status_text(score)
-            data.append([
-                Paragraph(category, self.styles['BodyText']),
-                Paragraph(f"{score}/100", self.styles['BodyText']),
-                Paragraph(status_text, self.styles['BodyText']) # Potresti voler applicare uno stile specifico qui per il colore
-            ])
+        for category_name, score_value in categories.items():
+            status_text = self._get_status_text(score_value)
+            # Determina lo stile del testo del punteggio in base al valore
+            score_style = self.styles['BodyText'] # Default
+            if score_value >= 90: score_style = self.styles['ScoreExcellent']
+            elif score_value >= 70: score_style = self.styles['ScoreGood']
+            elif score_value >= 50: score_style = self.styles['ScoreWarning'] # Adattato, prima era 'ScoreGood' per 70-90
+            else: score_style = self.styles['ScoreCritical']
 
-        table = Table(data, colWidths=[4*cm, 2.5*cm, 3*cm])
+            # Allinea a sinistra il nome della categoria, a destra il punteggio
+            category_paragraph = Paragraph(category_name, self.styles['BodyText'])
+            score_paragraph = Paragraph(f"{score_value}/100", score_style) # Usa lo stile colorato e allineato a destra
+            status_paragraph = Paragraph(status_text, self.styles['BodyText']) # Allineamento centrale di default per la tabella
+
+            data.append([category_paragraph, score_paragraph, status_paragraph])
+
+        table = Table(data, colWidths=[7*cm, 3*cm, 7*cm]) # Adjusted colWidths for better spacing
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['primary_light'])),
             ('TEXTCOLOR', (0, 0), (-1, 0), white),
@@ -221,6 +256,9 @@ class PDFGenerator:
             ('GRID', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['border'])),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['primary_dark'])),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,1), (0,-1), 'LEFT'),      # Allinea a sinistra i nomi delle categorie
+            ('ALIGN', (1,1), (1,-1), 'RIGHT'),     # Allinea a destra i punteggi
+            ('ALIGN', (2,1), (2,-1), 'CENTER'),    # Allinea al centro gli stati
         ]))
         self.story.append(table)
         self.story.append(Spacer(1, 0.5 * inch))
@@ -281,216 +319,13 @@ class PDFGenerator:
         self.story.append(Spacer(1, 0.5 * inch))
 
 
-    def _add_detailed_analysis_section(self):
-        """Aggiunge la sezione di analisi dettagliata con tabelle per i problemi"""
-        self.story.append(Paragraph("Analisi Dettagliata", self.styles['SectionHeading']))
-        self.story.append(Spacer(1, 0.2 * inch))
+    # def _add_detailed_analysis_section(self): # Commenting out old section
+    #     """Aggiunge la sezione di analisi dettagliata con tabelle per i problemi"""
+    #     self.story.append(Paragraph("Analisi Dettagliata", self.styles['SectionHeading']))
+    #     self.story.append(Spacer(1, 0.2 * inch))
+    #     # ... (implementation of old detailed analysis) ...
+    #     pass
 
-        detailed_issues = self.analysis_results.get('detailed_issues', {})
-
-        # Helper per aggiungere una sottosezione con tabella di problemi
-        def add_issue_table_subsection(title: str, issues: List[Dict], issue_type_key: str = 'type'):
-            if not issues:
-                return
-            
-            self.story.append(Paragraph(title, self.styles['BodyText']))
-            self.story.append(Spacer(1, 0.1 * inch))
-
-            data = [['URL', 'Tipo Problema']]
-            for issue in issues:
-                url = issue.get('url', 'N/A')
-                # Per i problemi di immagini, l'URL è direttamente l'URL dell'immagine, non un dizionario con 'type'
-                if issue_type_key == 'url':
-                    issue_type = "Immagine" # O un altro valore predefinito
-                else:
-                    issue_type = issue.get(issue_type_key, 'Sconosciuto')
-                data.append([
-                    Paragraph(url, self.styles['BodyText']),
-                    Paragraph(issue_type, self.styles['BodyText'])
-                ])
-            
-            table = Table(data, colWidths=[12*cm, 5*cm])
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['secondary'])),
-                ('TEXTCOLOR', (0, 0), (-1, 0), white),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), PDF_CONFIG['font_family']),
-                ('FONTSIZE', (0, 0), (-1, 0), PDF_CONFIG['font_sizes']['small']),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-                ('BACKGROUND', (0, 1), (-1, -1), HexColor(PDF_CONFIG['colors']['light_gray'])),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor(PDF_CONFIG['colors']['border'])),
-                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor(PDF_CONFIG['colors']['secondary_dark'])),
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ]))
-            self.story.append(table)
-            self.story.append(Spacer(1, 0.3 * inch))
-
-        # Title Tags
-        self.story.append(Paragraph("Title Tags", self.styles['SectionHeading']))
-        title_analysis = self.analysis_results['title_analysis']
-        self.story.append(Paragraph(f"• Pagine con Title: {title_analysis['pages_with_title']}/{title_analysis['total_pages']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza Title: {len(detailed_issues.get('pages_without_title', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Title duplicati: {len(detailed_issues.get('duplicate_titles', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Title troppo corti: {len(title_analysis['too_short_titles'])}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Title troppo lunghi: {len(title_analysis['too_long_titles'])}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {title_analysis['score']}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine senza Title", detailed_issues.get('pages_without_title', []))
-        add_issue_table_subsection("Title Duplicati", detailed_issues.get('duplicate_titles', []))
-        add_issue_table_subsection("Title Troppo Corti", title_analysis['too_short_titles'])
-        add_issue_table_subsection("Title Troppo Lunghi", title_analysis['too_long_titles'])
-        self.story.append(PageBreak())
-
-        # Meta Descriptions
-        self.story.append(Paragraph("Meta Descriptions", self.styles['SectionHeading']))
-        meta_analysis = self.analysis_results['meta_description_analysis']
-        self.story.append(Paragraph(f"• Pagine con Meta Description: {meta_analysis['pages_with_meta']}/{meta_analysis['total_pages']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza Meta Description: {len(detailed_issues.get('pages_without_meta', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Meta Description Duplicate: {len(detailed_issues.get('duplicate_meta_descriptions', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Meta Description Troppo Corte: {len(meta_analysis['too_short_metas'])}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Meta Description Troppo Lunghe: {len(meta_analysis['too_long_metas'])}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {meta_analysis['score']}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine senza Meta Description", detailed_issues.get('pages_without_meta', []))
-        add_issue_table_subsection("Meta Description Duplicate", detailed_issues.get('duplicate_meta_descriptions', []))
-        add_issue_table_subsection("Meta Description Troppo Corte", meta_analysis['too_short_metas'])
-        add_issue_table_subsection("Meta Description Troppo Lunghe", meta_analysis['too_long_metas'])
-        self.story.append(PageBreak())
-
-        # Headings (H1, H2, H3)
-        self.story.append(Paragraph("Headings (H1, H2, H3)", self.styles['SectionHeading']))
-        headings_analysis = self.analysis_results.get('headings_analysis', {})
-        self.story.append(Paragraph(f"• Pagine senza H1: {len(detailed_issues.get('missing_h1_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con H1 multipli: {len(detailed_issues.get('multiple_h1_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza H2: {len(detailed_issues.get('missing_h2_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza H3: {len(detailed_issues.get('missing_h3_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {headings_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine senza H1", detailed_issues.get('missing_h1_pages', []))
-        add_issue_table_subsection("Pagine con H1 Multipli", detailed_issues.get('multiple_h1_pages', []))
-        add_issue_table_subsection("Pagine senza H2", detailed_issues.get('missing_h2_pages', []))
-        add_issue_table_subsection("Pagine senza H3", detailed_issues.get('missing_h3_pages', []))
-        self.story.append(PageBreak())
-
-        # Immagini
-        self.story.append(Paragraph("Immagini", self.styles['SectionHeading']))
-        images_analysis = self.analysis_results['images_analysis']
-        self.story.append(Paragraph(f"• Totale immagini: {images_analysis['total_images']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Con alt text: {images_analysis['images_with_alt']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Senza alt text: {len(detailed_issues.get('images_without_alt', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Senza attributo title: {len(detailed_issues.get('images_without_title', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Alt vuoto: {images_analysis['images_with_empty_alt']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Immagini interrotte: {len(detailed_issues.get('broken_images', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {images_analysis['score']}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        # Per i problemi di immagini, l'URL è direttamente l'URL dell'immagine, non un dizionario con 'type'
-        add_issue_table_subsection("Immagini senza Alt Text", detailed_issues.get('images_without_alt', []), issue_type_key='url') 
-        add_issue_table_subsection("Immagini senza Attributo Title", detailed_issues.get('images_without_title', []), issue_type_key='url') 
-        add_issue_table_subsection("Immagini Interrotte", detailed_issues.get('broken_images', []), issue_type_key='url') 
-        self.story.append(PageBreak())
-
-        # Contenuto
-        self.story.append(Paragraph("Contenuto", self.styles['SectionHeading']))
-        content_analysis = self.analysis_results.get('content_analysis', {})
-        self.story.append(Paragraph(f"• Pagine con conteggio parole basso: {len(detailed_issues.get('low_word_count_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con duplicati di contenuto: {len(detailed_issues.get('duplicate_content_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con rapporto testo/HTML basso: {len(detailed_issues.get('low_text_html_ratio_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {content_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine con Conteggio Parole Basso", detailed_issues.get('low_word_count_pages', []))
-        add_issue_table_subsection("Pagine con Duplicati di Contenuto", detailed_issues.get('duplicate_content_pages', []))
-        add_issue_table_subsection("Pagine con Rapporto Testo/HTML Basso", detailed_issues.get('low_text_html_ratio_pages', []))
-        self.story.append(PageBreak())
-
-        # Link
-        self.story.append(Paragraph("Link", self.styles['SectionHeading']))
-        links_analysis = self.analysis_results.get('links_analysis', {})
-        self.story.append(Paragraph(f"• Link interni interrotti: {len(detailed_issues.get('broken_links', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Loop e catene di reindirizzamenti: {len(detailed_issues.get('redirect_chains', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con link canonico interrotto: {len(detailed_issues.get('broken_canonical_links', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con più URL canonici: {len(detailed_issues.get('multiple_canonical_urls', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {links_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Link Interni Interrotti", detailed_issues.get('broken_links', []))
-        add_issue_table_subsection("Loop e Catene di Reindirizzamenti", detailed_issues.get('redirect_chains', []))
-        add_issue_table_subsection("Pagine con Link Canonico Interrotto", detailed_issues.get('broken_canonical_links', []))
-        add_issue_table_subsection("Pagine con Più URL Canonici", detailed_issues.get('multiple_canonical_urls', []))
-        self.story.append(PageBreak())
-
-        # Performance
-        self.story.append(Paragraph("Performance", self.styles['SectionHeading']))
-        perf_analysis = self.analysis_results['performance_analysis']
-        self.story.append(Paragraph(f"• Pagine veloci: {perf_analysis['fast_pages']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine lente: {perf_analysis['slow_pages']}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Tempo medio: {perf_analysis['average_response_time']:.2f}s", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Dimensione media: {perf_analysis['average_page_size']/1024:.1f} KB", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con dimensioni HTML troppo grandi: {len(detailed_issues.get('large_html_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con velocità di caricamento bassa: {len(detailed_issues.get('slow_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {perf_analysis['score']}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine con Dimensioni HTML Troppo Grandi", detailed_issues.get('large_html_pages', []))
-        add_issue_table_subsection("Pagine con Velocità di Caricamento Bassa", detailed_issues.get('slow_pages', []))
-        self.story.append(PageBreak())
-
-        # Tecnico
-        self.story.append(Paragraph("Aspetti Tecnici", self.styles['SectionHeading']))
-        technical_analysis = self.analysis_results.get('technical_analysis', {})
-        self.story.append(Paragraph(f"• Pagine non raggiungibili dal crawler: {len(detailed_issues.get('unreachable_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi risoluzione DNS: {len(detailed_issues.get('dns_resolution_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Formati URL non corretti: {len(detailed_issues.get('invalid_url_format_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Robots.txt con errori: {len(detailed_issues.get('robots_txt_errors', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Sitemap.xml con errori: {len(detailed_issues.get('sitemap_xml_errors', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine sbagliate in sitemap.xml: {len(detailed_issues.get('sitemap_wrong_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi risoluzione WWW: {len(detailed_issues.get('www_resolution_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza tag viewport: {len(detailed_issues.get('pages_without_viewport', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine AMP senza tag canonici: {len(detailed_issues.get('amp_no_canonical_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi hreflang: {len(detailed_issues.get('hreflang_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Conflitti hreflang: {len(detailed_issues.get('hreflang_conflicts', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Link hreflang sbagliati: {len(detailed_issues.get('hreflang_broken_links', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine con meta refresh tag: {len(detailed_issues.get('meta_refresh_tags', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• CSS/JS interni inaccessibili: {len(detailed_issues.get('inaccessible_css_js', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Sitemap.xml troppo pesanti: {len(detailed_issues.get('large_sitemap_files', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Elementi dati strutturati non validi: {len(detailed_issues.get('invalid_structured_data', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Pagine senza valore larghezza viewport: {len(detailed_issues.get('pages_without_viewport_width', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {technical_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine Non Raggiungibili dal Crawler", detailed_issues.get('unreachable_pages', []))
-        add_issue_table_subsection("Problemi Risoluzione DNS", detailed_issues.get('dns_resolution_issues', []))
-        add_issue_table_subsection("Formati URL Non Corretti", detailed_issues.get('invalid_url_format_pages', []))
-        add_issue_table_subsection("Robots.txt con Errori", detailed_issues.get('robots_txt_errors', []))
-        add_issue_table_subsection("Sitemap.xml con Errori", detailed_issues.get('sitemap_xml_errors', []))
-        add_issue_table_subsection("Pagine Sbagliate in Sitemap.xml", detailed_issues.get('sitemap_wrong_pages', []))
-        add_issue_table_subsection("Problemi Risoluzione WWW", detailed_issues.get('www_resolution_issues', []))
-        add_issue_table_subsection("Pagine senza Tag Viewport", detailed_issues.get('pages_without_viewport', []))
-        add_issue_table_subsection("Pagine AMP senza Tag Canonici", detailed_issues.get('amp_no_canonical_pages', []))
-        add_issue_table_subsection("Problemi Hreflang", detailed_issues.get('hreflang_issues', []))
-        add_issue_table_subsection("Conflitti Hreflang", detailed_issues.get('hreflang_conflicts', []))
-        add_issue_table_subsection("Link Hreflang Sbagliati", detailed_issues.get('hreflang_broken_links', []))
-        add_issue_table_subsection("Pagine con Meta Refresh Tag", detailed_issues.get('meta_refresh_tags', []))
-        add_issue_table_subsection("CSS/JS Interni Inaccessibili", detailed_issues.get('inaccessible_css_js', []))
-        add_issue_table_subsection("Sitemap.xml Troppo Pesanti", detailed_issues.get('large_sitemap_files', []))
-        add_issue_table_subsection("Elementi Dati Strutturati Non Validi", detailed_issues.get('invalid_structured_data', []))
-        add_issue_table_subsection("Pagine senza Valore Larghezza Viewport", detailed_issues.get('pages_without_viewport_width', []))
-        self.story.append(PageBreak())
-
-        # SSL / Sicurezza
-        self.story.append(Paragraph("SSL / Sicurezza", self.styles['SectionHeading']))
-        ssl_analysis = self.analysis_results.get('ssl_analysis', {})
-        self.story.append(Paragraph(f"• Pagine non sicure (HTTP): {len(detailed_issues.get('non_secure_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Certificato in scadenza/scaduto: {len(detailed_issues.get('ssl_expired_or_expiring_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Vecchio protocollo sicurezza: {len(detailed_issues.get('old_security_protocol_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Certificato nome errato: {len(detailed_issues.get('ssl_wrong_name_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Problemi contenuti misti: {len(detailed_issues.get('mixed_content_pages', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Nessun reindirizzamento HTTP->HTTPS homepage: {len(detailed_issues.get('http_to_https_no_redirect_issues', []))}", self.styles['ListItem']))
-        self.story.append(Paragraph(f"• Punteggio: {ssl_analysis.get('score', 'N/A')}/100", self.styles['ListItem']))
-        self.story.append(Spacer(1, 0.1 * inch))
-        add_issue_table_subsection("Pagine Non Sicure (HTTP)", detailed_issues.get('non_secure_pages', []))
-        add_issue_table_subsection("Certificato in Scadenza/Scaduto", detailed_issues.get('ssl_expired_or_expiring_issues', []))
-        add_issue_table_subsection("Vecchio Protocollo Sicurezza", detailed_issues.get('old_security_protocol_issues', []))
-        add_issue_table_subsection("Certificato Nome Errato", detailed_issues.get('ssl_wrong_name_issues', []))
-        add_issue_table_subsection("Problemi Contenuti Misti", detailed_issues.get('mixed_content_pages', []))
-        add_issue_table_subsection("Nessun Reindirizzamento HTTP->HTTPS Homepage", detailed_issues.get('http_to_https_no_redirect_issues', []))
-        self.story.append(PageBreak())
 
     def _add_recommendations_section(self):
         """Aggiunge la sezione delle raccomandazioni con tabelle"""
@@ -696,8 +531,13 @@ class PDFGenerator:
             self._add_score_overview()
             self.story.append(PageBreak()) # Nuova pagina dopo la panoramica punteggi
 
-            self._add_detailed_analysis_section()
-            self.story.append(PageBreak()) # Nuova pagina dopo l'analisi dettagliata
+            # self._add_detailed_analysis_section() # Old section commented out
+            # self.story.append(PageBreak())
+
+            self._add_ocm_report_section()
+            self.story.append(PageBreak())
+            self._add_seo_audit_report_section()
+            self.story.append(PageBreak())
 
             self._add_recommendations_section()
             self.story.append(PageBreak()) # Nuova pagina dopo le raccomandazioni
@@ -712,3 +552,83 @@ class PDFGenerator:
             traceback.print_exc()
             return False
 
+    # --- New methods for OCM and SEO_AUDIT sections ---
+
+    def _add_ocm_report_section(self):
+        """Aggiunge la sezione del report OCM."""
+        self.story.append(Paragraph("OCM (Ottimizzazione Contenuti per Motori di Ricerca)", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        if 'classified_detailed_issues' not in self.analysis_results or \
+           CATEGORY_OCM not in self.analysis_results['classified_detailed_issues']:
+            self.story.append(Paragraph("Dati OCM non disponibili.", self.styles['BodyText']))
+            return
+
+        ocm_data = self.analysis_results['classified_detailed_issues'][CATEGORY_OCM]
+
+        self._add_impact_subsection(CATEGORY_OCM, IMPACT_ERROR, "🔴 ERRORI OCM (Alto Impatto):", ocm_data.get(IMPACT_ERROR, {}), PDF_CONFIG['colors']['error'])
+        self._add_impact_subsection(CATEGORY_OCM, IMPACT_WARNING, "🟡 AVVERTIMENTI OCM (Medio Impatto):", ocm_data.get(IMPACT_WARNING, {}), PDF_CONFIG['colors']['warning'])
+        self._add_impact_subsection(CATEGORY_OCM, IMPACT_NOTICE, "🟢 AVVISI OCM (Basso Impatto):", ocm_data.get(IMPACT_NOTICE, {}), PDF_CONFIG['colors']['success']) # Using success for notices
+
+    def _add_seo_audit_report_section(self):
+        """Aggiunge la sezione del report SEO AUDIT."""
+        self.story.append(Paragraph("📊 SEO AUDIT (Analisi Strategica e Tecnica Approfondita)", self.styles['SectionHeading']))
+        self.story.append(Spacer(1, 0.2 * inch))
+
+        if 'classified_detailed_issues' not in self.analysis_results or \
+           CATEGORY_SEO_AUDIT not in self.analysis_results['classified_detailed_issues']:
+            self.story.append(Paragraph("Dati SEO Audit non disponibili.", self.styles['BodyText']))
+            return
+
+        seo_audit_data = self.analysis_results['classified_detailed_issues'][CATEGORY_SEO_AUDIT]
+
+        self._add_impact_subsection(CATEGORY_SEO_AUDIT, IMPACT_ERROR, "🔴 ERRORI SEO AUDIT (Alto Impatto):", seo_audit_data.get(IMPACT_ERROR, {}), PDF_CONFIG['colors']['error'])
+        self._add_impact_subsection(CATEGORY_SEO_AUDIT, IMPACT_WARNING, "🟡 AVVERTIMENTI SEO AUDIT (Medio Impatto):", seo_audit_data.get(IMPACT_WARNING, {}), PDF_CONFIG['colors']['warning'])
+        self._add_impact_subsection(CATEGORY_SEO_AUDIT, IMPACT_NOTICE, "🟢 AVVISI SEO AUDIT (Basso Impatto):", seo_audit_data.get(IMPACT_NOTICE, {}), PDF_CONFIG['colors']['success'])
+
+
+    def _add_impact_subsection(self, category_key: str, impact_key: str, section_title_text: str, checks_in_impact_level: Dict, title_color_hex: str):
+        """
+        Aggiunge una sottosezione per un livello di impatto specifico (Errori, Avvertimenti, Avvisi)
+        all'interno di una categoria (OCM o SEO_AUDIT).
+        """
+        # Determina lo stile del titolo della sottosezione in base all'impatto
+        if impact_key == IMPACT_ERROR:
+            title_style = self.styles['ImpactSectionTitleError']
+        elif impact_key == IMPACT_WARNING:
+            title_style = self.styles['ImpactSectionTitleWarning']
+        elif impact_key == IMPACT_NOTICE:
+            title_style = self.styles['ImpactSectionTitleNotice']
+        else: # Fallback
+            title_style = self.styles['h3']
+            # Manually set color if not using specific styles
+            # title_style.textColor = HexColor(title_color_hex)
+
+
+        self.story.append(Paragraph(section_title_text, title_style))
+        self.story.append(Spacer(1, 0.1 * inch))
+
+        found_issues_in_subsection = False
+        if checks_in_impact_level:
+            for check_id, check_data in checks_in_impact_level.items():
+                if check_data.get('count', 0) > 0:
+                    found_issues_in_subsection = True
+
+                    # Add check description as a sub-sub-heading
+                    self.story.append(Paragraph(f"<b>{check_data['description']}</b> (ID: {check_id}, Peso: {check_data['weight']})", self.styles['CheckDescription']))
+
+                    # List each finding
+                    for finding in check_data.get('findings', []):
+                        finding_text = f"URL: {finding.get('url', 'N/A')}"
+                        if 'message' in finding and finding['message']:
+                             # Escape HTML entities in message if any, to prevent ReportLab errors
+                            message_clean = finding['message'].replace('<', '&lt;').replace('>', '&gt;')
+                            finding_text += f" - <i>Dettaglio: {message_clean}</i>"
+
+                        self.story.append(Paragraph(f"• {finding_text}", self.styles['FindingListItem']))
+                    self.story.append(Spacer(1, 0.1 * inch)) # Spacer after each check's findings
+
+        if not found_issues_in_subsection:
+            self.story.append(Paragraph(f"Nessun problema di tipo '{impact_key.lower()}' trovato in questa categoria.", self.styles['BodyText']))
+
+        self.story.append(Spacer(1, 0.2 * inch)) # Spacer after the whole impact subsection

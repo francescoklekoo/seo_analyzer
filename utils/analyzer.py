@@ -24,10 +24,39 @@ class SEOAnalyzer:
         self.analysis_results = {}
         self.logger = logging.getLogger(__name__)
         
+        # Initialize new_detailed_results structure
+        self.new_detailed_results = {
+            CATEGORY_OCM: {
+                IMPACT_ERROR: {},
+                IMPACT_WARNING: {},
+                IMPACT_NOTICE: {}
+            },
+            CATEGORY_SEO_AUDIT: {
+                IMPACT_ERROR: {},
+                IMPACT_WARNING: {},
+                IMPACT_NOTICE: {}
+            }
+        }
+        # Pre-populate with check details
+        for category, impacts in DETAILED_SEO_CHECKS.items():
+            for impact_level, checks in impacts.items():
+                for check_details in checks:
+                    self.new_detailed_results[category][impact_level][check_details['id']] = {
+                        "description": check_details['description'],
+                        "weight": check_details['weight'],
+                        "impact": check_details['impact'], # Storing impact level string as well
+                        "findings": [],
+                        "count": 0
+                    }
+
     def analyze_all(self) -> Dict:
         """Esegue tutte le analisi SEO"""
         self.logger.info("Inizio analisi SEO completa")
         
+        # Initialize new_detailed_results for this run (if analyzer is reused)
+        # This is already handled by pre-populating in __init__ and clearing findings per run if needed
+        # For now, assuming __init__ is called for each new analysis set (pages_data)
+
         # Analisi individuali
         self.analysis_results = {
             'title_analysis': self._analyze_titles(),
@@ -40,17 +69,25 @@ class SEOAnalyzer:
             'performance_analysis': self._analyze_performance(),
             'mobile_analysis': self._analyze_mobile_friendly(),
             'ssl_analysis': self._analyze_ssl(),
-            'detailed_issues': self._analyze_detailed_issues(),  # Nuova analisi dettagliata
+            'classified_detailed_issues': self._analyze_detailed_issues(), # New analysis used here
             'site_health': self._calculate_site_health(),  # Calcolo stato sito
+            # overall_score will be calculated after category scores
+            'ocm_category_score': 0, # Placeholder, will be calculated
+            'seo_audit_category_score': 0, # Placeholder, will be calculated
             'overall_score': 0,
             'recommendations': [],
             'summary': {}
         }
         
-        # Calcola il punteggio generale
+        # Calcola i punteggi delle categorie dettagliate (OCM, SEO_AUDIT)
+        # This needs to be done after 'classified_detailed_issues' is populated.
+        self._calculate_detailed_category_scores()
+
+        # Calcola il punteggio SEO generale complessivo
+        # This must be after individual scores and category scores are calculated.
         self.analysis_results['overall_score'] = self._calculate_overall_score()
         
-        # Genera raccomandazioni
+        # Genera raccomandazioni basate su tutte le analisi e punteggi
         self.analysis_results['recommendations'] = self._generate_recommendations()
         
         # Crea il riassunto
@@ -58,7 +95,58 @@ class SEOAnalyzer:
         
         self.logger.info("Analisi SEO completata")
         return self.analysis_results
-    
+
+    def _calculate_detailed_category_scores(self):
+        """
+        Calculates scores for OCM and SEO_AUDIT categories based on DETAILED_SEO_CHECKS findings.
+        """
+        self.logger.info("Calcolo punteggi categorie dettagliate...")
+        if 'classified_detailed_issues' not in self.analysis_results:
+            self.logger.warning("Risultati dettagliati classificati non trovati. Impossibile calcolare i punteggi delle categorie.")
+            self.analysis_results['ocm_category_score'] = 0
+            self.analysis_results['seo_audit_category_score'] = 0
+            return
+
+        detailed_findings = self.analysis_results['classified_detailed_issues']
+
+        for category_key in [CATEGORY_OCM, CATEGORY_SEO_AUDIT]:
+            max_possible_score_category = 0
+            total_penalty_score_category = 0
+
+            # Calculate max possible score for the category from DETAILED_SEO_CHECKS
+            if category_key in DETAILED_SEO_CHECKS:
+                for impact_level, checks in DETAILED_SEO_CHECKS[category_key].items():
+                    for check_config in checks:
+                        max_possible_score_category += check_config['weight']
+
+            if max_possible_score_category == 0: # Avoid division by zero if no checks defined for a category
+                category_score_percentage = 100 # Or 0, depending on desired behavior. 100 means no issues if no checks.
+                if category_key == CATEGORY_OCM:
+                    self.analysis_results['ocm_category_score'] = category_score_percentage
+                elif category_key == CATEGORY_SEO_AUDIT:
+                    self.analysis_results['seo_audit_category_score'] = category_score_percentage
+                self.logger.info(f"Punteggio per {category_key}: {category_score_percentage}% (max score 0)")
+                continue
+
+            # Calculate penalty from findings
+            if category_key in detailed_findings:
+                for impact_level, checks_found in detailed_findings[category_key].items():
+                    for check_id, check_data in checks_found.items():
+                        if check_data['count'] > 0:
+                            # The weight for penalty is the check's defined weight
+                            penalty_per_finding = check_data['weight']
+                            total_penalty_score_category += (penalty_per_finding * check_data['count'])
+
+            achieved_score_category = max(0, max_possible_score_category - total_penalty_score_category)
+            category_score_percentage = (achieved_score_category / max_possible_score_category) * 100
+
+            if category_key == CATEGORY_OCM:
+                self.analysis_results['ocm_category_score'] = round(category_score_percentage)
+                self.logger.info(f"Punteggio OCM: {achieved_score_category}/{max_possible_score_category} = {self.analysis_results['ocm_category_score']}%")
+            elif category_key == CATEGORY_SEO_AUDIT:
+                self.analysis_results['seo_audit_category_score'] = round(category_score_percentage)
+                self.logger.info(f"Punteggio SEO Audit: {achieved_score_category}/{max_possible_score_category} = {self.analysis_results['seo_audit_category_score']}%")
+
     def _analyze_titles(self) -> Dict:
         """Analizza i title tag"""
         analysis = {
@@ -546,304 +634,194 @@ class SEOAnalyzer:
         return analysis
     
     def _analyze_detailed_issues(self) -> Dict:
-        """Analisi dettagliata dei problemi specifici"""
-        detailed = {
-            'errors': [],      # Errori gravi
-            'warnings': [],    # Avvertimenti
-            'notices': [],     # Informazioni/suggerimenti
-            'missing_h1_pages': [],
-            'missing_h2_pages': [],
-            'missing_h3_pages': [],
-            'images_without_alt': [],
-            'images_without_title': [],
-            'duplicate_titles': [],
-            'duplicate_meta_descriptions': [],
-            'pages_without_title': [],
-            'pages_without_meta': [],
-            'low_word_count_pages': [],
-            'large_html_pages': [],
-            'slow_pages': [],
-            'pages_without_viewport': [],
-            'pages_without_lang': [],
-            'pages_without_canonical': [],
-            'broken_links': [],
-            'status_4xx_pages': [],
-            'status_5xx_pages': [],
-            'pages_without_schema': [],
-            'redirect_chains': [],
-            'mixed_content_pages': [],
-        }
-        
-        # Analizza ogni pagina per problemi specifici
-        for page in self.pages_data:
-            url = page.get('url', '')
-            title = page.get('title', '').strip()
-            meta_desc = page.get('meta_description', '').strip()
-            headings = page.get('headings', {})
-            images = page.get('images', [])
-            content = page.get('content', {})
-            status_code = page.get('status_code', 200)
-            html_size = page.get('html_size', 0)
-            response_time = page.get('response_time', 0)
-            canonical = page.get('canonical_url', '').strip()
-            lang = page.get('lang', '').strip()
-            schema = page.get('schema_markup', [])
+        """Analisi dettagliata dei problemi specifici basata su DETAILED_SEO_CHECKS."""
+        # Reset findings for the current analysis run
+        for category_key, impacts_dict in self.new_detailed_results.items():
+            for impact_key, checks_dict in impacts_dict.items():
+                for check_id, check_data in checks_dict.items():
+                    check_data["findings"] = []
+                    check_data["count"] = 0
+
+        # --- Helper functions for individual checks ---
+        def _add_finding(cat, imp, c_id, page_url, message_detail):
+            """Adds a finding to the self.new_detailed_results structure."""
+            try:
+                target_check = self.new_detailed_results[cat][imp][c_id]
+                target_check["findings"].append({"url": page_url, "message": message_detail})
+                target_check["count"] += 1
+            except KeyError:
+                self.logger.error(f"Check ID '{c_id}' not found in DETAILED_SEO_CHECKS for category '{cat}' and impact '{imp}'. Skipping finding.")
+
+        # --- Iterate through pages for page-specific checks ---
+        titles_for_duplication_check = {} # url: title
+        meta_descriptions_for_duplication_check = {} # url: meta_description
+        h1s_for_duplication_check = {} # url: list_of_h1s
+
+        for page_data in self.pages_data:
+            url = page_data.get('url', 'N/A')
+            title = page_data.get('title', '').strip()
+            meta_description = page_data.get('meta_description', '').strip()
+            headings = page_data.get('headings', {}) # {'h1': ['H1 text'], 'h2': [...]}
+            images = page_data.get('images', []) # [{'src': 'img.jpg', 'alt': 'Alt text'}]
+            content_data = page_data.get('content', {}) # {'word_count': 0}
             
-            # ERRORI (Problemi gravi)
-            if not title:
-                detailed['pages_without_title'].append({
-                    'url': url,
-                    'issue': 'Pagina senza title tag'
-                })
-                detailed['errors'].append({
-                    'type': 'missing_title',
-                    'url': url,
-                    'message': 'Title tag mancante'
-                })
-            
-            if status_code >= 500:
-                detailed['status_5xx_pages'].append({
-                    'url': url,
-                    'status_code': status_code,
-                    'issue': f'Errore server {status_code}'
-                })
-                detailed['errors'].append({
-                    'type': 'server_error',
-                    'url': url,
-                    'message': f'Errore server {status_code}'
-                })
-            
-            if status_code >= 400 and status_code < 500:
-                detailed['status_4xx_pages'].append({
-                    'url': url,
-                    'status_code': status_code,
-                    'issue': f'Errore client {status_code}'
-                })
-                detailed['errors'].append({
-                    'type': 'client_error',
-                    'url': url,
-                    'message': f'Errore client {status_code}'
-                })
-            
-            # AVVERTIMENTI (Problemi da correggere)
-            if not meta_desc:
-                detailed['pages_without_meta'].append({
-                    'url': url,
-                    'issue': 'Meta description mancante'
-                })
-                detailed['warnings'].append({
-                    'type': 'missing_meta',
-                    'url': url,
-                    'message': 'Meta description mancante'
-                })
-            
-            # Analisi headings
-            h1_count = len(headings.get('h1', []))
-            h2_count = len(headings.get('h2', []))
-            h3_count = len(headings.get('h3', []))
-            
-            if h1_count == 0:
-                detailed['missing_h1_pages'].append({
-                    'url': url,
-                    'issue': 'H1 mancante'
-                })
-                detailed['warnings'].append({
-                    'type': 'missing_h1',
-                    'url': url,
-                    'message': 'Tag H1 mancante'
-                })
-            elif h1_count > 1:
-                detailed['warnings'].append({
-                    'type': 'multiple_h1',
-                    'url': url,
-                    'message': f'Multipli H1 trovati ({h1_count})'
-                })
-            
-            if h2_count == 0:
-                detailed['missing_h2_pages'].append({
-                    'url': url,
-                    'issue': 'H2 mancante'
-                })
-                detailed['notices'].append({
-                    'type': 'missing_h2',
-                    'url': url,
-                    'message': 'Nessun tag H2 trovato'
-                })
-            
-            if h3_count == 0:
-                detailed['missing_h3_pages'].append({
-                    'url': url,
-                    'issue': 'H3 mancante'
-                })
-                detailed['notices'].append({
-                    'type': 'missing_h3',
-                    'url': url,
-                    'message': 'Nessun tag H3 trovato'
-                })
-            
-            # Analisi immagini
-            for img in images:
-                img_src = img.get('src', '')
-                img_alt = img.get('alt', '').strip()
-                img_title = img.get('title', '').strip()
-                
-                if not img_alt:
-                    detailed['images_without_alt'].append({
-                        'url': url,
-                        'image_src': img_src,
-                        'issue': 'Alt text mancante'
-                    })
-                    detailed['warnings'].append({
-                        'type': 'missing_alt',
-                        'url': url,
-                        'image': img_src,
-                        'message': 'Immagine senza alt text'
-                    })
-                
-                if not img_title:
-                    detailed['images_without_title'].append({
-                        'url': url,
-                        'image_src': img_src,
-                        'issue': 'Title mancante'
-                    })
-                    detailed['notices'].append({
-                        'type': 'missing_img_title',
-                        'url': url,
-                        'image': img_src,
-                        'message': 'Immagine senza attributo title'
-                    })
-            
-            # Contenuto
-            word_count = content.get('word_count', 0)
-            if word_count < SEO_CONFIG['min_word_count']:
-                detailed['low_word_count_pages'].append({
-                    'url': url,
-                    'word_count': word_count,
-                    'issue': f'Contenuto scarso ({word_count} parole)'
-                })
-                detailed['warnings'].append({
-                    'type': 'low_content',
-                    'url': url,
-                    'message': f'Contenuto insufficiente ({word_count} parole)'
-                })
-            
-            # Performance
-            if response_time > PERFORMANCE_CONFIG['max_response_time']:
-                detailed['slow_pages'].append({
-                    'url': url,
-                    'response_time': response_time,
-                    'issue': f'Pagina lenta ({response_time:.2f}s)'
-                })
-                detailed['warnings'].append({
-                    'type': 'slow_page',
-                    'url': url,
-                    'message': f'Tempo di caricamento elevato ({response_time:.2f}s)'
-                })
-            
-            if html_size > SEO_CONFIG['max_page_size_mb'] * 1024 * 1024:
-                detailed['large_html_pages'].append({
-                    'url': url,
-                    'size_mb': html_size / (1024 * 1024),
-                    'issue': f'HTML troppo grande ({html_size / (1024 * 1024):.1f}MB)'
-                })
-                detailed['warnings'].append({
-                    'type': 'large_page',
-                    'url': url,
-                    'message': f'Pagina troppo pesante ({html_size / (1024 * 1024):.1f}MB)'
-                })
-            
-            # Aspetti tecnici
-            if not canonical:
-                detailed['pages_without_canonical'].append({
-                    'url': url,
-                    'issue': 'URL canonico mancante'
-                })
-                detailed['notices'].append({
-                    'type': 'missing_canonical',
-                    'url': url,
-                    'message': 'URL canonico non specificato'
-                })
-            
-            if not lang:
-                detailed['pages_without_lang'].append({
-                    'url': url,
-                    'issue': 'Attributo lang mancante'
-                })
-                detailed['notices'].append({
-                    'type': 'missing_lang',
-                    'url': url,
-                    'message': 'Lingua della pagina non specificata'
-                })
-            
-            if not schema:
-                detailed['pages_without_schema'].append({
-                    'url': url,
-                    'issue': 'Schema markup mancante'
-                })
-                detailed['notices'].append({
-                    'type': 'missing_schema',
-                    'url': url,
-                    'message': 'Dati strutturati non presenti'
-                })
-        
-        # Trova duplicati
-        self._find_duplicates(detailed)
-        
-        return detailed
-    
-    def _find_duplicates(self, detailed: Dict):
-        """Trova duplicati nei title e meta description"""
-        title_counts = {}
-        meta_counts = {}
-        
-        for page in self.pages_data:
-            title = page.get('title', '').strip()
-            meta = page.get('meta_description', '').strip()
-            url = page.get('url', '')
-            
+            # Collect data for cross-page checks
             if title:
-                if title in title_counts:
-                    title_counts[title].append(url)
-                else:
-                    title_counts[title] = [url]
+                titles_for_duplication_check[url] = title
+            if meta_description:
+                meta_descriptions_for_duplication_check[url] = meta_description
+            if headings.get('h1'):
+                 h1s_for_duplication_check[url] = headings.get('h1')
+
+
+            # OCM - ERRORI
+            if not title:
+                _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_missing_title", url, f"Tag title mancante sulla pagina: {url}")
             
-            if meta:
-                if meta in meta_counts:
-                    meta_counts[meta].append(url)
-                else:
-                    meta_counts[meta] = [url]
-        
-        # Duplicati title
-        for title, urls in title_counts.items():
-            if len(urls) > 1:
-                for url in urls:
-                    detailed['duplicate_titles'].append({
-                        'url': url,
-                        'title': title,
-                        'duplicate_count': len(urls),
-                        'issue': f'Title duplicato ({len(urls)} pagine)'
-                    })
-                    detailed['warnings'].append({
-                        'type': 'duplicate_title',
-                        'url': url,
-                        'message': f'Title duplicato su {len(urls)} pagine'
-                    })
-        
-        # Duplicati meta
-        for meta, urls in meta_counts.items():
-            if len(urls) > 1:
-                for url in urls:
-                    detailed['duplicate_meta_descriptions'].append({
-                        'url': url,
-                        'meta': meta,
-                        'duplicate_count': len(urls),
-                        'issue': f'Meta description duplicata ({len(urls)} pagine)'
-                    })
-                    detailed['warnings'].append({
-                        'type': 'duplicate_meta',
-                        'url': url,
-                        'message': f'Meta description duplicata su {len(urls)} pagine'
-                    })
+            if len(title) > SEO_CONFIG.get('title_max_length', 60) and DETAILED_SEO_CHECKS[CATEGORY_OCM][IMPACT_WARNING][0]["id"] == "ocm_title_too_long": # Check if the ID matches
+                 # This check ID "ocm_title_too_long" is actually a WARNING in config, but example says ERRORI for "Title tag oltre 60 caratteri"
+                 # For now, I'll map it to the ocm_title_too_long (warning) as per current config.
+                 # If it should be an ERROR, the config or this logic needs adjustment.
+                 # Based on subtask description, "ocm_title_too_long" is an OCM ERROR. Let's assume there's a mismatch and treat it as error for now.
+                 # The original config has ocm_title_too_long as WARNING. I will stick to the config for now.
+                 # The subtask description has "OCM - ERRORI - title_too_long". This is a conflict.
+                 # I will create the finding if the ID is "ocm_title_too_long" under WARNINGS as per current config.
+                 # To adhere to subtask example "OCM - ERRORI - title_too_long", I'd need to change its category or ID.
+                 # Let's proceed by finding the check by its ID, regardless of its pre-defined category/impact for adding findings.
+                 # This means _add_finding needs to be robust or checks should be uniquely named if their category/impact can shift.
+                 # For now, the subtask implies I should implement the logic for the *description* "Title tag oltre 60 caratteri" as an OCM ERROR.
+                 # The closest ID is "ocm_title_too_long". I will add it to OCM/AVVERTIMENTI as per config.
+                 # If a different ID like "ocm_error_title_too_long" was defined in config for errors, that would be used.
+                 # Sticking to the defined DETAILED_SEO_CHECKS structure.
+                pass # This logic will be handled by its own check ID "ocm_title_too_long" under AVVERTIMENTI
+
+
+            if not meta_description:
+                _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_missing_meta_description", url, f"Meta description mancante sulla pagina: {url}")
+
+            if not headings.get('h1'):
+                _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_missing_h1", url, f"Tag H1 mancante sulla pagina: {url}")
+            elif len(headings.get('h1', [])) > 1: # As per subtask: OCM - ERRORI - duplicate_h1_same_page (mapped to ocm_multiple_h1)
+                _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_multiple_h1", url, f"Tag H1 multipli ({len(headings.get('h1', []))}) sulla pagina: {url}")
+
+            for img in images:
+                alt_text = img.get('alt') # Keep None if not present
+                if alt_text is None or alt_text.strip() == '':
+                    _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_missing_alt_text", url, f"Attributo ALT mancante/vuoto per immagine '{img.get('src', 'N/A')}' sulla pagina: {url}")
+            
+            # OCM - AVVERTIMENTI
+            if 0 < len(title) < SEO_CONFIG.get('title_min_length', 30):
+                _add_finding(CATEGORY_OCM, IMPACT_WARNING, "ocm_title_too_short", url, f"Tag title troppo corto ({len(title)} caratteri) sulla pagina: {url}. Min: {SEO_CONFIG.get('title_min_length', 30)}")
+            
+            # This is specifically for ocm_title_too_long under AVVERTIMENTI
+            if len(title) > SEO_CONFIG.get('title_max_length', 60):
+                 _add_finding(CATEGORY_OCM, IMPACT_WARNING, "ocm_title_too_long", url, f"Tag title troppo lungo ({len(title)} caratteri) sulla pagina: {url}. Max: {SEO_CONFIG.get('title_max_length', 60)}")
+
+
+            if 0 < len(meta_description) < SEO_CONFIG.get('meta_description_min_length', 120):
+                _add_finding(CATEGORY_OCM, IMPACT_WARNING, "ocm_meta_description_too_short", url, f"Meta description troppo corta ({len(meta_description)} caratteri) sulla pagina: {url}. Min: {SEO_CONFIG.get('meta_description_min_length', 120)}")
+            
+            if len(meta_description) > SEO_CONFIG.get('meta_description_max_length', 160):
+                _add_finding(CATEGORY_OCM, IMPACT_WARNING, "ocm_meta_description_too_long", url, f"Meta description troppo lunga ({len(meta_description)} caratteri) sulla pagina: {url}. Max: {SEO_CONFIG.get('meta_description_max_length', 160)}")
+
+            # OCM - AVVERTIMENTI - inconsistent_header_structure (simplified)
+            # If H3s exist but no H2s, flag it.
+            if headings.get('h3') and not headings.get('h2'):
+                 # Assuming an ID like "ocm_inconsistent_headings" exists or should be added to config.
+                 # For now, let's use a placeholder ID or skip if not in DETAILED_SEO_CHECKS.
+                 # The provided config does not have "ocm_inconsistent_headings".
+                 # It has "ocm_h_tags_order_incorrect" under AVVISI.
+                 # Let's map this simplified logic to "ocm_h_tags_order_incorrect" for now.
+                _add_finding(CATEGORY_OCM, IMPACT_NOTICE, "ocm_h_tags_order_incorrect", url, f"Struttura heading potenzialmente inconsistente: H3 presenti senza H2 sulla pagina: {url}")
+
+
+            # SEO_AUDIT - ERRORI
+            # SEO_AUDIT - ERRORI - thin_content_pages
+            word_count = content_data.get('word_count', 0)
+            min_word_count_config = SEO_CONFIG.get('min_word_count', 300)
+            if word_count < min_word_count_config:
+                # This ID "seo_audit_thin_content" is a WARNING in config, subtask says ERROR.
+                # I will add to WARNINGS as per config.
+                _add_finding(CATEGORY_SEO_AUDIT, IMPACT_WARNING, "seo_audit_thin_content", url, f"Contenuto potenzialmente 'thin' ({word_count} parole) sulla pagina: {url}. Minimo raccomandato: {min_word_count_config}")
+
+
+        # --- Cross-page checks (duplicates) ---
+        # OCM - ERRORI - ocm_duplicate_title
+        title_val_to_urls = {}
+        for url, title_text in titles_for_duplication_check.items():
+            if title_text not in title_val_to_urls:
+                title_val_to_urls[title_text] = []
+            title_val_to_urls[title_text].append(url)
+
+        for title_text, urls_with_title in title_val_to_urls.items():
+            if len(urls_with_title) > 1:
+                msg = f"Tag title duplicato '{title_text}' trovato sulle seguenti URLs: {', '.join(urls_with_title)}"
+                # Add this finding for each involved URL
+                for u in urls_with_title:
+                    _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_duplicate_title", u, msg)
+
+        # OCM - ERRORI - ocm_duplicate_meta_description
+        meta_val_to_urls = {}
+        for url, meta_text in meta_descriptions_for_duplication_check.items():
+            if meta_text not in meta_val_to_urls:
+                meta_val_to_urls[meta_text] = []
+            meta_val_to_urls[meta_text].append(url)
+
+        for meta_text, urls_with_meta in meta_val_to_urls.items():
+            if len(urls_with_meta) > 1:
+                msg = f"Meta description duplicata '{meta_text}' trovata sulle seguenti URLs: {', '.join(urls_with_meta)}"
+                for u in urls_with_meta:
+                    _add_finding(CATEGORY_OCM, IMPACT_ERROR, "ocm_duplicate_meta_description", u, msg)
+
+        # OCM - ERRORI - ocm_duplicate_h1 (Note: config has this as Medio impact, not Alto)
+        # This check is about "Evita H1 identici su pagine diverse"
+        # The subtask also lists "OCM - ERRORI - duplicate_h1_same_page", which I mapped to "ocm_multiple_h1"
+        # For "ocm_duplicate_h1" (across pages):
+        h1_text_to_urls = {}
+        for url, h1_list in h1s_for_duplication_check.items():
+            # Consider only the first H1 for duplication across pages if multiple H1s exist on one page
+            # (multiple H1s on the same page is a separate check: ocm_multiple_h1)
+            if h1_list:
+                first_h1 = h1_list[0].strip() # Use the text of the first H1
+                if first_h1: # Ensure it's not empty
+                    if first_h1 not in h1_text_to_urls:
+                        h1_text_to_urls[first_h1] = []
+                    h1_text_to_urls[first_h1].append(url)
+
+        for h1_text, urls_with_h1 in h1_text_to_urls.items():
+            if len(urls_with_h1) > 1:
+                msg = f"Tag H1 duplicato (testo: '{h1_text}') trovato sulle seguenti URLs: {', '.join(urls_with_h1)}"
+                for u in urls_with_h1:
+                     # "ocm_duplicate_h1" is Medio/Warning in config.
+                    _add_finding(CATEGORY_OCM, IMPACT_WARNING, "ocm_duplicate_h1", u, msg)
+
+
+        # SEO_AUDIT - ERRORI - extensive_duplicate_content (Placeholder)
+        # This is complex. For now, a placeholder comment or a very simple check.
+        # If text_content is available and comparable:
+        # For now, let's assume 'text_content' is not readily available in a comparable format in pages_data
+        # or that robust text similarity is too complex for this subtask.
+        # Add a note to the findings for this check if it exists in self.new_detailed_results.
+        check_id_dup_content = "seo_audit_duplicate_content_across_domains" # This is ALTO in config
+        if CATEGORY_SEO_AUDIT in self.new_detailed_results and \
+           IMPACT_ERROR in self.new_detailed_results[CATEGORY_SEO_AUDIT] and \
+           check_id_dup_content in self.new_detailed_results[CATEGORY_SEO_AUDIT][IMPACT_ERROR]:
+            
+            # Simplified: check if any two pages have identical 'meta_description' (already covered by ocm_duplicate_meta_description)
+            # or identical 'title' (covered by ocm_duplicate_title).
+            # This check is more about full content duplication.
+            # For now, just adding a placeholder message to the results of this check.
+            # Actual implementation would require comparing page.get('text_content') or similar.
+             self.new_detailed_results[CATEGORY_SEO_AUDIT][IMPACT_ERROR][check_id_dup_content]["findings"].append({
+                 "url": "N/A", # This check is site-wide or compares multiple pages
+                 "message": "Implementazione della logica per 'extensive_duplicate_content' (es. similarità testuale >80%) è complessa e richiede ulteriore sviluppo. Controllare manualmente per ora."
+             })
+             self.new_detailed_results[CATEGORY_SEO_AUDIT][IMPACT_ERROR][check_id_dup_content]["count"] = 1 # Mark as 1 to show it's noted.
+
+
+        return self.new_detailed_results
+
+    # _find_duplicates method removed as its functionality is integrated into _analyze_detailed_issues
     
     def _calculate_site_health(self) -> Dict:
         """Calcola lo stato di salute del sito con algoritmo migliorato"""
@@ -996,12 +974,46 @@ class SEOAnalyzer:
                 scores[analysis_type] = self.analysis_results['ssl_analysis']['score']
             elif analysis_type == 'content_quality':
                 scores[analysis_type] = self.analysis_results['content_analysis']['score']
+            elif analysis_type == 'ocm_score':
+                scores[analysis_type] = self.analysis_results.get('ocm_category_score', 0) # Use .get for safety
+            elif analysis_type == 'seo_audit_score':
+                scores[analysis_type] = self.analysis_results.get('seo_audit_category_score', 0) # Use .get for safety
         
         # Calcola media ponderata
-        weighted_sum = sum(scores[key] * SEO_WEIGHTS[key] for key in scores)
-        total_weight = sum(SEO_WEIGHTS.values())
+        weighted_sum = 0
+        current_total_weight = 0
+        for key, score_value in scores.items():
+            if key in SEO_WEIGHTS: # Ensure the key exists in SEO_WEIGHTS
+                weighted_sum += score_value * SEO_WEIGHTS[key]
+                current_total_weight += SEO_WEIGHTS[key]
+            else:
+                self.logger.warning(f"Ponderazione per '{key}' non trovata in SEO_WEIGHTS. Sarà ignorato nel calcolo del punteggio generale.")
+
+        self.logger.info(f"Somma ponderata: {weighted_sum}, Peso totale considerato: {current_total_weight}")
         
-        return int(weighted_sum / total_weight) if total_weight > 0 else 0
+        # Log details of scores and weights used
+        for key in SEO_WEIGHTS:
+            score_val = scores.get(key, "N/A (non calcolato o mancante)")
+            weight_val = SEO_WEIGHTS[key]
+            self.logger.debug(f"Overall Score Component: {key} - Score: {score_val}, Weight: {weight_val}")
+
+        if current_total_weight == 0:
+             self.logger.warning("Il peso totale per il calcolo del punteggio generale è 0. Il punteggio generale sarà 0.")
+             return 0
+
+        # Ensure the sum of SEO_WEIGHTS used matches 100 if that's the convention.
+        # If current_total_weight is not 100 (e.g. some scores were not found), this will normalize.
+        # However, it's better if all components are present.
+        # For now, let's assume total_weight should be the sum of all defined weights in SEO_WEIGHTS
+        expected_total_weight = sum(SEO_WEIGHTS.values())
+        if current_total_weight != expected_total_weight:
+            self.logger.warning(f"Il peso totale corrente ({current_total_weight}) non corrisponde al peso totale atteso ({expected_total_weight}) da SEO_WEIGHTS.")
+            # Decide handling: either use current_total_weight or expected_total_weight.
+            # Using current_total_weight makes sense if some scores legitimately cannot be calculated.
+            # If all scores *should* be there, then expected_total_weight might be better to highlight missing parts.
+            # For robustness, using current_total_weight for scores actually present.
+
+        return int(weighted_sum / current_total_weight) if current_total_weight > 0 else 0
     
     def _generate_recommendations(self) -> List[Dict]:
         """Genera raccomandazioni basate sull'analisi"""
