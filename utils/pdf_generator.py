@@ -246,7 +246,7 @@ class PDFGenerator:
 
         table = Table(data, colWidths=[7*cm, 3*cm, 7*cm]) # Adjusted colWidths for better spacing
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['primary_light'])),
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor(PDF_CONFIG['colors']['secondary'])),
             ('TEXTCOLOR', (0, 0), (-1, 0), white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), PDF_CONFIG['font_family']),
